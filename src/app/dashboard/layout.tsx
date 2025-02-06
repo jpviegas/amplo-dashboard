@@ -1,0 +1,28 @@
+import HeaderComponent from "@/components/header";
+import SidebarComponent from "@/components/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Dashboard - Amplo Serviços",
+  description: "Deashboard amplo serviços",
+};
+
+export default async function DashboardLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <SidebarProvider>
+      <div className="flex h-dvh w-dvw">
+        <SidebarComponent />
+        <SidebarTrigger />
+        <div className="flex flex-auto flex-col">
+          <HeaderComponent />
+          {children}
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
