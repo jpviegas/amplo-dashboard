@@ -35,43 +35,16 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 // import PersonalDataForm from "./funcionarios/personalForm";
+import { registerEmployeeSchema } from "@/types";
 import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
 
 export default function NewEmployeeForm() {
   const [activeTab, setActiveTab] = useState("general");
-  // se quiser converter algum campo para number, usar z.coerce.number()
-  const formSchema = z.object({
-    name: z.string().min(10, "O nome é obrigarório"),
-    pis: z.string().min(1, "O PIS é obrigatório"),
-    cpf: z
-      .string()
-      .nonempty()
-      .length(11, "Preencha apenas os 11 números do CPF"),
-    registration: z.string().min(1, "O número de matrícula é obrigatório"),
-    admissionDate: z.date({
-      required_error: "A data de admissão é obrigatória",
-    }),
-    company: z.string().min(1, "O código da empresa é obrigatório"),
-    workingHours: z.string(),
-    status: z.enum(["active", "inactive"]),
-    department: z.string(),
-    costCenter: z.string(),
-    position: z.string(),
-    sheetNumber: z.string(),
-    ctps: z.string(),
-    directSuperior: z.string().optional(),
-    rg: z.string(),
-    birthDate: z.date({
-      required_error: "A data de nascimento é obrigatória",
-    }),
-    socialName: z.string().optional(),
-  });
-
-  type FormValues = z.infer<typeof formSchema>;
+  type FormValues = z.infer<typeof registerEmployeeSchema>;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(registerEmployeeSchema),
     defaultValues: {
       status: "active",
     },

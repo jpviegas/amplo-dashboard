@@ -1,27 +1,32 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const protectedRoutes = ["/admin", "/dashboard"];
-const publicRoutes = ["/", "/login", "/register"];
+// Add routes that require authentication
+const protectedRoutes = ["/dashboard"];
+const authRoutes = ["/login"];
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
-  const userRole = request.cookies.get("role")?.value;
-  const path = request.nextUrl.pathname;
-
+  const hasSession = request.cookies.has("session");
   const isProtectedRoute = protectedRoutes.some((route) =>
-    path.startsWith(route),
+    request.nextUrl.pathname.startsWith(route),
+  );
+  const isAuthRoute = authRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route),
   );
 
-  if (isProtectedRoute) {
-    if (!token || userRole !== "admin") {
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
+  // Redirect to login if accessing protected route without session
+  if (isProtectedRoute && !hasSession) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Redirect to dashboard if accessing auth routes with active session
+  if (isAuthRoute && hasSession) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [...protectedRoutes, ...authRoutes],
 };

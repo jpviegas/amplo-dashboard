@@ -1,4 +1,5 @@
-// import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
 
@@ -8,12 +9,12 @@ const quicksand = Quicksand({
   display: "swap",
 });
 
-// export const metadata: Metadata = {
-//   title: "Amplo Serviços",
-//   description: "Home page amplo serviços",
-// };
+export const metadata: Metadata = {
+  title: "Amplo Serviços",
+  description: "Home page amplo serviços",
+};
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -21,14 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${quicksand.className} antialiased`}>
-        {/* <ThemeProvider
+        <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-        > */}
-        {children}
-        {/* </ThemeProvider> */}
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

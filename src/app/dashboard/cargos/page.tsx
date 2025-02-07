@@ -1,6 +1,18 @@
 import { api } from "@/api/fake";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -9,7 +21,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -25,27 +36,69 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+// import { Label } from "@radix-ui/react-label";
 import { ChevronDown, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import Link from "next/link";
 
-const data = await api.getEmployees();
+const data = await api.getJobRoles();
 
-export default async function EmployeesPage() {
+export default async function DepartmentPage() {
   return (
     <main className="container mx-auto flex h-full flex-col justify-evenly gap-8">
       <div className="flex items-center justify-between border-b pb-8">
-        <h1 className="flex text-2xl font-semibold">Funcionários</h1>
+        <h1 className="flex text-2xl font-semibold">Cargos</h1>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2">
             Busca Avançada
             <ChevronDown className="size-4" />
           </Button>
-          <Button asChild className="gap-2">
-            <Link href={"funcionarios/cadastrar"}>
-              <span>+</span>
-              Adicionar
-            </Link>
-          </Button>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <span>+</span>
+                Adicionar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Criar novo cargo</DialogTitle>
+                <DialogDescription>
+                  Crie um novo cargo e selecione a empresa.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="jobRole" className="text-right">
+                    Nome
+                  </Label>
+                  <Input
+                    id="jobRole"
+                    placeholder="Novo cargo"
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="company" className="text-right">
+                    Empresa
+                  </Label>
+                  <Input
+                    id="company"
+                    placeholder="Nome da empresa"
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">
+                    Fechar
+                  </Button>
+                </DialogClose>
+                <Button type="submit">Salvar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button variant="ghost" size="icon">
             <MoreHorizontal className="size-4" />
           </Button>
@@ -69,32 +122,10 @@ export default async function EmployeesPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-sm">Filtrar por funcionários:</span>
-          <RadioGroup defaultValue="ativos" className="flex gap-4">
-            <div className="flex items-center gap-1">
-              <RadioGroupItem value="ativos" id="ativos" />
-              <label htmlFor="ativos" className="text-sm">
-                Ativos
-              </label>
-            </div>
-            <div className="flex items-center gap-1">
-              <RadioGroupItem value="inativos" id="inativos" />
-              <label htmlFor="inativos" className="text-sm">
-                Inativos
-              </label>
-            </div>
-            <div className="flex items-center gap-1">
-              <RadioGroupItem value="todos" id="todos" />
-              <label htmlFor="todos" className="text-sm">
-                Todos
-              </label>
-            </div>
-          </RadioGroup>
-
-          {/* <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <span className="text-sm">Buscar:</span>
             <Input className="w-48" />
-          </div> */}
+          </div>
         </div>
       </div>
 
@@ -102,28 +133,24 @@ export default async function EmployeesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Departamento</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Cargo</TableHead>
+              <TableHead>Quantidade de Funcionários</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((employee) => (
-              <TableRow key={employee.id}>
-                <TableCell>{employee.name}</TableCell>
-                <TableCell>{employee.company}</TableCell>
-                <TableCell>{employee.department}</TableCell>
-                <TableCell className="flex items-center justify-between">
-                  {employee.status}
+            {data.map((job) => (
+              <TableRow key={job.id}>
+                <TableCell className="w-1/2">{job.role}</TableCell>
+                <TableCell className="flex w-full items-center justify-between">
+                  10
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Link href={`funcionarios/${employee.id}`}>
-                        <Pencil className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="size-8">
+                      <Link href={`funcionarios/${job.id}`}>
+                        <Pencil className="size-4" />
                       </Link>
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Trash className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="size-8">
+                      <Trash className="size-4" />
                     </Button>
                   </div>
                 </TableCell>

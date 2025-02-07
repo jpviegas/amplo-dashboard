@@ -1,4 +1,38 @@
 export const companyData = {
+  accounts: {
+    id: 1,
+    email: "admin",
+    password: "admin",
+    role: "admin",
+  },
+
+  companies: [
+    {
+      id: "1",
+      name: "Empresa 1",
+      cnpj: "00000000000001",
+      employeeQuantity: "1",
+    },
+    {
+      id: "2",
+      name: "Empresa 2",
+      cnpj: "00000000000002",
+      employeeQuantity: "2",
+    },
+  ],
+
+  jobRoles: [
+    { id: 1, role: "Cargo 1" },
+    { id: 2, role: "Cargo 2" },
+    { id: 3, role: "Cargo 3" },
+  ],
+
+  departments: [
+    { id: 1, department: "Departamento 1" },
+    { id: 3, department: "Departamento 3" },
+    { id: 3, department: "Departamento 3" },
+    { id: 4, department: "Departamento 4" },
+  ],
   // Basic company information
   info: {
     name: "TechCorp Solutions",
@@ -262,5 +296,21 @@ export const api = {
 
   getWorkingHours: () => {
     return Promise.resolve(companyData.workingHours);
+  },
+
+  getAccount: () => {
+    return Promise.resolve(companyData.accounts);
+  },
+
+  getCompanies: () => {
+    return Promise.resolve(companyData.companies);
+  },
+
+  getJobRoles: () => {
+    return Promise.resolve(companyData.jobRoles);
+  },
+
+  getDepartments: () => {
+    return Promise.resolve(companyData.departments);
   },
 };

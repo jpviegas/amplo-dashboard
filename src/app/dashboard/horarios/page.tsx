@@ -100,7 +100,7 @@ export default async function Shift() {
                   <div className="flex justify-end gap-2">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="size-4" />
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
@@ -140,11 +140,11 @@ export default async function Shift() {
 
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <Link href={`funcionarios/${employee.id}`}>
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="size-4" />
                       </Link>
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Trash className="h-4 w-4" />
+                      <Trash className="size-4" />
                     </Button>
                   </div>
                 </TableCell>

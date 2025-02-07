@@ -1,6 +1,6 @@
 import HeaderComponent from "@/components/header";
 import SidebarComponent from "@/components/sidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,7 +17,6 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <div className="flex h-dvh w-dvw">
         <SidebarComponent />
-        <SidebarTrigger />
         <div className="flex flex-auto flex-col">
           <HeaderComponent />
           {children}

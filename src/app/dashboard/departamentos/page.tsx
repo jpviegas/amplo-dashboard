@@ -1,5 +1,6 @@
 import { api } from "@/api/fake";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -28,13 +29,13 @@ import {
 import { ChevronDown, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import Link from "next/link";
 
-const data = await api.getEmployees();
+const data = await api.getDepartments();
 
-export default async function EmployeesPage() {
+export default async function DepartmentPage() {
   return (
     <main className="container mx-auto flex h-full flex-col justify-evenly gap-8">
       <div className="flex items-center justify-between border-b pb-8">
-        <h1 className="flex text-2xl font-semibold">Funcionários</h1>
+        <h1 className="flex text-2xl font-semibold">Departamentos</h1>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2">
             Busca Avançada
@@ -91,10 +92,10 @@ export default async function EmployeesPage() {
             </div>
           </RadioGroup>
 
-          {/* <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <span className="text-sm">Buscar:</span>
             <Input className="w-48" />
-          </div> */}
+          </div>
         </div>
       </div>
 
@@ -102,28 +103,69 @@ export default async function EmployeesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Empresa</TableHead>
-              <TableHead>Departamento</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="font-medium">Nome</TableHead>
+              <TableHead className="font-medium">
+                Número de Funcionários
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((employee) => (
-              <TableRow key={employee.id}>
-                <TableCell>{employee.name}</TableCell>
-                <TableCell>{employee.company}</TableCell>
-                <TableCell>{employee.department}</TableCell>
+            {data.map((department) => (
+              <TableRow key={department.id}>
+                <TableCell>{department.department}</TableCell>
                 <TableCell className="flex items-center justify-between">
-                  {employee.status}
+                  8
+                  {/* <Dialog>
+                    <DialogTrigger asChild>
+                      <Pencil className="size-4" />
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Editar departamento</DialogTitle>
+                        <DialogDescription>
+                          Crie um novo cargo e selecione a empresa.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="department" className="text-right">
+                            Nome
+                          </Label>
+                          <Input
+                            id="department"
+                            placeholder="Nome do departamento"
+                            className="col-span-3"
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="company" className="text-right">
+                            Empresa
+                          </Label>
+                          <Input
+                            id="company"
+                            placeholder="Nome da empresa"
+                            className="col-span-3"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button type="button" variant="outline">
+                            Fechar
+                          </Button>
+                        </DialogClose>
+                        <Button type="submit">Salvar</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog> */}
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Link href={`funcionarios/${employee.id}`}>
-                        <Pencil className="h-4 w-4" />
+                      <Link href={`departamentos/${department.id}`}>
+                        <Pencil className="size-4" />
                       </Link>
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Trash className="h-4 w-4" />
+                      <Trash className="size-4" />
                     </Button>
                   </div>
                 </TableCell>
