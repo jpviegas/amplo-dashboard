@@ -7,7 +7,7 @@ export default async function HeaderComponent() {
   const data = await api.getCompanyInfo();
 
   return (
-    <header className="flex h-16 items-center justify-between px-8 shadow-lg shadow-sidebar-border">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between bg-background px-8 shadow-lg shadow-sidebar-border">
       <Link href={"/"} className="size-12 rounded-full bg-white">
         icone
       </Link>
