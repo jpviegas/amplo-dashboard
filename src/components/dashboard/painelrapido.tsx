@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import Link from "next/link";
 import { JSX } from "react";
 import { FaRegClock, FaUsers } from "react-icons/fa6";
 import { LiaClipboardCheckSolid } from "react-icons/lia";
@@ -29,16 +28,19 @@ export const QuickPanel = () => {
             ],
           ] as [JSX.Element, string, string][]
         ).map(([icon, text, link]) => (
-          <Link href={link} key={link} className="h-28 w-40">
-            <Card className="h-full w-full transition-colors duration-200 hover:-text--secondary-color">
-              <CardContent className="flex h-full w-full flex-col items-center justify-evenly p-0">
-                <div>{icon}</div>
-                <div>
-                  <p className="text-center">{text}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+          // <Link href={link} key={link} className="h-28 w-40">
+          <Card
+            key={link}
+            className="h-full w-full transition-colors duration-200 hover:-text--secondary-color"
+          >
+            <CardContent className="flex h-full w-full flex-col items-center justify-evenly p-0">
+              <div>{icon}</div>
+              <div>
+                <p className="text-center">{text}</p>
+              </div>
+            </CardContent>
+          </Card>
+          // </Link>
         ))}
       </div>
     </div>

@@ -49,16 +49,16 @@ export function LoginForm() {
       // if (getAccount.password === values.password) {
       //   router.push("/dashboard");
       // }
-      const response = await fetch("/api", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
+      // const response = await fetch("/api", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(values),
+      // });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Erro ao fazer login");
-      }
+      // if (!response.ok) {
+      //   const data = await response.json();
+      //   throw new Error(data.error || "Erro ao fazer login");
+      // }
 
       router.push("/dashboard");
       router.refresh();
