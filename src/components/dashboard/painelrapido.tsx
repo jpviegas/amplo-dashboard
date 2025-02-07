@@ -1,7 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { JSX } from "react";
-import { FaRegClock, FaUsers } from "react-icons/fa6";
-import { LiaClipboardCheckSolid } from "react-icons/lia";
+import Link from "next/link";
 
 export const QuickPanel = () => {
   return (
@@ -11,36 +9,21 @@ export const QuickPanel = () => {
       <div className="grid grid-cols-2 gap-8 md:grid-cols-3">
         {(
           [
-            [
-              <FaUsers className="h-8 w-8" />,
-              "Funcionários",
-              "dashboard/funcionarios",
-            ],
-            [
-              <FaRegClock className="h-8 w-8" />,
-              "Horários",
-              "dashboard/horarios",
-            ],
-            [
-              <LiaClipboardCheckSolid className="h-8 w-8" />,
-              "Cartão de ponto",
-              "dashboard/cartao",
-            ],
-          ] as [JSX.Element, string, string][]
-        ).map(([icon, text, link]) => (
-          // <Link href={link} key={link} className="h-28 w-40">
-          <Card
-            key={link}
-            className="h-full w-full transition-colors duration-200 hover:-text--secondary-color"
-          >
-            <CardContent className="flex h-full w-full flex-col items-center justify-evenly p-0">
-              <div>{icon}</div>
-              <div>
-                <p className="text-center">{text}</p>
-              </div>
-            </CardContent>
-          </Card>
-          // </Link>
+            ["FaUsers", "Funcionários", "dashboard/funcionarios"],
+            ["FaRegClock", "Horários", "dashboard/horarios"],
+            ["LiaClipboardCheckSolid", "Cartão de ponto", "dashboard/cartao"],
+          ] as [string, string, string][]
+        ).map(([icon, text, link], index) => (
+          <Link href={link} key={index} className="h-28 w-40">
+            <Card className="h-full w-full transition-colors duration-200 hover:-text--secondary-color">
+              <CardContent className="flex h-full w-full flex-col items-center justify-evenly p-0">
+                <div>{icon}</div>
+                <div>
+                  <p className="text-center">{text}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
