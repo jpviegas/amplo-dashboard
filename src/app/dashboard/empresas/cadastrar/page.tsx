@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Toaster } from "@/components/ui/toaster";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { registerCompanySchema, ufsBrasil } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,6 +39,18 @@ export default function RegisterCompanyPage() {
 
   function onSubmit(values: FormValues) {
     console.log(values);
+
+    try {
+      // API call or other logic
+      toast({
+        title: "A empresa foi cadastrada com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Não foi possível cadastrar a empresa.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -309,6 +323,7 @@ export default function RegisterCompanyPage() {
                   <Button variant="outline" type="reset">
                     <Link href={"./"}>Cancelar</Link>
                   </Button>
+                  <Toaster />
                 </div>
               </form>
             </Form>

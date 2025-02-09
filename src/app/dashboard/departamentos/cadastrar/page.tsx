@@ -10,6 +10,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 import { registerDepartmentSchema } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -31,6 +32,18 @@ export default function NewDepartmentForm() {
 
   function onSubmit(values: FormValues) {
     console.log(values);
+
+    try {
+      // API call or other logic
+      toast({
+        title: "O departamento foi cadastrado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Não foi possível cadastrar o departamento.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (

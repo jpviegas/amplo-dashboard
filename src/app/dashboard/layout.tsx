@@ -1,6 +1,7 @@
 import HeaderComponent from "@/components/header";
 import SidebarComponent from "@/components/sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/toaster";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default async function DashboardLayout({
         <div className="flex flex-auto flex-col">
           <HeaderComponent />
           {children}
+          <Toaster />
         </div>
       </div>
     </SidebarProvider>

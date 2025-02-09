@@ -10,6 +10,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 import { registerRoleSchema } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -29,6 +30,19 @@ export default function NewDepartmentForm() {
 
   function onSubmit(values: FormValues) {
     console.log(values);
+
+    // Example error handling
+    try {
+      // API call or other logic
+      toast({
+        title: "O cargo foi cadastrado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Não foi possível cadastrar o cargo.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -73,7 +87,7 @@ export default function NewDepartmentForm() {
                 <div className="flex gap-4">
                   <Button type="submit">Salvar</Button>
                   <Button asChild variant="outline" type="reset">
-                    <Link href={"./"}>Cancelar</Link>
+                    <Link href="./">Cancelar</Link>
                   </Button>
                 </div>
               </form>

@@ -35,6 +35,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 // import PersonalDataForm from "./funcionarios/personalForm";
+import { toast } from "@/hooks/use-toast";
 import { registerEmployeeSchema } from "@/types";
 import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
@@ -52,6 +53,18 @@ export default function NewEmployeeForm() {
 
   function onSubmit(values: FormValues) {
     console.log(values);
+
+    try {
+      // API call or other logic
+      toast({
+        title: "O funcionário foi cadastrado com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Não foi possível cadastrar o funcionário.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
