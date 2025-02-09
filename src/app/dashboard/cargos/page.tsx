@@ -1,17 +1,6 @@
 import { api } from "@/api/fake";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Pagination,
   PaginationContent,
@@ -36,8 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { Label } from "@radix-ui/react-label";
-import { ChevronDown, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import Link from "next/link";
 
 const data = await api.getJobRoles();
@@ -48,57 +36,16 @@ export default async function DepartmentPage() {
       <div className="flex items-center justify-between border-b pb-8">
         <h1 className="flex text-2xl font-semibold">Cargos</h1>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
+          {/* <Button variant="outline" className="gap-2">
             Busca Avançada
             <ChevronDown className="size-4" />
+          </Button> */}
+          <Button asChild className="gap-2">
+            <Link href={"cargos/cadastrar"}>
+              <span>+</span>
+              Adicionar
+            </Link>
           </Button>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <span>+</span>
-                Adicionar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Criar novo cargo</DialogTitle>
-                <DialogDescription>
-                  Crie um novo cargo e selecione a empresa.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="jobRole" className="text-right">
-                    Nome
-                  </Label>
-                  <Input
-                    id="jobRole"
-                    placeholder="Novo cargo"
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="company" className="text-right">
-                    Empresa
-                  </Label>
-                  <Input
-                    id="company"
-                    placeholder="Nome da empresa"
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="outline">
-                    Fechar
-                  </Button>
-                </DialogClose>
-                <Button type="submit">Salvar</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
           <Button variant="ghost" size="icon">
             <MoreHorizontal className="size-4" />
           </Button>

@@ -1,4 +1,5 @@
 import { api } from "@/api/fake";
+import { EmployeeFilterForm } from "@/components/dashboard/funcionarios/filterForm";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -9,14 +10,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -52,51 +45,7 @@ export default async function EmployeesPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between pb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm">Mostrar</span>
-          <Select defaultValue="10">
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-sm">registros</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <span className="text-sm">Filtrar por funcionários:</span>
-          <RadioGroup defaultValue="ativos" className="flex gap-4">
-            <div className="flex items-center gap-1">
-              <RadioGroupItem value="ativos" id="ativos" />
-              <label htmlFor="ativos" className="text-sm">
-                Ativos
-              </label>
-            </div>
-            <div className="flex items-center gap-1">
-              <RadioGroupItem value="inativos" id="inativos" />
-              <label htmlFor="inativos" className="text-sm">
-                Inativos
-              </label>
-            </div>
-            <div className="flex items-center gap-1">
-              <RadioGroupItem value="todos" id="todos" />
-              <label htmlFor="todos" className="text-sm">
-                Todos
-              </label>
-            </div>
-          </RadioGroup>
-
-          {/* <div className="flex items-center gap-2">
-            <span className="text-sm">Buscar:</span>
-            <Input className="w-48" />
-          </div> */}
-        </div>
-      </div>
+      <EmployeeFilterForm />
 
       <div className="rounded-md border">
         <Table>
