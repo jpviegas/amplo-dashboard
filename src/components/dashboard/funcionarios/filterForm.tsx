@@ -56,7 +56,7 @@ export function EmployeeFilterForm() {
     });
 
     return () => subscription.unsubscribe();
-  }, [form.watch]);
+  }, [form]);
 
   function onSubmit(values: z.infer<typeof FormSchema>) {
     console.log(values);

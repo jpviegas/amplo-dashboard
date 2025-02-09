@@ -38,7 +38,7 @@ export default function NewDepartmentForm() {
       toast({
         title: "O departamento foi cadastrado com sucesso.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Não foi possível cadastrar o departamento.",
         variant: "destructive",

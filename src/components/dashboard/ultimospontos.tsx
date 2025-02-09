@@ -9,7 +9,7 @@ export const LastPoints = async () => {
         <div key={employee.id}>
           <p className="flex items-center gap-8 text-balance">
             <span>{employee.name}</span>
-            <span className="rounded-lg -bg--secondary-color px-4 py-2">
+            <span className="rounded-lg bg-primary px-4 py-2">
               {employee.startDate} - {employee.startTime}
             </span>
           </p>

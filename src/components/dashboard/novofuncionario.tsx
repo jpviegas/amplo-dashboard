@@ -59,7 +59,7 @@ export default function NewEmployeeForm() {
       toast({
         title: "O funcionário foi cadastrado com sucesso.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Não foi possível cadastrar o funcionário.",
         variant: "destructive",

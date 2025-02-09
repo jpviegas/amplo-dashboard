@@ -45,7 +45,7 @@ export default function RegisterCompanyPage() {
       toast({
         title: "A empresa foi cadastrada com sucesso.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Não foi possível cadastrar a empresa.",
         variant: "destructive",
