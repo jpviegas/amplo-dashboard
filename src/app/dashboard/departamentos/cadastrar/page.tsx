@@ -64,9 +64,12 @@ export default function NewDepartmentForm() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nome</FormLabel>
+                        <FormLabel>Nome do departamento</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nome" {...field} />
+                          <Input
+                            placeholder="Nome do departamento"
+                            {...field}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -76,9 +79,9 @@ export default function NewDepartmentForm() {
                     name="company"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>company</FormLabel>
+                        <FormLabel>Selecione a empresa</FormLabel>
                         <FormControl>
-                          <Input placeholder="company" {...field} />
+                          <Input placeholder="Selecione a empresa" {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -87,9 +90,9 @@ export default function NewDepartmentForm() {
                     name="approvalFlow"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>fluxo</FormLabel>
+                        <FormLabel>Fluxo de aprovação</FormLabel>
                         <FormControl>
-                          <Input placeholder="fluxo" {...field} />
+                          <Input placeholder="Fluxo de aprovação" {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -98,16 +101,28 @@ export default function NewDepartmentForm() {
                     name="sheetNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>folha</FormLabel>
+                        <FormLabel>Número da folha</FormLabel>
                         <FormControl>
-                          <Input placeholder="folha" {...field} />
+                          <Input placeholder="Número da folha" {...field} />
                         </FormControl>
                       </FormItem>
                     )}
                   />
                 </div>
                 <div className="flex gap-4">
-                  <Button type="submit">Salvar</Button>
+                  <Button
+                    type="submit"
+                    onClick={() =>
+                      toast({
+                        title: "Não foi possível cadastrar o departamento",
+                        description:
+                          "falta preencher algum campo ou preencheu errado",
+                        variant: "destructive",
+                      })
+                    }
+                  >
+                    Salvar
+                  </Button>
                   <Button asChild variant="outline" type="reset">
                     <Link href={"./"}>Cancelar</Link>
                   </Button>

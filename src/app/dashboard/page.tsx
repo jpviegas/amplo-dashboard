@@ -6,7 +6,6 @@ export default function PG() {
     <main className="container mx-auto flex h-full flex-col items-center justify-evenly">
       <QuickPanel />
       <LastPoints />
-      {/* <ChangeColors /> */}
     </main>
   );
 }

@@ -12,7 +12,7 @@ import { FaUserClock } from "react-icons/fa6";
 import { IoIosArrowForward } from "react-icons/io";
 import { LuFileText } from "react-icons/lu";
 import { MdOutlineSettingsInputSvideo } from "react-icons/md";
-import { Button } from "../ui/button";
+import { buttonVariants } from "../ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -93,9 +93,12 @@ export default async function SidebarComponent() {
                   <SidebarMenuSub>
                     {item.items.map((item) => (
                       <SidebarMenuSubItem key={item.item}>
-                        <Button variant="link">
-                          <Link href={item.url}>{item.item}</Link>
-                        </Button>
+                        <Link
+                          href={item.url}
+                          className={buttonVariants({ variant: "link" })}
+                        >
+                          {item.item}
+                        </Link>
                       </SidebarMenuSubItem>
                     ))}
                   </SidebarMenuSub>

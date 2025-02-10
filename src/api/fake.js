@@ -184,6 +184,12 @@ export const companyData = {
       startDate: "2024/03/10",
       startTime: "09:15",
     },
+    {
+      id: 4,
+      name: "John Doe",
+      startDate: "2024/05/03",
+      startTime: "19:00",
+    },
   ],
 
   // Employees information

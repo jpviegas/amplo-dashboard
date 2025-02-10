@@ -795,7 +795,19 @@ export default function NewEmployeeForm() {
                   </TabsContent>
                 </Tabs>
                 <div className="flex gap-4">
-                  <Button type="submit">Salvar</Button>
+                  <Button
+                    type="submit"
+                    onClick={() =>
+                      toast({
+                        title: "Não foi possível cadastrar o funcionário",
+                        description:
+                          "falta preencher algum campo ou preencheu errado",
+                        variant: "destructive",
+                      })
+                    }
+                  >
+                    Salvar
+                  </Button>
                   <Button asChild variant="outline" type="reset">
                     <Link href={"./"}>Cancelar</Link>
                   </Button>

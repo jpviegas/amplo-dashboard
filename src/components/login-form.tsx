@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 import { loginSchema } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
@@ -59,6 +60,9 @@ export function LoginForm() {
       //   const data = await response.json();
       //   throw new Error(data.error || "Erro ao fazer login");
       // }
+      toast({
+        title: "Login com sucesso",
+      });
 
       router.push("/dashboard");
       router.refresh();
@@ -142,6 +146,14 @@ export function LoginForm() {
               type="submit"
               className="w-full"
               disabled={form.formState.isSubmitting}
+              onClick={() =>
+                toast({
+                  title: "Não foi possível cadastrar a empresa",
+                  description:
+                    "falta preencher algum campo ou preencheu errado",
+                  variant: "destructive",
+                })
+              }
             >
               {form.formState.isSubmitting ? "Entrando..." : "Entrar"}
             </Button>
