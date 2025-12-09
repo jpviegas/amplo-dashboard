@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -88,8 +89,8 @@ export function DepartmentsList() {
         setPagination(paginationData);
       }
     } catch (error) {
-      console.error("Erro ao buscar cargos da empresa:", error);
-      toast.error("Não foi possível carregar os cargos da empresa.");
+      console.error("Erro ao buscar departamentos:", error);
+      toast.error("Não foi possível carregar os departamentos.");
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +117,8 @@ export function DepartmentsList() {
   useEffect(() => {
     fetchDepartments(form.getValues());
   }, [form]);
+
+  const TABLE_ROWS = 10;
 
   const handlePageChange = async (newPage: number) => {
     try {
@@ -160,7 +163,7 @@ export function DepartmentsList() {
               <FormItem className="flex items-center gap-4">
                 <FormLabel>Buscar:</FormLabel>
                 <FormControl>
-                  <Input placeholder="buscar cargo" {...field} />
+                  <Input placeholder="buscar departamento" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -179,42 +182,84 @@ export function DepartmentsList() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={2} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                    Carregando...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : departments.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="text-muted-foreground h-24 text-center"
-                >
-                  Nenhum departamento encontrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              departments.map((job) => (
-                <TableRow key={job._id}>
-                  <TableCell className="w-1/2">{job.department}</TableCell>
+              Array.from({ length: TABLE_ROWS }).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell className="w-1/2">
+                    <Skeleton className="h-4 w-full max-w-[250px]" />
+                  </TableCell>
                   <TableCell className="flex w-full items-center justify-between">
-                    10
+                    <Skeleton className="h-4 w-full max-w-[50px]" />
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <Link href={`roles/${job._id}`}>
-                          <Pencil className="size-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <Trash className="size-4" />
-                      </Button>
+                      <Skeleton className="size-8 rounded-md" />
+                      <Skeleton className="size-8 rounded-md" />
                     </div>
                   </TableCell>
                 </TableRow>
               ))
+            ) : (
+              <>
+                {departments.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={2}
+                      className="text-muted-foreground h-16 text-center"
+                    >
+                      Nenhum departamento encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {departments.map((job) => (
+                  <TableRow key={job._id}>
+                    <TableCell className="w-1/2">{job.department}</TableCell>
+                    <TableCell className="flex w-full items-center justify-between">
+                      10
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <Link href={`roles/${job._id}`}>
+                            <Pencil className="size-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {Array.from({
+                  length: Math.max(
+                    0,
+                    TABLE_ROWS -
+                      departments.length -
+                      (departments.length === 0 ? 1 : 0),
+                  ),
+                }).map((_, index) => (
+                  <TableRow key={`empty-${index}`}>
+                    <TableCell className="w-1/2">&nbsp;</TableCell>
+                    <TableCell className="flex w-full items-center justify-between">
+                      &nbsp;
+                      <div className="flex justify-end gap-2 opacity-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             )}
           </TableBody>
         </Table>

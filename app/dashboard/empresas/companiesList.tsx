@@ -1,6 +1,6 @@
 "use client";
 
-import { GetCompanies } from "@/api/dashboard/empresas/route";
+import { GetAllCompanies } from "@/api/dashboard/empresas/route";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,6 +19,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -84,7 +85,7 @@ export function CompaniesList() {
         success,
         pagination: paginationData,
         companies,
-      } = await GetCompanies(
+      } = await GetAllCompanies(
         user._id,
         values.search,
         pagination.page.toString(),
@@ -124,6 +125,8 @@ export function CompaniesList() {
     fetchCompanies(form.getValues());
   }, [form]);
 
+  const TABLE_ROWS = 10;
+
   const handlePageChange = async (newPage: number) => {
     try {
       setIsLoading(true);
@@ -135,7 +138,7 @@ export function CompaniesList() {
         success,
         pagination: paginationData,
         companies,
-      } = await GetCompanies(
+      } = await GetAllCompanies(
         user._id,
         form.getValues("search"),
         newPage.toString(),
@@ -186,42 +189,86 @@ export function CompaniesList() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                    Carregando...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : companies.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={3}
-                  className="text-muted-foreground h-24 text-center"
-                >
-                  Nenhuma empresa encontrada.
-                </TableCell>
-              </TableRow>
-            ) : (
-              companies.map((company) => (
-                <TableRow key={company._id}>
-                  <TableCell>{company.companyName}</TableCell>
-                  <TableCell>{company.cnpj}</TableCell>
+              Array.from({ length: TABLE_ROWS }).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full max-w-[250px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-full max-w-[150px]" />
+                  </TableCell>
                   <TableCell className="flex items-center justify-end">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <Link href={`empresas/${company._id}`}>
-                          <Pencil className="size-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <Trash className="size-4" />
-                      </Button>
+                      <Skeleton className="size-8 rounded-md" />
+                      <Skeleton className="size-8 rounded-md" />
                     </div>
                   </TableCell>
                 </TableRow>
               ))
+            ) : (
+              <>
+                {companies.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-muted-foreground h-16 text-center"
+                    >
+                      Nenhuma empresa encontrada.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {companies.map((company) => (
+                  <TableRow key={company._id}>
+                    <TableCell>{company.companyName}</TableCell>
+                    <TableCell>{company.cnpj}</TableCell>
+                    <TableCell className="flex items-center justify-end">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <Link href={`empresas/${company._id}`}>
+                            <Pencil className="size-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {Array.from({
+                  length: Math.max(
+                    0,
+                    TABLE_ROWS -
+                      companies.length -
+                      (companies.length === 0 ? 1 : 0),
+                  ),
+                }).map((_, index) => (
+                  <TableRow key={`empty-${index}`}>
+                    <TableCell>&nbsp;</TableCell>
+                    <TableCell>&nbsp;</TableCell>
+                    <TableCell className="flex items-center justify-end">
+                      <div className="flex justify-end gap-2 opacity-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             )}
           </TableBody>
         </Table>

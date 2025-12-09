@@ -15,7 +15,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   useEffect(() => {
-    const userid = Cookies.get("userid");
+    const userid = Cookies.get("user");
     if (userid) {
       fetchUser(userid);
     }
@@ -24,7 +24,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const fetchUser = async (userid: string) => {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/auth/user/${userid}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user/${userid}`,
       {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -33,7 +33,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     const data = await res.json();
 
     if (res.ok) {
-      setUser(data.users);
+      setUser(data.user);
     } else {
       console.error(data.message);
     }

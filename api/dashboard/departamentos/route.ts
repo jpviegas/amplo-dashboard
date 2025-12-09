@@ -15,10 +15,13 @@ export async function GetAllDepartments(): Promise<{
   };
   departments: DepartmentTypeWithId[];
 }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/departments/`, {
-    method: "GET",
-    headers: { "content-type": "application/json" },
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/departments/`,
+    {
+      method: "GET",
+      headers: { "content-type": "application/json" },
+    },
+  );
 
   const data = await res.json();
   return data;
@@ -42,7 +45,7 @@ export async function GetCompanyDepartments(
   };
   departments: DepartmentTypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/departments/`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/departments/`;
 
   const queryParams = new URLSearchParams();
 
@@ -75,7 +78,7 @@ export async function GetCompanyDepartmentById(department: string): Promise<{
   success: boolean;
   departments: DepartmentTypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/departments/${department}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/departments/${department}`;
 
   const res = await fetch(url, {
     method: "GET",
@@ -89,11 +92,14 @@ export async function GetCompanyDepartmentById(department: string): Promise<{
 export async function CreateDepartment(
   values: DepartmentType,
 ): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/departments`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(values),
-  });
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/departments`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(values),
+    },
+  );
 
   if (!res) {
     throw new Error("Erro ao cadastrar o departamento");

@@ -1,6 +1,7 @@
 "use client";
 
 import { CreateDepartment } from "@/api/dashboard/departamentos/route";
+import { GetAllCompanies } from "@/api/dashboard/empresas/route";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -8,17 +9,50 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { registerDepartmentSchema } from "@/zodSchemas";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUser } from "@/context/UserContext";
+import { CompanyTypeWithId, registerDepartmentSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 export default function NewDepartmentForm() {
   type FormValues = z.infer<typeof registerDepartmentSchema>;
+  const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
+  const { user } = useUser();
+
+  const fetchCompanies = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, companies } = await GetAllCompanies(user._id, "", "1");
+
+      if (success) {
+        setCompanies(companies);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar empresas:", error);
+      toast.error("Não foi possível carregar as empresas.");
+    }
+  };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [user?._id]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerDepartmentSchema),
@@ -49,6 +83,7 @@ export default function NewDepartmentForm() {
       <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-4 md:grid-cols-3">
           <FormField
+            control={form.control}
             name="department"
             render={({ field }) => (
               <FormItem>
@@ -56,6 +91,7 @@ export default function NewDepartmentForm() {
                 <FormControl>
                   <Input placeholder="Nome do departamento" {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -65,13 +101,29 @@ export default function NewDepartmentForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Selecione a empresa</FormLabel>
-                <FormControl>
-                  <Input placeholder="Selecione a empresa" {...field} />
-                </FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a empresa" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {companies.map((company) => (
+                      <SelectItem key={company._id} value={company._id}>
+                        {company.companyName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
+            control={form.control}
             name="approvalFlow"
             render={({ field }) => (
               <FormItem>
@@ -79,10 +131,12 @@ export default function NewDepartmentForm() {
                 <FormControl>
                   <Input placeholder="Fluxo de aprovação" {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
+            control={form.control}
             name="sheetNumber"
             render={({ field }) => (
               <FormItem>
@@ -90,6 +144,7 @@ export default function NewDepartmentForm() {
                 <FormControl>
                   <Input placeholder="Número da folha" {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function DepartmentPage() {
   return (
-    <main className="container mx-auto flex h-full flex-col justify-evenly gap-8">
+    <main className="container mx-auto flex h-full w-11/12 flex-col justify-evenly gap-8">
       <DashboardHeader title="Departamentos" link="departamentos/cadastrar" />
 
       <DepartmentsList />

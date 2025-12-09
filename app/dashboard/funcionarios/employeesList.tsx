@@ -1,6 +1,6 @@
 "use client";
 
-import { GetCompanyEmployees } from "@/api/dashboard/funcionarios/route";
+import { GetAllEmployees } from "@/api/dashboard/funcionarios/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -32,11 +33,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const FormSchema = z.object({
-  name: z.string(),
+  search: z.string(),
 });
 
 export function EmployeesList() {
-  const [employees, setEmployees] = useState<EmployeeTypeWithId[]>([]);
+  const [employees, setEmployees] = useState<
+    (EmployeeTypeWithId & { companyName: string })[]
+  >([]);
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -62,7 +65,7 @@ export function EmployeesList() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      name: "",
+      search: "",
     },
   });
 
@@ -77,11 +80,12 @@ export function EmployeesList() {
         success,
         pagination: paginationData,
         employees,
-      } = await GetCompanyEmployees(
+      } = await GetAllEmployees(
         user._id,
-        values.name,
+        values.search,
         pagination.page.toString(),
       );
+      console.log(employees);
 
       if (success) {
         setEmployees(employees);
@@ -117,6 +121,8 @@ export function EmployeesList() {
     fetchEmployees(form.getValues());
   }, [form]);
 
+  const TABLE_ROWS = 10;
+
   const handlePageChange = async (newPage: number) => {
     try {
       setIsLoading(true);
@@ -128,9 +134,9 @@ export function EmployeesList() {
         success,
         pagination: paginationData,
         employees,
-      } = await GetCompanyEmployees(
+      } = await GetAllEmployees(
         user._id,
-        form.getValues("name"),
+        form.getValues("search"),
         newPage.toString(),
       );
 
@@ -155,7 +161,7 @@ export function EmployeesList() {
         >
           <FormField
             control={form.control}
-            name="name"
+            name="search"
             render={({ field }) => (
               <FormItem className="flex items-center gap-4">
                 <FormLabel>Buscar:</FormLabel>
@@ -179,42 +185,86 @@ export function EmployeesList() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={2} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                    Carregando...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : employees.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="text-muted-foreground h-24 text-center"
-                >
-                  Nenhum funcionário encontrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              employees.map((employee) => (
-                <TableRow key={employee._id}>
-                  <TableCell className="w-1/2">{employee.name}</TableCell>
+              Array.from({ length: TABLE_ROWS }).map((_, index) => (
+                <TableRow key={index}>
+                  <TableCell className="w-1/2">
+                    <Skeleton className="h-4 w-full max-w-[250px]" />
+                  </TableCell>
                   <TableCell className="flex w-full items-center justify-between">
-                    {employee.company}
+                    <Skeleton className="h-4 w-full max-w-[150px]" />
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <Link href={`funcionarios/${employee._id}`}>
-                          <Pencil className="size-4" />
-                        </Link>
-                      </Button>
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <Trash className="size-4" />
-                      </Button>
+                      <Skeleton className="size-8 rounded-md" />
+                      <Skeleton className="size-8 rounded-md" />
                     </div>
                   </TableCell>
                 </TableRow>
               ))
+            ) : (
+              <>
+                {employees.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={2}
+                      className="text-muted-foreground h-16 text-center"
+                    >
+                      Nenhum funcionário encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {employees.map((employee) => (
+                  <TableRow key={employee._id}>
+                    <TableCell className="w-1/2">{employee.name}</TableCell>
+                    <TableCell className="flex w-full items-center justify-between">
+                      {employee.companyName}
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <Link
+                            href={`/dashboard/funcionarios/${employee._id}`}
+                          >
+                            <Pencil className="size-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {Array.from({
+                  length: Math.max(
+                    0,
+                    TABLE_ROWS -
+                      employees.length -
+                      (employees.length === 0 ? 1 : 0),
+                  ),
+                }).map((_, index) => (
+                  <TableRow key={`empty-${index}`}>
+                    <TableCell className="w-1/2">&nbsp;</TableCell>
+                    <TableCell className="flex w-full items-center justify-between">
+                      &nbsp;
+                      <div className="flex justify-end gap-2 opacity-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             )}
           </TableBody>
         </Table>

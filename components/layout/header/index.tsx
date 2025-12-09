@@ -17,11 +17,11 @@ export default function HeaderComponent() {
       </Link>
 
       <div className="flex items-center gap-8">
+        <h1>{user?.email}</h1>
+
         <SidebarTrigger className="border-input hover:bg-accent hover:text-accent-foreground size-9 border shadow-sm" />
 
         <ModeToggle />
-
-        <h1>{user?.name}</h1>
       </div>
     </header>
   );

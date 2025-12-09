@@ -14,7 +14,7 @@ export async function GetAllUsers(): Promise<LoginType[]> {
 
 export async function GetUserByEmail(email: string): Promise<LoginType[]> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/auth/user/${email}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user/${email}`,
     {
       method: "GET",
       headers: { "content-type": "application/json" },
@@ -29,7 +29,7 @@ export async function GetUserById(
   id: string,
 ): Promise<{ success: boolean; users: UserType }> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/auth/user/${id}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user/${id}`,
     {
       method: "GET",
       headers: { "content-type": "application/json" },
@@ -45,12 +45,12 @@ export async function login(values: LoginType): Promise<{
   success: boolean;
   token: string;
   user: {
+    _id: string;
     email: string;
     name: string;
-    id: string;
   };
 }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),
@@ -66,7 +66,7 @@ export async function login(values: LoginType): Promise<{
 }
 
 export async function createUser(values: LoginType) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/user`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(values),

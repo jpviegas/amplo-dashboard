@@ -9,6 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export function Logout() {
   Cookies.remove("token");
-  Cookies.remove("userid");
+  Cookies.remove("user");
   return redirect("/");
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { login } from "@/api/route";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-// import { useUser } from "@/context/UserContext";
+import { useUser } from "@/context/UserContext";
 import { loginSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
@@ -32,7 +33,7 @@ import * as z from "zod";
 export function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  // const { fetchUser } = useUser();
+  const { fetchUser } = useUser();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -44,21 +45,17 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
-      Cookies.set("token", values.email, { expires: 1, path: "/" });
-      Cookies.set("userid", values.email, { expires: 1, path: "/" });
-      router.push("/dashboard");
-      toast.success("Login com sucesso");
+      const { message, success, token, user } = await login(values);
 
-      // const { message, success, token, user } = await login(values);
-      // if (!success) {
-      //   toast.error(message);
-      // } else {
-      //   fetchUser(user.id);
-      //   Cookies.set("token", token, { expires: 1, path: "/" });
-      //   Cookies.set("userid", user.id, { expires: 1, path: "/" });
-      //   toast.success(message);
-      //   router.push("/dashboard");
-      // }
+      if (!success) {
+        toast.error(message);
+      } else {
+        fetchUser(user._id);
+        Cookies.set("token", token, { expires: 1, path: "/" });
+        Cookies.set("user", user._id, { expires: 1, path: "/" });
+        toast.success(message);
+        router.push("/dashboard");
+      }
     } catch {
       toast.error("Ocorreu um erro.");
     }

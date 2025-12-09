@@ -15,7 +15,7 @@ export async function GetAllRoles(): Promise<{
   };
   roles: RoleTypeWithId[];
 }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/roles/`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles/`, {
     method: "GET",
     headers: { "content-type": "application/json" },
   });
@@ -42,7 +42,7 @@ export async function GetCompanyRoles(
   };
   roles: RoleTypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/roles/`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/roles/`;
 
   const queryParams = new URLSearchParams();
 
@@ -75,7 +75,7 @@ export async function GetCompanyRoleById(role: string): Promise<{
   success: boolean;
   roles: RoleTypeWithId;
 }> {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/roles/${role}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/roles/${role}`;
 
   const res = await fetch(url, {
     method: "GET",
@@ -89,7 +89,7 @@ export async function GetCompanyRoleById(role: string): Promise<{
 export async function CreateRole(
   values: RoleType,
 ): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/roles`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(values),

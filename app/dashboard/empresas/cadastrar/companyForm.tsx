@@ -68,7 +68,7 @@ export default function RegisterCompanyPage() {
   }
 
   return (
-    <main className="container mx-auto h-full">
+    <main className="container mx-auto h-full w-11/12 pt-8">
       <div className="flex items-center justify-between">
         <h1 className="mt-8 text-3xl font-bold">Nova Empresa</h1>
       </div>

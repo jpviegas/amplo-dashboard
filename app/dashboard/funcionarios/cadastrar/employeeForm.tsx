@@ -1,6 +1,10 @@
 "use client";
 
-import { CreateEmployee } from "@/api/dashboard/funcionarios/route";
+import { GetAllCompanies } from "@/api/dashboard/empresas/route";
+import {
+  CreateEmployee,
+  UpdateEmployee,
+} from "@/api/dashboard/funcionarios/route";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -27,71 +31,135 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
-import { registerEmployeeSchema, ufsBrasil } from "@/zodSchemas";
+import {
+  CompanyTypeWithId,
+  EmployeeTypeWithId,
+  registerEmployeeSchema,
+  ufsBrasil,
+} from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, MapPin, Phone, Plus, Search, User } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-export default function NewEmployeeForm() {
+interface EmployeeFormProps {
+  initialData?: EmployeeTypeWithId;
+}
+
+export default function EmployeeForm({ initialData }: EmployeeFormProps) {
   const [activeTab, setActiveTab] = useState("general");
+  const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
+  const { user } = useUser();
+
   type FormValues = z.infer<typeof registerEmployeeSchema>;
+
+  const fetchCompanies = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, companies } = await GetAllCompanies(user._id, "", "1");
+
+      if (success) {
+        setCompanies(companies);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar empresas:", error);
+      toast.error("Não foi possível carregar as empresas.");
+    }
+  };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [user?._id]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerEmployeeSchema),
-    defaultValues: {
-      name: "",
-      pis: "",
-      cpf: "",
-      registration: "",
-      admissionDate: new Date(),
-      company: "",
-      workingHours: "",
-      status: "active",
-      department: "",
-      costCenter: "",
-      position: "",
-      sheetNumber: "",
-      ctps: "",
-      directSuperior: "",
-      rg: "",
-      birthDate: new Date(),
-      socialName: "",
-      cnh: "",
-      cnhCategory: "",
-      cnhExpiration: new Date(),
-      cep: "",
-      address: "",
-      neighborhood: "",
-      city: "",
-      state: "",
-      phone: "",
-      extension: "",
-      fatherName: "",
-      motherName: "",
-      gender: "",
-      nationality: "",
-      placeOfBirth: "",
-      civilStatus: "",
-    },
+    defaultValues: initialData
+      ? {
+          ...initialData,
+          admissionDate: initialData.admissionDate
+            ? new Date(initialData.admissionDate)
+            : new Date(),
+          birthDate: initialData.birthDate
+            ? new Date(initialData.birthDate)
+            : new Date(),
+          cnhExpiration: initialData.cnhExpiration
+            ? new Date(initialData.cnhExpiration)
+            : new Date(),
+          status: initialData.status as "active" | "inactive",
+        }
+      : {
+          name: "",
+          pis: "",
+          cpf: "",
+          registration: "",
+          admissionDate: new Date(),
+          company: "",
+          workingHours: "",
+          status: "active",
+          department: "",
+          costCenter: "",
+          position: "",
+          sheetNumber: "",
+          ctps: "",
+          directSuperior: "",
+          rg: "",
+          birthDate: new Date(),
+          socialName: "",
+          cnh: "",
+          cnhCategory: "",
+          cnhExpiration: new Date(),
+          cep: "",
+          address: "",
+          neighborhood: "",
+          city: "",
+          state: "",
+          phone: "",
+          extension: "",
+          fatherName: "",
+          motherName: "",
+          gender: "",
+          nationality: "",
+          placeOfBirth: "",
+          civilStatus: "",
+        },
   });
 
   async function onSubmit(values: FormValues) {
     try {
-      const { message, success } = await CreateEmployee(values);
-
-      if (!success) {
-        toast.error(message);
+      if (initialData) {
+        const { message, success } = await UpdateEmployee(
+          values,
+          initialData._id,
+        );
+        if (!success) {
+          toast.error(message);
+        } else {
+          toast.success(message);
+        }
       } else {
-        toast.success(message);
+        const { message, success } = await CreateEmployee(values);
+
+        if (!success) {
+          toast.error(message);
+        } else {
+          toast.success(message);
+        }
       }
     } catch {
-      toast.error("Erro ao cadastrar o funcionário.");
+      toast.error(
+        initialData
+          ? "Erro ao atualizar o funcionário."
+          : "Erro ao cadastrar o funcionário.",
+      );
     }
   }
 
@@ -185,13 +253,28 @@ export default function NewEmployeeForm() {
             )}
           />
           <FormField
+            control={form.control}
             name="company"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Empresa</FormLabel>
-                <FormControl>
-                  <Input placeholder="amplo" {...field} />
-                </FormControl>
+                <FormLabel>Selecione a empresa</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a empresa" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {companies.map((company) => (
+                      <SelectItem key={company._id} value={company._id}>
+                        {company.companyName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -229,6 +312,7 @@ export default function NewEmployeeForm() {
                   <RadioGroup
                     onValueChange={field.onChange}
                     defaultValue="active"
+                    value={field.value}
                   >
                     <div className="flex gap-8">
                       <div className="flex gap-2">
@@ -810,9 +894,11 @@ export default function NewEmployeeForm() {
           </TabsContent>
         </Tabs>
         <div className="flex gap-4">
-          <Button type="submit">Salvar</Button>
+          <Button type="submit">{initialData ? "Atualizar" : "Salvar"}</Button>
           <Button asChild variant="outline" type="reset">
-            <Link href={"./"}>Cancelar</Link>
+            <Link href={initialData ? "/dashboard/funcionarios" : "./"}>
+              Cancelar
+            </Link>
           </Button>
         </div>
       </form>
