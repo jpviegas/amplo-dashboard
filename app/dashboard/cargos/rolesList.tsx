@@ -23,6 +23,7 @@ import {
 import { useUser } from "@/context/UserContext";
 import { RoleTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Cookies from "js-cookie";
 import debounce from "lodash/debounce";
 import { Pencil, Trash } from "lucide-react";
 import Link from "next/link";
@@ -32,7 +33,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const FormSchema = z.object({
-  role: z.string(),
+  search: z.string(),
 });
 
 export function RolesList() {
@@ -58,18 +59,19 @@ export function RolesList() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      role: "",
+      search: "",
     },
   });
 
   const fetchRoles = async (values: z.infer<typeof FormSchema>) => {
     try {
       setIsLoading(true);
-      if (!user?._id) {
+      if (!userId) {
         throw new Error("User ID is required");
       }
 
@@ -78,8 +80,8 @@ export function RolesList() {
         pagination: paginationData,
         roles,
       } = await GetCompanyRoles(
-        user._id,
-        values.role,
+        userId,
+        values.search,
         pagination.page.toString(),
       );
 
@@ -99,7 +101,7 @@ export function RolesList() {
     debounce((values: z.infer<typeof FormSchema>) => {
       fetchRoles(values);
     }, 500),
-    [user?._id],
+    [userId],
   );
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export function RolesList() {
   const handlePageChange = async (newPage: number) => {
     try {
       setIsLoading(true);
-      if (!user?._id) {
+      if (!userId) {
         throw new Error("User ID is required");
       }
 
@@ -129,8 +131,8 @@ export function RolesList() {
         pagination: paginationData,
         roles,
       } = await GetCompanyRoles(
-        user._id,
-        form.getValues("role"),
+        userId,
+        form.getValues("search"),
         newPage.toString(),
       );
 
@@ -155,7 +157,7 @@ export function RolesList() {
         >
           <FormField
             control={form.control}
-            name="role"
+            name="search"
             render={({ field }) => (
               <FormItem className="flex items-center gap-4">
                 <FormLabel>Buscar:</FormLabel>
@@ -199,7 +201,7 @@ export function RolesList() {
             ) : (
               roles.map((job) => (
                 <TableRow key={job._id}>
-                  <TableCell className="w-1/2">{job.role}</TableCell>
+                  <TableCell className="w-1/2">{job.position}</TableCell>
                   <TableCell className="flex w-full items-center justify-between">
                     10
                     <div className="flex justify-end gap-2">

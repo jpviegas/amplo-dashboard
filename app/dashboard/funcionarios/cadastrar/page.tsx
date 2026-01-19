@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
-import NewEmployeeForm from "./employeeForm";
+import NewEmployeeForm from "./registerEployeeForm";
 
 export const metadata: Metadata = {
   title: "Cadastrar funcionário - Amplo Serviços",

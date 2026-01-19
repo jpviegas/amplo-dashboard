@@ -22,6 +22,7 @@ import {
 import { useUser } from "@/context/UserContext";
 import { CompanyTypeWithId, registerDepartmentSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -32,14 +33,15 @@ export default function NewDepartmentForm() {
   type FormValues = z.infer<typeof registerDepartmentSchema>;
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
 
   const fetchCompanies = async () => {
     try {
-      if (!user?._id) {
+      if (!userId) {
         return;
       }
 
-      const { success, companies } = await GetAllCompanies(user._id, "", "1");
+      const { success, companies } = await GetAllCompanies(userId);
 
       if (success) {
         setCompanies(companies);
@@ -52,7 +54,7 @@ export default function NewDepartmentForm() {
 
   useEffect(() => {
     fetchCompanies();
-  }, [user?._id]);
+  }, [userId]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerDepartmentSchema),
@@ -66,7 +68,12 @@ export default function NewDepartmentForm() {
 
   async function onSubmit(values: FormValues) {
     try {
-      const { success, message } = await CreateDepartment(values);
+      if (!userId) {
+        toast.error("Usuário não identificado.");
+        return;
+      }
+
+      const { success, message } = await CreateDepartment(userId, values);
 
       if (!success) {
         toast.warning(message);

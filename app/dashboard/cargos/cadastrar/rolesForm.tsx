@@ -11,27 +11,37 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useUser } from "@/context/UserContext";
 import { registerRoleSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 export default function NewRolesForm() {
+  const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
+
   type FormValues = z.infer<typeof registerRoleSchema>;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerRoleSchema),
     defaultValues: {
-      role: "",
+      position: "",
       company: "",
     },
   });
 
   async function onSubmit(values: FormValues) {
     try {
-      const { success, message } = await CreateRole(values);
+      if (!userId) {
+        toast.error("Usuário não identificado.");
+        return;
+      }
+
+      const { success, message } = await CreateRole(userId, values);
 
       if (!success) {
         toast.warning(message);
@@ -49,7 +59,7 @@ export default function NewRolesForm() {
         <div className="grid gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
-            name="role"
+            name="position"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nome</FormLabel>

@@ -33,7 +33,7 @@ import * as z from "zod";
 export function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const { fetchUser } = useUser();
+  const { setUser } = useUser();
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -46,11 +46,12 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
       const { message, success, token, user } = await login(values);
+      console.log(user);
 
       if (!success) {
         toast.error(message);
       } else {
-        fetchUser(user._id);
+        setUser(user);
         Cookies.set("token", token, { expires: 1, path: "/" });
         Cookies.set("user", user._id, { expires: 1, path: "/" });
         toast.success(message);

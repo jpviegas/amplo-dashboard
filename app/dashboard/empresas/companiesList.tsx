@@ -20,6 +20,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
+import Cookies from "js-cookie";
+
 import {
   Table,
   TableBody,
@@ -66,6 +68,7 @@ export function CompaniesList() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -77,7 +80,7 @@ export function CompaniesList() {
   const fetchCompanies = async (values: z.infer<typeof FormSchema>) => {
     try {
       setIsLoading(true);
-      if (!user?._id) {
+      if (!userId) {
         throw new Error("User ID is required");
       }
 
@@ -86,7 +89,7 @@ export function CompaniesList() {
         pagination: paginationData,
         companies,
       } = await GetAllCompanies(
-        user._id,
+        userId,
         values.search,
         pagination.page.toString(),
       );
@@ -107,7 +110,7 @@ export function CompaniesList() {
     debounce((values: z.infer<typeof FormSchema>) => {
       fetchCompanies(values);
     }, 500),
-    [user?._id],
+    [userId],
   );
 
   useEffect(() => {
@@ -130,7 +133,7 @@ export function CompaniesList() {
   const handlePageChange = async (newPage: number) => {
     try {
       setIsLoading(true);
-      if (!user?._id) {
+      if (!userId) {
         throw new Error("User ID is required");
       }
 
@@ -139,7 +142,7 @@ export function CompaniesList() {
         pagination: paginationData,
         companies,
       } = await GetAllCompanies(
-        user._id,
+        userId,
         form.getValues("search"),
         newPage.toString(),
       );

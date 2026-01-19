@@ -1,7 +1,7 @@
 import { EmployeeType, EmployeeTypeWithId } from "@/zodSchemas";
 
 export async function GetAllEmployees(
-  company: string,
+  userId: string,
   search?: string,
   page?: string,
 ): Promise<{
@@ -16,15 +16,15 @@ export async function GetAllEmployees(
     nextPage: null | number;
     prevPage: null | number;
   };
-  employees: (EmployeeTypeWithId & { companyName: string })[];
+  users: (EmployeeTypeWithId & { companyName: string })[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/employees/`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/`;
 
   const queryParams = new URLSearchParams();
 
-  if (company) {
-    queryParams.append("company", company);
-  }
+  // if (company) {
+  //   queryParams.append("company", company);
+  // }
 
   if (search) {
     queryParams.append("search", search);
@@ -38,18 +38,25 @@ export async function GetAllEmployees(
     url += `?${queryParams.toString()}`;
   }
 
+  // const cookieStore = await cookies();
+  // const token = cookieStore.get("user")?.value;
+  // console.log(token);
+
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
-  console.log(data);
 
   return data;
 }
 
 export async function GetCompanyEmployees(
+  userId: string,
   company: string,
   employee?: string,
   page?: string,
@@ -67,7 +74,7 @@ export async function GetCompanyEmployees(
   };
   employees: EmployeeTypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/employees/`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/auth`;
 
   const queryParams = new URLSearchParams();
 
@@ -89,24 +96,30 @@ export async function GetCompanyEmployees(
 
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
-  console.log(data);
 
   return data;
 }
 
-export async function GetCompanyEmployeeById(employee: string): Promise<{
+export async function GetCompanyEmployeeById(userId: string): Promise<{
   success: boolean;
-  employee: EmployeeTypeWithId;
+  user: EmployeeTypeWithId;
+  message: string;
 }> {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/employees/${employee}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${userId}`;
 
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
@@ -114,11 +127,15 @@ export async function GetCompanyEmployeeById(employee: string): Promise<{
 }
 
 export async function CreateEmployee(
+  userId: string,
   values: EmployeeType,
 ): Promise<{ message: string; success: boolean }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/employees`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
     body: JSON.stringify(values),
   });
 
@@ -131,17 +148,18 @@ export async function CreateEmployee(
 }
 
 export async function UpdateEmployee(
+  userId: string,
   values: EmployeeType,
   id: string,
 ): Promise<{ message: string; success: boolean }> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/employees/${id}`,
-    {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(values),
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/${id}`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
     },
-  );
+    body: JSON.stringify(values),
+  });
 
   if (!res) {
     throw new Error("Erro ao cadastrar a funcionário");

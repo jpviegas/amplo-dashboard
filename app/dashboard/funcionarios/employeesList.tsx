@@ -24,6 +24,7 @@ import {
 import { useUser } from "@/context/UserContext";
 import { EmployeeTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Cookies from "js-cookie";
 import debounce from "lodash/debounce";
 import { Pencil, Trash } from "lucide-react";
 import Link from "next/link";
@@ -61,6 +62,7 @@ export function EmployeesList() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -72,23 +74,22 @@ export function EmployeesList() {
   const fetchEmployees = async (values: z.infer<typeof FormSchema>) => {
     try {
       setIsLoading(true);
-      if (!user?._id) {
+      if (!userId) {
         throw new Error("User ID is required");
       }
 
       const {
         success,
         pagination: paginationData,
-        employees,
+        users,
       } = await GetAllEmployees(
-        user._id,
+        userId,
         values.search,
         pagination.page.toString(),
       );
-      console.log(employees);
 
       if (success) {
-        setEmployees(employees);
+        setEmployees(users);
         setPagination(paginationData);
       }
     } catch (error) {
@@ -103,7 +104,7 @@ export function EmployeesList() {
     debounce((values: z.infer<typeof FormSchema>) => {
       fetchEmployees(values);
     }, 500),
-    [user?._id],
+    [userId],
   );
 
   useEffect(() => {
@@ -126,22 +127,22 @@ export function EmployeesList() {
   const handlePageChange = async (newPage: number) => {
     try {
       setIsLoading(true);
-      if (!user?._id) {
+      if (!userId) {
         throw new Error("User ID is required");
       }
 
       const {
         success,
         pagination: paginationData,
-        employees,
+        users,
       } = await GetAllEmployees(
-        user._id,
+        userId,
         form.getValues("search"),
         newPage.toString(),
       );
 
       if (success) {
-        setEmployees(employees);
+        setEmployees(users);
         setPagination(paginationData);
       }
     } catch (error) {

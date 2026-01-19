@@ -6,7 +6,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface UserContextType {
   user: UserType | null;
-  fetchUser: (email: string) => Promise<void>;
+  setUser: (user: UserType | null) => void;
+  fetchUser: (userId: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -14,33 +15,38 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  useEffect(() => {
-    const userid = Cookies.get("user");
-    if (userid) {
-      fetchUser(userid);
-    }
-  }, []);
   const [user, setUser] = useState<UserType | null>(null);
 
-  const fetchUser = async (userid: string) => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/user/${userid}`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-    const data = await res.json();
+  const fetchUser = async (userId: string) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${userId}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+      const data = await res.json();
 
-    if (res.ok) {
-      setUser(data.user);
-    } else {
-      console.error(data.message);
+      if (res.ok) {
+        setUser(data.user);
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
     }
   };
 
+  useEffect(() => {
+    const userId = Cookies.get("user");
+    if (userId && !user) {
+      fetchUser(userId);
+    }
+  }, []);
+
   return (
-    <UserContext.Provider value={{ user, fetchUser }}>
+    <UserContext.Provider value={{ user, setUser, fetchUser }}>
       {children}
     </UserContext.Provider>
   );

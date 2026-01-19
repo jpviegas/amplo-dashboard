@@ -1,6 +1,10 @@
 import { DepartmentType, DepartmentTypeWithId } from "@/zodSchemas";
 
-export async function GetAllDepartments(): Promise<{
+export async function GetAllDepartments(
+  userId: string,
+  search?: string,
+  page?: string,
+): Promise<{
   success: boolean;
   count: number;
   pagination: {
@@ -15,19 +19,35 @@ export async function GetAllDepartments(): Promise<{
   };
   departments: DepartmentTypeWithId[];
 }> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/departments/`,
-    {
-      method: "GET",
-      headers: { "content-type": "application/json" },
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/deparments`;
+
+  const queryParams = new URLSearchParams();
+
+  if (search) {
+    queryParams.append("search", search);
+  }
+  if (page) {
+    queryParams.append("page", page);
+  }
+
+  if (queryParams.toString()) {
+    url += `?${queryParams.toString()}`;
+  }
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
     },
-  );
+  });
 
   const data = await res.json();
   return data;
 }
 
 export async function GetCompanyDepartments(
+  userId: string,
   company: string,
   department?: string,
   page?: string,
@@ -67,14 +87,20 @@ export async function GetCompanyDepartments(
 
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
   return data;
 }
 
-export async function GetCompanyDepartmentById(department: string): Promise<{
+export async function GetCompanyDepartmentById(
+  userId: string,
+  department: string,
+): Promise<{
   success: boolean;
   departments: DepartmentTypeWithId[];
 }> {
@@ -82,7 +108,10 @@ export async function GetCompanyDepartmentById(department: string): Promise<{
 
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
@@ -90,13 +119,17 @@ export async function GetCompanyDepartmentById(department: string): Promise<{
 }
 
 export async function CreateDepartment(
+  userId: string,
   values: DepartmentType,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/departments`,
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${userId}`,
+      },
       body: JSON.stringify(values),
     },
   );

@@ -52,7 +52,9 @@ interface EmployeeFormProps {
   initialData?: EmployeeTypeWithId;
 }
 
-export default function EmployeeForm({ initialData }: EmployeeFormProps) {
+export default function RegisterEmployeeForm({
+  initialData,
+}: EmployeeFormProps) {
   const [activeTab, setActiveTab] = useState("general");
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const { user } = useUser();
@@ -82,61 +84,19 @@ export default function EmployeeForm({ initialData }: EmployeeFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerEmployeeSchema),
-    defaultValues: initialData
-      ? {
-          ...initialData,
-          admissionDate: initialData.admissionDate
-            ? new Date(initialData.admissionDate)
-            : new Date(),
-          birthDate: initialData.birthDate
-            ? new Date(initialData.birthDate)
-            : new Date(),
-          cnhExpiration: initialData.cnhExpiration
-            ? new Date(initialData.cnhExpiration)
-            : new Date(),
-          status: initialData.status as "active" | "inactive",
-        }
-      : {
-          name: "",
-          pis: "",
-          cpf: "",
-          registration: "",
-          admissionDate: new Date(),
-          company: "",
-          workingHours: "",
-          status: "active",
-          department: "",
-          costCenter: "",
-          position: "",
-          sheetNumber: "",
-          ctps: "",
-          directSuperior: "",
-          rg: "",
-          birthDate: new Date(),
-          socialName: "",
-          cnh: "",
-          cnhCategory: "",
-          cnhExpiration: new Date(),
-          cep: "",
-          address: "",
-          neighborhood: "",
-          city: "",
-          state: "",
-          phone: "",
-          extension: "",
-          fatherName: "",
-          motherName: "",
-          gender: "",
-          nationality: "",
-          placeOfBirth: "",
-          civilStatus: "",
-        },
+    defaultValues: initialData,
   });
 
   async function onSubmit(values: FormValues) {
+    if (!user?._id) {
+      toast.error("Usuário não autenticado.");
+      return;
+    }
+
     try {
       if (initialData) {
         const { message, success } = await UpdateEmployee(
+          user._id,
           values,
           initialData._id,
         );
@@ -146,7 +106,7 @@ export default function EmployeeForm({ initialData }: EmployeeFormProps) {
           toast.success(message);
         }
       } else {
-        const { message, success } = await CreateEmployee(values);
+        const { message, success } = await CreateEmployee(user._id, values);
 
         if (!success) {
           toast.error(message);

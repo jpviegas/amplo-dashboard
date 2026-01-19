@@ -1,6 +1,6 @@
 import { RoleType, RoleTypeWithId } from "@/zodSchemas";
 
-export async function GetAllRoles(): Promise<{
+export async function GetAllRoles(userId: string): Promise<{
   success: boolean;
   count: number;
   pagination: {
@@ -17,7 +17,10 @@ export async function GetAllRoles(): Promise<{
 }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles/`, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
@@ -25,8 +28,8 @@ export async function GetAllRoles(): Promise<{
 }
 
 export async function GetCompanyRoles(
-  company: string,
-  role?: string,
+  userId: string,
+  search?: string,
   page?: string,
 ): Promise<{
   success: boolean;
@@ -42,16 +45,12 @@ export async function GetCompanyRoles(
   };
   roles: RoleTypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/roles/`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/positions`;
 
   const queryParams = new URLSearchParams();
 
-  if (company) {
-    queryParams.append("company", company);
-  }
-
-  if (role) {
-    queryParams.append("role", role);
+  if (search) {
+    queryParams.append("search", search);
   }
 
   if (page) {
@@ -64,22 +63,31 @@ export async function GetCompanyRoles(
 
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
   return data;
 }
 
-export async function GetCompanyRoleById(role: string): Promise<{
+export async function GetCompanyRoleById(
+  userId: string,
+  role: string,
+): Promise<{
   success: boolean;
   roles: RoleTypeWithId;
 }> {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/roles/${role}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/positions/${role}`;
 
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
@@ -87,11 +95,15 @@ export async function GetCompanyRoleById(role: string): Promise<{
 }
 
 export async function CreateRole(
+  userId: string,
   values: RoleType,
 ): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/positions`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
     body: JSON.stringify(values),
   });
 

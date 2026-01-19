@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+// import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardHeader({
@@ -18,9 +18,9 @@ export default async function DashboardHeader({
             <span>+ Adicionar</span>
           </Link>
         </Button>
-        <Button variant="ghost" size="icon">
+        {/* <Button variant="ghost" size="icon">
           <MoreHorizontal className="size-4" />
-        </Button>
+        </Button> */}
       </div>
     </header>
   );

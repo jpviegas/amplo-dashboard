@@ -11,6 +11,8 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import Cookies from "js-cookie";
+
 import {
   Select,
   SelectContent,
@@ -19,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import { registerCompanySchema, ufsBrasil } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +34,8 @@ import { z } from "zod";
 
 export default function RegisterCompanyPage() {
   const [activeTab, setActiveTab] = useState("general");
+  const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
 
   type FormValues = z.infer<typeof registerCompanySchema>;
 
@@ -54,9 +59,9 @@ export default function RegisterCompanyPage() {
     },
   });
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(userId: string, values: FormValues) {
     try {
-      const { message, success } = await CreateCompany(values);
+      const { message, success } = await CreateCompany(userId, values);
       if (!success) {
         toast.error(`${message}`);
       } else {
@@ -78,7 +83,13 @@ export default function RegisterCompanyPage() {
             <Form {...form}>
               <form
                 className="space-y-8"
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={form.handleSubmit((values) => {
+                  if (!userId) {
+                    toast.error("Usuário não identificado");
+                    return;
+                  }
+                  onSubmit(userId, values);
+                })}
               >
                 <Tabs defaultValue="general" className="space-y-4">
                   <TabsList className="w-full justify-start border-b bg-transparent p-0">

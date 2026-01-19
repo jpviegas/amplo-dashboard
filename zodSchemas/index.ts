@@ -70,31 +70,33 @@ export const registerEmployeeSchema = z.object({
     .nonempty("O CPF é obrigatório")
     .length(11, "Preencha apenas os 11 números do CPF"),
   registration: z.string().min(1, "O número de matrícula é obrigatório"),
-  admissionDate: z.date({
-    required_error: "A data de admissão é obrigatória",
+  admissionDate: z.string({
+    error: "A data de admissão é obrigatória",
   }),
   company: z.string().min(1, "O código da empresa é obrigatório"),
-  workingHours: z.string(),
+  workingHours: z.string().optional(),
   status: z.enum(["active", "inactive"]),
-  department: z.string(),
-  costCenter: z.string(),
-  position: z.string(),
-  sheetNumber: z.string(),
-  ctps: z.string(),
+  department: z.string().optional(),
+  costCenter: z.string().optional(),
+  position: z.string().optional(),
+  sheetNumber: z.string().optional(),
+  ctps: z.string().optional(),
   directSuperior: z.string().optional(),
   rg: z
     .string()
     .nonempty("O RG é obrigatório")
     .length(9, "Preencha apenas os 9 números do RG"),
-  birthDate: z.date({
-    required_error: "A data de nascimento é obrigatória",
+  birthDate: z.string({
+    error: "A data de nascimento é obrigatória",
   }),
   socialName: z.string().optional(),
   cnh: z.string().optional(),
   cnhCategory: z.string().optional(),
-  cnhExpiration: z.date({
-    required_error: "A data de expiração da CNH é obrigatória",
-  }),
+  cnhExpiration: z
+    .string({
+      error: "A data de expiração da CNH é obrigatória",
+    })
+    .optional(),
   cep: z.string().optional(),
   address: z.string().optional(),
   neighborhood: z.string().optional(),
@@ -108,6 +110,17 @@ export const registerEmployeeSchema = z.object({
   nationality: z.string().optional(),
   placeOfBirth: z.string().optional(),
   civilStatus: z.string().optional(),
+  dependents: z.boolean().optional(),
+  dependentsQuantity: z.number().optional(),
+  children: z
+    .array(
+      z.object({
+        name: z.string().optional(),
+        cpf: z.string().optional(),
+        birthDate: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export type DepartmentType = z.infer<typeof registerDepartmentSchema>;
@@ -122,7 +135,7 @@ export const registerDepartmentSchema = z.object({
 export type RoleType = z.infer<typeof registerRoleSchema>;
 export type RoleTypeWithId = RoleType & { _id: string };
 export const registerRoleSchema = z.object({
-  role: z.string().min(1, "O nome é obrigarório"),
+  position: z.string().min(1, "O nome é obrigarório"),
   company: z.string().min(1, "O ID da empresa é obrigarório"),
 });
 

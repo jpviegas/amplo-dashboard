@@ -1,6 +1,6 @@
 import { WorkingHourType, WorkingHourTypeWithId } from "@/zodSchemas";
 
-export async function GetAllHours(): Promise<{
+export async function GetAllHours(userId: string): Promise<{
   success: boolean;
   count: number;
   pagination: {
@@ -17,7 +17,10 @@ export async function GetAllHours(): Promise<{
 }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/hours/`, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
@@ -25,6 +28,7 @@ export async function GetAllHours(): Promise<{
 }
 
 export async function GetCompanyHours(
+  userId: string,
   company: string,
   hour?: string,
   page?: string,
@@ -59,7 +63,10 @@ export async function GetCompanyHours(
 
   const res = await fetch(url, {
     method: "GET",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
   });
 
   const data = await res.json();
@@ -67,11 +74,15 @@ export async function GetCompanyHours(
 }
 
 export async function CreateHour(
+  userId: string,
   values: WorkingHourType,
 ): Promise<{ message: string }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/hours`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${userId}`,
+    },
     body: JSON.stringify(values),
   });
 
