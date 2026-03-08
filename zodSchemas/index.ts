@@ -100,7 +100,13 @@ export const registerEmployeeSchema = z.object({
   cep: z.string().optional(),
   address: z.string().optional(),
   neighborhood: z.string().optional(),
-  city: z.string().optional(),
+  city: z
+    .object({
+      city: z.string().optional(),
+      meal: z.number().optional(),
+      transport: z.number().optional(),
+    })
+    .optional(),
   state: z.string().optional(),
   phone: z.string().optional(),
   extension: z.string().optional(),

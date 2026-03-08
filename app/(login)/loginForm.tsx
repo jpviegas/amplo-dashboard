@@ -1,7 +1,7 @@
 "use client";
 
 import { login } from "@/api/route";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,7 +23,6 @@ import { loginSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import { Eye, EyeOff, LoaderCircleIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -124,9 +123,9 @@ export function LoginForm() {
               )}
             />
 
-            <Link href="#" className={buttonVariants({ variant: "link" })}>
+            {/* <Link href="#" className={buttonVariants({ variant: "link" })}>
               Esqueceu sua senha?
-            </Link>
+            </Link> */}
 
             <Button
               type="submit"
