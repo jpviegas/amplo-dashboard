@@ -151,3 +151,11 @@ export const registerWorkingHourSchema = z.object({
   hour: z.string().min(1, "O nome é obrigarório"),
   company: z.string().min(1, "O ID da empresa é obrigatório"),
 });
+
+export type DocumentsType = z.infer<typeof registerDocumentSchema>;
+export type DocumentsTypeWithId = DocumentsType & { _id: string };
+export const registerDocumentSchema = z.object({
+  userId: z.string().min(1, "O ID do usuário é obrigatório"),
+  signers: z.string().min(1, "O email dos assinantes é obrigatório"),
+  file: z.string().min(1, "O arquivo é obrigatório"),
+});

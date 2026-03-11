@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { FaRegClock, FaUsers } from "react-icons/fa6";
+import { IoDocumentTextOutline } from "react-icons/io5";
+
 import { LiaClipboardCheckSolid } from "react-icons/lia";
 
 export default async function QuickPanel() {
@@ -34,6 +36,11 @@ export default async function QuickPanel() {
             icon: LiaClipboardCheckSolid,
             link: "dashboard/pontos",
             title: "Cartão de ponto",
+          },
+          {
+            icon: IoDocumentTextOutline,
+            link: "dashboard/documentos",
+            title: "Documentos",
           },
         ].map((item) => (
           <Button key={item.title} asChild variant="outline" className="h-24">

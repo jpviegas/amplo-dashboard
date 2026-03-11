@@ -38,6 +38,7 @@ export default function SidebarComponent() {
               items: [
                 { item: "Empresas", url: "/dashboard/empresas" },
                 { item: "Funcionários", url: "/dashboard/funcionarios" },
+                { item: "Documentos", url: "/dashboard/documentos" },
                 { item: "Departamentos", url: "/dashboard/departamentos" },
                 { item: "Cargos", url: "/dashboard/cargos" },
               ],
