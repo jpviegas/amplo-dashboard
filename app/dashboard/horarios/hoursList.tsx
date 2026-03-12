@@ -80,7 +80,7 @@ export function HoursList() {
           hours,
         } = await GetCompanyHours(
           user._id,
-          values.search,
+          values.search || "",
           pagination.page.toString(),
         );
 
@@ -133,7 +133,7 @@ export function HoursList() {
         hours,
       } = await GetCompanyHours(
         user._id,
-        form.getValues("search"),
+        form.getValues("search") || "",
         newPage.toString(),
       );
 
