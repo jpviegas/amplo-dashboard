@@ -1,6 +1,6 @@
 "use client";
 
-import { CreateRole } from "@/api/dashboard/cargos/route";
+import { CreatePosition } from "@/api/dashboard/cargos/route";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/context/UserContext";
-import { registerRoleSchema } from "@/zodSchemas";
+import { registerPositionSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import Link from "next/link";
@@ -20,17 +20,16 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-export default function NewRolesForm() {
+export default function NewPositionForm() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
 
-  type FormValues = z.infer<typeof registerRoleSchema>;
+  type FormValues = z.infer<typeof registerPositionSchema>;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(registerRoleSchema),
+    resolver: zodResolver(registerPositionSchema),
     defaultValues: {
-      position: "",
-      company: "",
+      positionName: "",
     },
   });
 
@@ -41,7 +40,7 @@ export default function NewRolesForm() {
         return;
       }
 
-      const { success, message } = await CreateRole(userId, values);
+      const { success, message } = await CreatePosition(userId, values);
 
       if (!success) {
         toast.warning(message);
@@ -59,7 +58,7 @@ export default function NewRolesForm() {
         <div className="grid gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
-            name="position"
+            name="positionName"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nome</FormLabel>
@@ -70,7 +69,7 @@ export default function NewRolesForm() {
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name="company"
             render={({ field }) => (
@@ -82,7 +81,7 @@ export default function NewRolesForm() {
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
         </div>
         <div className="flex gap-4">
           <Button type="submit" disabled={form.formState.isSubmitting}>

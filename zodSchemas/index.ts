@@ -138,11 +138,10 @@ export const registerDepartmentSchema = z.object({
   sheetNumber: z.string().min(1, "O número da folha é obrigarório").optional(),
 });
 
-export type RoleType = z.infer<typeof registerRoleSchema>;
-export type RoleTypeWithId = RoleType & { _id: string };
-export const registerRoleSchema = z.object({
-  position: z.string().min(1, "O nome é obrigarório"),
-  company: z.string().min(1, "O ID da empresa é obrigarório"),
+export type PositionType = z.infer<typeof registerPositionSchema>;
+export type PositionTypeWithId = PositionType & { _id: string };
+export const registerPositionSchema = z.object({
+  positionName: z.string().min(1, "O nome do cargo é obrigarório"),
 });
 
 export type WorkingHourType = z.infer<typeof registerWorkingHourSchema>;

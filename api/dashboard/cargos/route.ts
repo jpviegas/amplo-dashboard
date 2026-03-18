@@ -1,6 +1,6 @@
-import { RoleType, RoleTypeWithId } from "@/zodSchemas";
+import { PositionType, PositionTypeWithId } from "@/zodSchemas";
 
-export async function GetAllRoles(userId: string): Promise<{
+export async function GetAllPositions(userId: string): Promise<{
   success: boolean;
   count: number;
   pagination: {
@@ -13,9 +13,9 @@ export async function GetAllRoles(userId: string): Promise<{
     nextPage: null | number;
     prevPage: null | number;
   };
-  roles: RoleTypeWithId[];
+  positions: PositionTypeWithId[];
 }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/roles/`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/positions/`, {
     method: "GET",
     headers: {
       "content-type": "application/json",
@@ -27,7 +27,7 @@ export async function GetAllRoles(userId: string): Promise<{
   return data;
 }
 
-export async function GetCompanyRoles(
+export async function GetCompanyPositions(
   userId: string,
   search?: string,
   page?: string,
@@ -43,7 +43,7 @@ export async function GetCompanyRoles(
     nextPage: null | number;
     prevPage: null | number;
   };
-  roles: RoleTypeWithId[];
+  positions: PositionTypeWithId[];
 }> {
   let url = `${process.env.NEXT_PUBLIC_API_URL}/api/positions`;
 
@@ -73,14 +73,14 @@ export async function GetCompanyRoles(
   return data;
 }
 
-export async function GetCompanyRoleById(
+export async function GetCompanyPositionById(
   userId: string,
-  role: string,
+  position: string,
 ): Promise<{
   success: boolean;
-  roles: RoleTypeWithId;
+  position: PositionTypeWithId | null;
 }> {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/positions/${role}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/positions/${position}`;
 
   const res = await fetch(url, {
     method: "GET",
@@ -91,12 +91,20 @@ export async function GetCompanyRoleById(
   });
 
   const data = await res.json();
-  return data;
+  const normalizedPosition: PositionTypeWithId | null =
+    data?.position ??
+    (Array.isArray(data?.positions) ? data.positions[0] : data?.positions) ??
+    null;
+
+  return {
+    ...data,
+    position: normalizedPosition,
+  };
 }
 
-export async function CreateRole(
+export async function CreatePosition(
   userId: string,
-  values: RoleType,
+  values: PositionType,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/positions`, {
     method: "POST",
@@ -109,6 +117,54 @@ export async function CreateRole(
 
   if (!res) {
     throw new Error("Erro ao cadastrar o cargo");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function UpdatePosition(
+  userId: string,
+  positionId: string,
+  values: PositionType,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/positions/${positionId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${userId}`,
+      },
+      body: JSON.stringify(values),
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao atualizar o cargo");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function DeletePosition(
+  userId: string,
+  positionId: string,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/positions/${positionId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${userId}`,
+      },
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao deletar o cargo");
   }
 
   const data = await res.json();

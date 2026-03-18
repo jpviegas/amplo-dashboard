@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useUser } from "@/context/UserContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
+import Link from "next/link";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -149,9 +150,12 @@ export default function RegisterDocumentForm() {
           )}
         />
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-4">
           <Button type="submit" disabled={form.formState.isSubmitting}>
             Enviar documento
+          </Button>
+          <Button asChild variant="outline" type="reset">
+            <Link href={"./"}>Cancelar</Link>
           </Button>
         </div>
       </form>
