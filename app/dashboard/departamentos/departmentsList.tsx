@@ -1,7 +1,21 @@
 "use client";
 
-import { GetCompanyDepartments } from "@/api/dashboard/departamentos/route";
+import {
+  DeleteDepartment,
+  GetCompanyDepartments,
+} from "@/api/dashboard/departamentos/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,6 +25,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -33,11 +52,14 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const FormSchema = z.object({
-  department: z.string(),
+  departmentName: z.string(),
 });
 
 export function DepartmentsList() {
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
+  const [deletingDepartmentId, setDeletingDepartmentId] = useState<
+    string | null
+  >(null);
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -63,7 +85,7 @@ export function DepartmentsList() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      department: "",
+      departmentName: "",
     },
   });
 
@@ -80,7 +102,7 @@ export function DepartmentsList() {
         departments,
       } = await GetCompanyDepartments(
         user._id,
-        values.department,
+        values.departmentName,
         pagination.page.toString(),
       );
 
@@ -133,9 +155,10 @@ export function DepartmentsList() {
         departments,
       } = await GetCompanyDepartments(
         user._id,
-        form.getValues("department"),
+        form.getValues("departmentName"),
         newPage.toString(),
       );
+      console.log(departments);
 
       if (success) {
         setDepartments(departments);
@@ -149,6 +172,39 @@ export function DepartmentsList() {
     }
   };
 
+  const handleDeleteDepartment = async (departmentId: string) => {
+    try {
+      if (!user?._id) {
+        toast.error("Usuário não identificado.");
+        return;
+      }
+
+      setDeletingDepartmentId(departmentId);
+      const { success, message } = await DeleteDepartment(
+        user._id,
+        departmentId,
+      );
+
+      if (!success) {
+        toast.warning(message);
+        return;
+      }
+
+      toast.success(message);
+
+      const isLastItemOnPage = departments.length === 1;
+      const nextPage = isLastItemOnPage
+        ? Math.max(1, pagination.page - 1)
+        : pagination.page;
+      await handlePageChange(nextPage);
+    } catch (error) {
+      console.error("Erro ao deletar departamento:", error);
+      toast.error("Não foi possível deletar o departamento.");
+    } finally {
+      setDeletingDepartmentId(null);
+    }
+  };
+
   return (
     <>
       <Form {...form}>
@@ -158,7 +214,7 @@ export function DepartmentsList() {
         >
           <FormField
             control={form.control}
-            name="department"
+            name="departmentName"
             render={({ field }) => (
               <FormItem className="flex items-center gap-4">
                 <FormLabel>Buscar:</FormLabel>
@@ -177,7 +233,7 @@ export function DepartmentsList() {
           <TableHeader>
             <TableRow>
               <TableHead>Departamento</TableHead>
-              <TableHead>Quantidade de Funcionários</TableHead>
+              {/* <TableHead>Quantidade de Funcionários</TableHead> */}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -210,18 +266,68 @@ export function DepartmentsList() {
                 )}
                 {departments.map((job) => (
                   <TableRow key={job._id}>
-                    <TableCell className="w-1/2">{job.department}</TableCell>
+                    <TableCell className="w-1/2">
+                      {job.departmentName}
+                    </TableCell>
                     <TableCell className="flex w-full items-center justify-between">
-                      10
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <Link href={`roles/${job._id}`}>
-                            <Pencil className="size-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <Trash className="size-4" />
-                        </Button>
+                        <HoverCard openDelay={100} closeDelay={200}>
+                          <HoverCardTrigger>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                            >
+                              <Link href={`departamentos/${job._id}`}>
+                                <Pencil className="size-4" />
+                              </Link>
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent>Editar</HoverCardContent>
+                        </HoverCard>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <HoverCard openDelay={100} closeDelay={200}>
+                              <HoverCardTrigger>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 cursor-pointer"
+                                  disabled={
+                                    isLoading ||
+                                    deletingDepartmentId === job._id
+                                  }
+                                >
+                                  <Trash className="size-4" />
+                                </Button>
+                                <HoverCardContent>Deletar</HoverCardContent>
+                              </HoverCardTrigger>
+                            </HoverCard>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Deletar departamento?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Essa ação não pode ser desfeita. O departamento
+                                {job.departmentName
+                                  ? ` "${job.departmentName}"`
+                                  : ""}{" "}
+                                será removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() => handleDeleteDepartment(job._id)}
+                              >
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

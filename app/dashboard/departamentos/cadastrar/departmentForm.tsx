@@ -1,7 +1,6 @@
 "use client";
 
 import { CreateDepartment } from "@/api/dashboard/departamentos/route";
-import { GetAllCompanies } from "@/api/dashboard/empresas/route";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,57 +11,49 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useUser } from "@/context/UserContext";
-import { CompanyTypeWithId, registerDepartmentSchema } from "@/zodSchemas";
+import { registerDepartmentSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 export default function NewDepartmentForm() {
   type FormValues = z.infer<typeof registerDepartmentSchema>;
-  const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
+  // const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
 
-  const fetchCompanies = async () => {
-    try {
-      if (!userId) {
-        return;
-      }
+  // const fetchCompanies = async () => {
+  //   try {
+  //     if (!userId) {
+  //       return;
+  //     }
 
-      const { success, companies } = await GetAllCompanies(userId);
+  //     const { success, companies } = await GetAllCompanies(userId);
 
-      if (success) {
-        setCompanies(companies);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar empresas:", error);
-      toast.error("Não foi possível carregar as empresas.");
-    }
-  };
+  //     if (success) {
+  //       setCompanies(companies);
+  //     }
+  //   } catch (error) {
+  //     console.error("Erro ao buscar empresas:", error);
+  //     toast.error("Não foi possível carregar as empresas.");
+  //   }
+  // };
 
-  useEffect(() => {
-    fetchCompanies();
-  }, [userId]);
+  // useEffect(() => {
+  //   fetchCompanies();
+  // }, [userId]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerDepartmentSchema),
     defaultValues: {
-      department: "",
-      company: "",
-      approvalFlow: "",
-      sheetNumber: "",
+      departmentName: "",
+      // company: "",
+      // approvalFlow: "",
+      // sheetNumber: "",
     },
   });
 
@@ -73,7 +64,9 @@ export default function NewDepartmentForm() {
         return;
       }
 
-      const { success, message } = await CreateDepartment(userId, values);
+      const { success, message } = await CreateDepartment(userId, {
+        departmentName: values.departmentName,
+      });
 
       if (!success) {
         toast.warning(message);
@@ -85,13 +78,27 @@ export default function NewDepartmentForm() {
     }
   }
 
+  function onInvalid(errors: FieldErrors<FormValues>) {
+    const messages = Object.values(errors)
+      .map((error) => error?.message)
+      .filter((message): message is string => Boolean(message));
+
+    const uniqueMessages = Array.from(new Set(messages));
+    for (const message of uniqueMessages) {
+      toast.error(message);
+    }
+  }
+
   return (
     <Form {...form}>
-      <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="space-y-8"
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      >
         <div className="grid gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
-            name="department"
+            name="departmentName"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nome do departamento</FormLabel>
@@ -102,7 +109,7 @@ export default function NewDepartmentForm() {
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name="company"
             render={({ field }) => (
@@ -128,8 +135,8 @@ export default function NewDepartmentForm() {
                 <FormMessage />
               </FormItem>
             )}
-          />
-          <FormField
+          /> */}
+          {/* <FormField
             control={form.control}
             name="approvalFlow"
             render={({ field }) => (
@@ -141,8 +148,8 @@ export default function NewDepartmentForm() {
                 <FormMessage />
               </FormItem>
             )}
-          />
-          <FormField
+          /> */}
+          {/* <FormField
             control={form.control}
             name="sheetNumber"
             render={({ field }) => (
@@ -154,10 +161,12 @@ export default function NewDepartmentForm() {
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
         </div>
         <div className="flex gap-4">
-          <Button type="submit">Salvar</Button>
+          <Button type="submit" className="cursor-pointer">
+            Salvar
+          </Button>
           <Button asChild variant="outline" type="reset">
             <Link href={"./"}>Cancelar</Link>
           </Button>

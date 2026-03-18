@@ -74,7 +74,7 @@ export async function GetCompanyDepartments(
   }
 
   if (department) {
-    queryParams.append("department", department);
+    queryParams.append("departmentName", department);
   }
 
   if (page) {
@@ -102,7 +102,7 @@ export async function GetCompanyDepartmentById(
   department: string,
 ): Promise<{
   success: boolean;
-  departments: DepartmentTypeWithId[];
+  department: DepartmentTypeWithId;
 }> {
   const url = `${process.env.NEXT_PUBLIC_API_URL}/api/departments/${department}`;
 
@@ -122,6 +122,7 @@ export async function CreateDepartment(
   userId: string,
   values: DepartmentType,
 ): Promise<{ success: boolean; message: string }> {
+  console.log(values);
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/departments`,
     {
@@ -130,12 +131,60 @@ export async function CreateDepartment(
         "content-type": "application/json",
         Authorization: `Bearer ${userId}`,
       },
-      body: JSON.stringify(values),
+      body: JSON.stringify({ departmentName: values.departmentName }),
     },
   );
 
   if (!res) {
     throw new Error("Erro ao cadastrar o departamento");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function UpdateDepartment(
+  userId: string,
+  departmentId: string,
+  values: DepartmentType,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/departments/${departmentId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${userId}`,
+      },
+      body: JSON.stringify({ departmentName: values.departmentName }),
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao atualizar o departamento");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function DeleteDepartment(
+  userId: string,
+  departmentId: string,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/departments/${departmentId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${userId}`,
+      },
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao deletar o departamento");
   }
 
   const data = await res.json();

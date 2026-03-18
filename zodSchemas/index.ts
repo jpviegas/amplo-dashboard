@@ -132,10 +132,10 @@ export const registerEmployeeSchema = z.object({
 export type DepartmentType = z.infer<typeof registerDepartmentSchema>;
 export type DepartmentTypeWithId = DepartmentType & { _id: string };
 export const registerDepartmentSchema = z.object({
-  department: z.string().min(1, "O nome é obrigarório"),
-  company: z.string().min(1, "A empresa é obrigarória"),
-  approvalFlow: z.string(),
-  sheetNumber: z.string().min(1, "O número da folha é obrigarório"),
+  departmentName: z.string().min(1, "O nome é obrigarório"),
+  company: z.string().min(1, "A empresa é obrigarória").optional(),
+  approvalFlow: z.string().optional(),
+  sheetNumber: z.string().min(1, "O número da folha é obrigarório").optional(),
 });
 
 export type RoleType = z.infer<typeof registerRoleSchema>;
