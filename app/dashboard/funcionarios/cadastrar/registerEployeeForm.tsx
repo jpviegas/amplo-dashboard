@@ -1,6 +1,7 @@
 "use client";
 
-import { GetAllCompanies } from "@/api/dashboard/empresas/route";
+import { GetAllPositions } from "@/api/dashboard/cargos/route";
+import { GetAllDepartments } from "@/api/dashboard/departamentos/route";
 import {
   CreateEmployee,
   UpdateEmployee,
@@ -34,8 +35,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import {
-  CompanyTypeWithId,
+  DepartmentTypeWithId,
   EmployeeTypeWithId,
+  PositionTypeWithId,
   registerEmployeeSchema,
   ufsBrasil,
 } from "@/zodSchemas";
@@ -56,30 +58,53 @@ export default function RegisterEmployeeForm({
   initialData,
 }: EmployeeFormProps) {
   const [activeTab, setActiveTab] = useState("general");
-  const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
+  const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
+  const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const { user } = useUser();
 
   type FormValues = z.infer<typeof registerEmployeeSchema>;
 
-  const fetchCompanies = async () => {
+  const fetchPositions = async () => {
     try {
       if (!user?._id) {
         return;
       }
 
-      const { success, companies } = await GetAllCompanies(user._id, "", "1");
+      const { success, positions } = await GetAllPositions(user._id);
 
       if (success) {
-        setCompanies(companies);
+        setPositions(positions);
       }
     } catch (error) {
-      console.error("Erro ao buscar empresas:", error);
-      toast.error("Não foi possível carregar as empresas.");
+      console.error("Erro ao buscar cargos:", error);
+      toast.error("Não foi possível carregar os cargos.");
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, departments } = await GetAllDepartments(
+        user._id,
+        "",
+        "1",
+      );
+
+      if (success) {
+        setDepartments(departments);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar departamentos:", error);
+      toast.error("Não foi possível carregar os departamentos.");
     }
   };
 
   useEffect(() => {
-    fetchCompanies();
+    fetchDepartments();
+    fetchPositions();
   }, [user?._id]);
 
   const form = useForm<FormValues>({
@@ -212,7 +237,7 @@ export default function RegisterEmployeeForm({
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name="company"
             render={({ field }) => (
@@ -238,8 +263,8 @@ export default function RegisterEmployeeForm({
                 <FormMessage />
               </FormItem>
             )}
-          />
-          <FormField
+          /> */}
+          {/* <FormField
             name="workingHours"
             render={({ field }) => (
               <FormItem className="space-y-2">
@@ -255,14 +280,14 @@ export default function RegisterEmployeeForm({
                     <SelectItem value="hour2">18:00 / 06:00</SelectItem>
                   </SelectContent>
                 </Select>
-                {/* <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2">
                           <Plus className="size-4" />
                           Criar novo Horário
-                        </Button> */}
+                        </Button>
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
           <FormField
             name="status"
             render={({ field }) => (
@@ -348,19 +373,30 @@ export default function RegisterEmployeeForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="dept1">Departamento 1</SelectItem>
-                        <SelectItem value="dept2">Departamento 2</SelectItem>
+                        {departments.map((department) => (
+                          <SelectItem
+                            key={department._id}
+                            value={department._id}
+                          >
+                            {department.departmentName}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <Button variant="outline" size="sm" className="gap-2">
-                      <Plus className="size-4" />
-                      Criar novo departamento
+                      <Link
+                        href="/dashboard/departamentos/cadastrar"
+                        className="flex items-center gap-2"
+                      >
+                        <Plus className="size-4" />
+                        Criar novo departamento
+                      </Link>
                     </Button>
                   </FormItem>
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 name="costCenter"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
@@ -382,7 +418,7 @@ export default function RegisterEmployeeForm({
                     </Button>
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <FormField
                 name="position"
@@ -396,11 +432,11 @@ export default function RegisterEmployeeForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* {roles.map((role, index) => (
-                                  <SelectItem key={index} value={role.role}>
-                                    {role.role}
-                                  </SelectItem>
-                                ))} */}
+                        {positions.map((position) => (
+                          <SelectItem key={position._id} value={position._id}>
+                            {position.positionName}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>

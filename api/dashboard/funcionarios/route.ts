@@ -1,7 +1,7 @@
 import { EmployeeType, EmployeeTypeWithId } from "@/zodSchemas";
 
 export async function GetAllEmployees(
-  userId: string,
+  userId: string | { email: string },
   search?: string,
   page?: string,
 ): Promise<{
@@ -46,7 +46,7 @@ export async function GetAllEmployees(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -56,7 +56,7 @@ export async function GetAllEmployees(
 }
 
 export async function GetCompanyEmployees(
-  userId: string,
+  userId: string | { email: string },
   company: string,
   employee?: string,
   page?: string,
@@ -98,7 +98,7 @@ export async function GetCompanyEmployees(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -107,18 +107,21 @@ export async function GetCompanyEmployees(
   return data;
 }
 
-export async function GetCompanyEmployeeById(userId: string): Promise<{
+export async function GetCompanyEmployeeById(
+  userId: string | { email: string },
+): Promise<{
   success: boolean;
   user: EmployeeTypeWithId;
   message: string;
 }> {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${userId}`;
+  const userIdValue = typeof userId === "string" ? userId : userId.email;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${userIdValue}`;
 
   const res = await fetch(url, {
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${userIdValue}`,
     },
   });
 
@@ -127,14 +130,14 @@ export async function GetCompanyEmployeeById(userId: string): Promise<{
 }
 
 export async function CreateEmployee(
-  userId: string,
+  userId: string | { email: string },
   values: EmployeeType,
 ): Promise<{ message: string; success: boolean }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
     body: JSON.stringify(values),
   });
@@ -148,7 +151,7 @@ export async function CreateEmployee(
 }
 
 export async function UpdateEmployee(
-  userId: string,
+  userId: string | { email: string },
   values: EmployeeType,
   id: string,
 ): Promise<{ message: string; success: boolean }> {
@@ -156,13 +159,36 @@ export async function UpdateEmployee(
     method: "PATCH",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
     body: JSON.stringify(values),
   });
 
   if (!res) {
     throw new Error("Erro ao cadastrar a funcionário");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function DeleteEmployee(
+  userId: string | { email: string },
+  employeeId: string,
+): Promise<{ message: string; success: boolean }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/${employeeId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao deletar o funcionário");
   }
 
   const data = await res.json();

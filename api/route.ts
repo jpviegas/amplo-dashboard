@@ -2,8 +2,17 @@ import { LoginType } from "@/zodSchemas";
 
 export type UserType = { _id: string; name: string; email: string };
 
-export async function GetAllUsers(): Promise<LoginType[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user`, {
+export type GetAllUsersType = {
+  success: boolean;
+  users: UserType[];
+};
+export type GetUserType = {
+  success: boolean;
+  user: UserType;
+};
+
+export async function GetAllUsers(): Promise<GetAllUsersType> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth`, {
     method: "GET",
     headers: { "content-type": "application/json" },
   });
@@ -25,9 +34,7 @@ export async function GetUserByEmail(email: string): Promise<LoginType[]> {
   return data;
 }
 
-export async function GetUserById(
-  id: string,
-): Promise<{ success: boolean; users: UserType }> {
+export async function GetUserById(id: string): Promise<GetUserType> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/${id}`, {
     method: "GET",
     headers: { "content-type": "application/json" },
@@ -49,7 +56,10 @@ export async function login(values: LoginType): Promise<{
 }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${values.email}`,
+    },
     body: JSON.stringify(values),
   });
 
@@ -67,7 +77,10 @@ export async function createUser(values: LoginType) {
     `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${values.email}`,
+      },
       body: JSON.stringify(values),
     },
   );

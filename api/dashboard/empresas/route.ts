@@ -1,7 +1,7 @@
 import { CompanyType, CompanyTypeWithId } from "@/zodSchemas";
 
 export async function GetAllCompanies(
-  userId: string,
+  userId: string | { email: string },
   search?: string,
   page?: string,
 ): Promise<{
@@ -37,7 +37,7 @@ export async function GetAllCompanies(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -46,7 +46,7 @@ export async function GetAllCompanies(
 }
 
 export async function GetCompanyById(
-  userId: string,
+  userId: string | { email: string },
   company: string,
   search?: string,
   page?: string,
@@ -83,7 +83,7 @@ export async function GetCompanyById(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -92,14 +92,14 @@ export async function GetCompanyById(
 }
 
 export async function CreateCompany(
-  userId: string,
+  userId: string | { email: string },
   values: CompanyType,
 ): Promise<{ message: string; success: boolean }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/companies`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
     body: JSON.stringify(values),
   });

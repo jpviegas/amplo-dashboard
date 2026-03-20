@@ -1,5 +1,5 @@
 export async function GetAllPoints(
-  userId: string,
+  userId: string | { email: string },
   page?: string,
 ): Promise<{
   success: boolean;
@@ -35,7 +35,7 @@ export async function GetAllPoints(
     cache: "no-store",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 

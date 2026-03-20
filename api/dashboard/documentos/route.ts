@@ -27,7 +27,7 @@ export async function GetDocumentsByEmail(email: string): Promise<{
 }
 
 export async function CreateDocuments(
-  userId: string,
+  userId: string | { email: string },
   signers: string[],
   file: Blob,
 ): Promise<{
@@ -50,8 +50,9 @@ export async function CreateDocuments(
     }>;
   };
 }> {
+  const userIdValue = typeof userId === "string" ? userId : userId.email;
   const formData = new FormData();
-  formData.append("userId", userId);
+  formData.append("userId", userIdValue);
   for (const signerEmail of signers) {
     formData.append("signers", signerEmail);
   }
@@ -62,7 +63,7 @@ export async function CreateDocuments(
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${userIdValue}`,
     },
     body: formData,
   });

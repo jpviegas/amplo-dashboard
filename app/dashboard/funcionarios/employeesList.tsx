@@ -1,7 +1,21 @@
 "use client";
 
-import { GetAllEmployees } from "@/api/dashboard/funcionarios/route";
+import {
+  DeleteEmployee,
+  GetAllEmployees,
+} from "@/api/dashboard/funcionarios/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,6 +25,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -41,6 +60,9 @@ export function EmployeesList() {
   const [employees, setEmployees] = useState<
     (EmployeeTypeWithId & { companyName: string })[]
   >([]);
+  const [deletingEmployeeId, setDeletingEmployeeId] = useState<string | null>(
+    null,
+  );
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -153,6 +175,36 @@ export function EmployeesList() {
     }
   };
 
+  const handleDeleteEmployee = async (employeeId: string) => {
+    try {
+      if (!userId) {
+        toast.error("Usuário não identificado.");
+        return;
+      }
+
+      setDeletingEmployeeId(employeeId);
+      const { success, message } = await DeleteEmployee(userId, employeeId);
+
+      if (!success) {
+        toast.warning(message);
+        return;
+      }
+
+      toast.success(message);
+
+      const isLastItemOnPage = employees.length === 1;
+      const nextPage = isLastItemOnPage
+        ? Math.max(1, pagination.page - 1)
+        : pagination.page;
+      await handlePageChange(nextPage);
+    } catch (error) {
+      console.error("Erro ao deletar funcionário:", error);
+      toast.error("Não foi possível deletar o funcionário.");
+    } finally {
+      setDeletingEmployeeId(null);
+    }
+  };
+
   return (
     <>
       <Form {...form}>
@@ -181,7 +233,7 @@ export function EmployeesList() {
           <TableHeader>
             <TableRow>
               <TableHead>Funcionário</TableHead>
-              <TableHead>Empresa</TableHead>
+              <TableHead>Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -218,16 +270,69 @@ export function EmployeesList() {
                     <TableCell className="flex w-full items-center justify-between">
                       {employee.companyName}
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <Link
-                            href={`/dashboard/funcionarios/${employee._id}`}
-                          >
-                            <Pencil className="size-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <Trash className="size-4" />
-                        </Button>
+                        <HoverCard openDelay={100} closeDelay={200}>
+                          <HoverCardTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              asChild
+                            >
+                              <Link
+                                href={`/dashboard/funcionarios/${employee._id}`}
+                              >
+                                <Pencil className="size-4" />
+                              </Link>
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent>Editar</HoverCardContent>
+                        </HoverCard>
+
+                        <AlertDialog>
+                          <HoverCard openDelay={100} closeDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 cursor-pointer"
+                                  disabled={
+                                    isLoading ||
+                                    deletingEmployeeId === employee._id
+                                  }
+                                >
+                                  <Trash className="size-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </HoverCardTrigger>
+                            <HoverCardContent>Deletar</HoverCardContent>
+                          </HoverCard>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Deletar funcionário?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Essa ação não pode ser desfeita. O funcionário
+                                {employee.name
+                                  ? ` "${employee.name}"`
+                                  : ""}{" "}
+                                será removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() =>
+                                  handleDeleteEmployee(employee._id)
+                                }
+                              >
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

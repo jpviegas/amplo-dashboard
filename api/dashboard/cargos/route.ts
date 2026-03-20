@@ -1,6 +1,8 @@
 import { PositionType, PositionTypeWithId } from "@/zodSchemas";
 
-export async function GetAllPositions(userId: string): Promise<{
+export async function GetAllPositions(
+  userId: string | { email: string },
+): Promise<{
   success: boolean;
   count: number;
   pagination: {
@@ -19,7 +21,7 @@ export async function GetAllPositions(userId: string): Promise<{
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -28,7 +30,7 @@ export async function GetAllPositions(userId: string): Promise<{
 }
 
 export async function GetCompanyPositions(
-  userId: string,
+  userId: string | { email: string },
   search?: string,
   page?: string,
 ): Promise<{
@@ -65,7 +67,7 @@ export async function GetCompanyPositions(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -74,7 +76,7 @@ export async function GetCompanyPositions(
 }
 
 export async function GetCompanyPositionById(
-  userId: string,
+  userId: string | { email: string },
   position: string,
 ): Promise<{
   success: boolean;
@@ -86,7 +88,7 @@ export async function GetCompanyPositionById(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -103,14 +105,14 @@ export async function GetCompanyPositionById(
 }
 
 export async function CreatePosition(
-  userId: string,
+  userId: string | { email: string },
   values: PositionType,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/positions`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
     body: JSON.stringify(values),
   });
@@ -124,7 +126,7 @@ export async function CreatePosition(
 }
 
 export async function UpdatePosition(
-  userId: string,
+  userId: string | { email: string },
   positionId: string,
   values: PositionType,
 ): Promise<{ success: boolean; message: string }> {
@@ -134,7 +136,7 @@ export async function UpdatePosition(
       method: "PATCH",
       headers: {
         "content-type": "application/json",
-        Authorization: `Bearer ${userId}`,
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
       },
       body: JSON.stringify(values),
     },
@@ -149,7 +151,7 @@ export async function UpdatePosition(
 }
 
 export async function DeletePosition(
-  userId: string,
+  userId: string | { email: string },
   positionId: string,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(
@@ -158,7 +160,7 @@ export async function DeletePosition(
       method: "DELETE",
       headers: {
         "content-type": "application/json",
-        Authorization: `Bearer ${userId}`,
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
       },
     },
   );

@@ -1,7 +1,7 @@
 import { DepartmentType, DepartmentTypeWithId } from "@/zodSchemas";
 
 export async function GetAllDepartments(
-  userId: string,
+  userId: string | { email: string },
   search?: string,
   page?: string,
 ): Promise<{
@@ -38,7 +38,7 @@ export async function GetAllDepartments(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -47,7 +47,7 @@ export async function GetAllDepartments(
 }
 
 export async function GetCompanyDepartments(
-  userId: string,
+  userId: string | { email: string },
   company: string,
   department?: string,
   page?: string,
@@ -89,7 +89,7 @@ export async function GetCompanyDepartments(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -98,7 +98,7 @@ export async function GetCompanyDepartments(
 }
 
 export async function GetCompanyDepartmentById(
-  userId: string,
+  userId: string | { email: string },
   department: string,
 ): Promise<{
   success: boolean;
@@ -110,7 +110,7 @@ export async function GetCompanyDepartmentById(
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: `Bearer ${userId}`,
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -119,7 +119,7 @@ export async function GetCompanyDepartmentById(
 }
 
 export async function CreateDepartment(
-  userId: string,
+  userId: string | { email: string },
   values: DepartmentType,
 ): Promise<{ success: boolean; message: string }> {
   console.log(values);
@@ -129,7 +129,7 @@ export async function CreateDepartment(
       method: "POST",
       headers: {
         "content-type": "application/json",
-        Authorization: `Bearer ${userId}`,
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
       },
       body: JSON.stringify({ departmentName: values.departmentName }),
     },
@@ -144,7 +144,7 @@ export async function CreateDepartment(
 }
 
 export async function UpdateDepartment(
-  userId: string,
+  userId: string | { email: string },
   departmentId: string,
   values: DepartmentType,
 ): Promise<{ success: boolean; message: string }> {
@@ -154,7 +154,7 @@ export async function UpdateDepartment(
       method: "PATCH",
       headers: {
         "content-type": "application/json",
-        Authorization: `Bearer ${userId}`,
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
       },
       body: JSON.stringify({ departmentName: values.departmentName }),
     },
@@ -169,7 +169,7 @@ export async function UpdateDepartment(
 }
 
 export async function DeleteDepartment(
-  userId: string,
+  userId: string | { email: string },
   departmentId: string,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(
@@ -178,7 +178,7 @@ export async function DeleteDepartment(
       method: "DELETE",
       headers: {
         "content-type": "application/json",
-        Authorization: `Bearer ${userId}`,
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
       },
     },
   );
