@@ -1,6 +1,7 @@
 "use client";
 
-import { GetDocumentsByEmail } from "@/api/dashboard/documentos/route";
+import { GetDocuments } from "@/api/dashboard/documentos/route";
+import { GetAllUsers, GetAllUsersType } from "@/api/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import { GoLinkExternal } from "react-icons/go";
 
@@ -22,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useUser } from "@/context/UserContext";
+// import { useUser } from "@/context/UserContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import debounce from "lodash/debounce";
 import Link from "next/link";
@@ -30,9 +31,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+// import { useUser } from "@/context/UserContext";
 
 const FormSchema = z.object({
-  email: z.string().email("Email inválido").or(z.literal("")),
+  search: z.string().optional(),
 });
 
 type DocumentSigner = {
@@ -47,6 +49,7 @@ type DocumentSigner = {
 
 export function DocumentsList() {
   const [documents, setDocuments] = useState<DocumentSigner[]>([]);
+  const [users, setUsers] = useState<GetAllUsersType["users"]>([]);
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -67,14 +70,42 @@ export function DocumentsList() {
     prevPage: null,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useUser();
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  // const { user } = useUser();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      email: "",
+      search: "",
     },
   });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchUsers() {
+      try {
+        setIsUsersLoading(true);
+        const data = await GetAllUsers();
+        if (isMounted) {
+          setUsers(data.users);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar usuários:", error);
+      } finally {
+        if (isMounted) {
+          setIsUsersLoading(false);
+        }
+      }
+    }
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const buildPagination = useCallback((total: number, page: number) => {
     const limit = 10;
@@ -94,16 +125,39 @@ export function DocumentsList() {
   }, []);
 
   const fetchDocuments = useCallback(
-    async ({ email }: z.infer<typeof FormSchema>) => {
-      if (!email) {
-        setDocuments([]);
-        setPagination(buildPagination(0, 1));
-        return;
-      }
-
+    async ({ search }: z.infer<typeof FormSchema>) => {
       try {
         setIsLoading(true);
-        const { success, signers } = await GetDocumentsByEmail(email);
+        const raw = (search ?? "").trim();
+        const resolvedEmail = raw.includes("@")
+          ? raw
+          : (() => {
+              const normalized = raw.toLowerCase();
+              const exactMatch = users.find(
+                (u) => (u.name || "").toLowerCase() === normalized,
+              );
+              if (exactMatch) {
+                return exactMatch.email;
+              }
+
+              const startsWithMatches = users.filter((u) =>
+                (u.name || "").toLowerCase().startsWith(normalized),
+              );
+              if (startsWithMatches.length === 1) {
+                return startsWithMatches[0].email;
+              }
+
+              const containsMatches = users.filter((u) =>
+                (u.name || "").toLowerCase().includes(normalized),
+              );
+              if (containsMatches.length === 1) {
+                return containsMatches[0].email;
+              }
+
+              return "";
+            })();
+
+        const { success, signers } = await GetDocuments(resolvedEmail || "");
 
         if (success) {
           setDocuments(signers);
@@ -123,7 +177,7 @@ export function DocumentsList() {
         setIsLoading(false);
       }
     },
-    [buildPagination],
+    [buildPagination, users],
   );
 
   const debouncedFetchDocuments = useMemo(() => {
@@ -144,12 +198,31 @@ export function DocumentsList() {
   }, [form, debouncedFetchDocuments]);
 
   useEffect(() => {
-    const currentEmail = form.getValues("email");
-    if (!currentEmail && user?.email) {
-      form.setValue("email", user.email, { shouldDirty: false });
-      fetchDocuments({ email: user.email });
+    // const currentValue = form.getValues("search");
+    // if (!currentValue && user?.email) {
+    //   form.setValue("search", user.email, { shouldDirty: false });
+    fetchDocuments({ search: "" });
+    // }
+  }, [form, fetchDocuments]);
+
+  const searchValue = form.watch("search") || "";
+  const searchQuery = useMemo(() => {
+    return searchValue.trim().toLowerCase();
+  }, [searchValue]);
+
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) {
+      return [];
     }
-  }, [user?.email, form, fetchDocuments]);
+
+    return users
+      .filter((u) => {
+        const name = (u.name || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        return name.includes(searchQuery) || email.includes(searchQuery);
+      })
+      .slice(0, 10);
+  }, [users, searchQuery]);
 
   const PAGE_SIZE = 10;
   const startIndex = (pagination.page - 1) * PAGE_SIZE;
@@ -158,6 +231,7 @@ export function DocumentsList() {
   const handlePageChange = (newPage: number) => {
     setPagination(buildPagination(documents.length, newPage));
   };
+  console.log(documents);
 
   return (
     <>
@@ -168,12 +242,65 @@ export function DocumentsList() {
         >
           <FormField
             control={form.control}
-            name="email"
+            name="search"
             render={({ field }) => (
               <FormItem className="flex items-center gap-4">
-                <FormLabel>Email:</FormLabel>
+                <FormLabel>Email ou nome:</FormLabel>
                 <FormControl>
-                  <Input placeholder="email@exemplo.com" {...field} />
+                  <div className="relative">
+                    <Input
+                      placeholder="Digite um email ou nome"
+                      {...field}
+                      onChange={(event) => {
+                        field.onChange(event);
+                        setIsSearchOpen(true);
+                      }}
+                      onFocus={() => setIsSearchOpen(true)}
+                      onBlur={() => {
+                        window.setTimeout(() => {
+                          setIsSearchOpen(false);
+                        }, 150);
+                      }}
+                    />
+                    {isSearchOpen && searchQuery && (
+                      <div className="bg-popover text-popover-foreground absolute top-full z-50 mt-1 w-full overflow-hidden rounded-md border shadow-md">
+                        {isUsersLoading ? (
+                          <div className="text-muted-foreground p-2 text-sm">
+                            Carregando...
+                          </div>
+                        ) : filteredUsers.length === 0 ? (
+                          <div className="text-muted-foreground p-2 text-sm">
+                            Nenhum resultado
+                          </div>
+                        ) : (
+                          <div className="max-h-60 overflow-auto">
+                            {filteredUsers.map((u) => (
+                              <button
+                                key={u._id}
+                                type="button"
+                                className="hover:bg-accent hover:text-accent-foreground w-full px-3 py-2 text-left text-sm"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  form.setValue("search", u.email, {
+                                    shouldDirty: true,
+                                    shouldTouch: true,
+                                    shouldValidate: true,
+                                  });
+                                  fetchDocuments({ search: u.email });
+                                  setIsSearchOpen(false);
+                                }}
+                              >
+                                <div className="font-medium">{u.name}</div>
+                                <div className="text-muted-foreground text-xs">
+                                  {u.email}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -186,6 +313,7 @@ export function DocumentsList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Funcionário</TableHead>
               <TableHead>Documento</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden md:table-cell">
@@ -223,6 +351,7 @@ export function DocumentsList() {
 
                 {visibleDocuments.map((document) => (
                   <TableRow key={document.token}>
+                    <TableCell>{document.name}</TableCell>
                     <TableCell className="">
                       <Link
                         className="hover:text-amplo-secondary flex items-center gap-2 hover:underline"

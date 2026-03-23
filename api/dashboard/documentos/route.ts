@@ -1,4 +1,4 @@
-export async function GetDocumentsByEmail(email: string): Promise<{
+export async function GetDocuments(email: string): Promise<{
   success: boolean;
   signers: Array<{
     token: string;
@@ -9,9 +9,28 @@ export async function GetDocumentsByEmail(email: string): Promise<{
     phone_number: string;
     signed_at: string | null;
   }>;
+  // documents: Array<{
+  //   userId: string;
+  //   userEmail: string;
+  //   document_name: string;
+  //   token: string;
+  //   status: string;
+  //   signers: Array<{
+  //     token: string;
+  //     status: string;
+  //     name: string;
+  //     email: string;
+  //     phone_country: string;
+  //     phone_number: string;
+  //     signed_at: string | null;
+  //   }>;
+  // }>;
 }> {
+  const queryParams = new URLSearchParams();
+  queryParams.append("email", email);
+
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/documents?email=${email}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/documents?${queryParams.toString()}`,
     {
       method: "GET",
       headers: {

@@ -187,6 +187,8 @@ export default function RegisterDocumentForm() {
     }
   }
 
+  console.log(form.getValues());
+
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
@@ -275,24 +277,22 @@ export default function RegisterDocumentForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Código de Conduta">
+                  <SelectItem value="codigo_conduta">
                     Código de Conduta
                   </SelectItem>
-                  <SelectItem value="Contrato de Trabalho">
-                    Contrato de Trabalho
-                  </SelectItem>
-                  <SelectItem value="Diversos">Diversos</SelectItem>
-                  <SelectItem value="Ficha EPI">Ficha EPI</SelectItem>
-                  <SelectItem value="Ficha de Registro">
+                  <SelectItem value="contrato">Contrato de Trabalho</SelectItem>
+                  <SelectItem value="diversos">Diversos</SelectItem>
+                  <SelectItem value="ficha_epi">Ficha EPI</SelectItem>
+                  <SelectItem value="ficha_registro">
                     Ficha de Registro
                   </SelectItem>
-                  <SelectItem value="Política Interna">
+                  <SelectItem value="politica_interna">
                     Política Interna
                   </SelectItem>
-                  <SelectItem value="Saúde Ocupacional">
+                  <SelectItem value="saude_ocupacional">
                     Saúde Ocupacional
                   </SelectItem>
-                  <SelectItem value="Termos">Termos</SelectItem>
+                  <SelectItem value="termos">Termos</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
