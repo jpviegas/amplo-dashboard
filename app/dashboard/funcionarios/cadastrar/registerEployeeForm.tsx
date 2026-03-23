@@ -165,6 +165,18 @@ export default function RegisterEmployeeForm({
             )}
           />
           <FormField
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>E-mail</FormLabel>
+                <FormControl>
+                  <Input placeholder="E-mail" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
             name="pis"
             render={({ field }) => (
               <FormItem>

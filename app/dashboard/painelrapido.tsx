@@ -42,6 +42,11 @@ export default async function QuickPanel() {
             link: "dashboard/documentos",
             title: "Documentos",
           },
+          {
+            icon: IoDocumentTextOutline,
+            link: "dashboard/atendimento",
+            title: "Atendimento Conecta",
+          },
         ].map((item) => (
           <Button key={item.title} asChild variant="outline" className="h-24">
             <Link href={item.link} className="flex flex-col justify-evenly">

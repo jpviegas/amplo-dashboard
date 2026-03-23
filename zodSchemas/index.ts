@@ -64,16 +64,23 @@ export type EmployeeType = z.infer<typeof registerEmployeeSchema>;
 export type EmployeeTypeWithId = EmployeeType & { _id: string };
 export const registerEmployeeSchema = z.object({
   name: z.string().min(10, "O nome é obrigarório"),
-  pis: z.string().min(1, "O PIS é obrigatório"),
+  email: z.string().min(1, "O email é obrigatório"),
+  pis: z.string().min(1, "O PIS é obrigatório").optional(),
   cpf: z
     .string()
     .nonempty("O CPF é obrigatório")
-    .length(11, "Preencha apenas os 11 números do CPF"),
-  registration: z.string().min(1, "O número de matrícula é obrigatório"),
-  admissionDate: z.string({
-    error: "A data de admissão é obrigatória",
-  }),
-  company: z.string().min(1, "O código da empresa é obrigatório"),
+    .length(11, "Preencha apenas os 11 números do CPF")
+    .optional(),
+  registration: z
+    .string()
+    .min(1, "O número de matrícula é obrigatório")
+    .optional(),
+  admissionDate: z
+    .string({
+      error: "A data de admissão é obrigatória",
+    })
+    .optional(),
+  company: z.string().min(1, "O código da empresa é obrigatório").optional(),
   workingHours: z.string().optional(),
   status: z.enum(["active", "inactive"]),
   department: z.string().optional(),
@@ -85,10 +92,13 @@ export const registerEmployeeSchema = z.object({
   rg: z
     .string()
     .nonempty("O RG é obrigatório")
-    .length(9, "Preencha apenas os 9 números do RG"),
-  birthDate: z.string({
-    error: "A data de nascimento é obrigatória",
-  }),
+    .length(9, "Preencha apenas os 9 números do RG")
+    .optional(),
+  birthDate: z
+    .string({
+      error: "A data de nascimento é obrigatória",
+    })
+    .optional(),
   socialName: z.string().optional(),
   cnh: z.string().optional(),
   cnhCategory: z.string().optional(),
@@ -157,4 +167,14 @@ export const registerDocumentSchema = z.object({
   userId: z.string().min(1, "O ID do usuário é obrigatório"),
   signers: z.string().min(1, "O email dos assinantes é obrigatório"),
   file: z.string().min(1, "O arquivo é obrigatório"),
+});
+
+export type ServiceType = z.infer<typeof servicechema>;
+export type ServiceTypeWithId = ServiceType & { _id: string };
+export const servicechema = z.object({
+  type: z.string().min(1, "O ID do usuário é obrigatório"),
+  subject: z.string().min(1, "O email dos assinantes é obrigatório"),
+  text: z.string().min(1, "O arquivo é obrigatório"),
+  status: z.string().min(1, "O arquivo é obrigatório"),
+  name: z.string().min(1, "O arquivo é obrigatório"),
 });
