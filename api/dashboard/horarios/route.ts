@@ -2,9 +2,10 @@ import { WorkingHourType, WorkingHourTypeWithId } from "@/zodSchemas";
 
 export async function GetAllHours(
   userId: string | { email: string },
+  hour?: string,
+  page?: string,
 ): Promise<{
   success: boolean;
-  count: number;
   pagination: {
     total: number;
     page: number;
@@ -15,9 +16,24 @@ export async function GetAllHours(
     nextPage: number;
     prevPage: null | number;
   };
-  roles: WorkingHourTypeWithId[];
+  hours: WorkingHourTypeWithId[];
 }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/hours/`, {
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/hours/`;
+
+  const queryParams = new URLSearchParams();
+
+  if (hour) {
+    queryParams.append("hour", hour);
+  }
+  if (page) {
+    queryParams.append("page", page);
+  }
+
+  if (queryParams.toString()) {
+    url += `?${queryParams.toString()}`;
+  }
+
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       "content-type": "application/json",
@@ -26,6 +42,9 @@ export async function GetAllHours(
   });
 
   const data = await res.json();
+  if (!Array.isArray(data?.hours) && Array.isArray(data?.roles)) {
+    return { ...data, hours: data.roles };
+  }
   return data;
 }
 
@@ -48,7 +67,7 @@ export async function GetCompanyHours(
   };
   hours: WorkingHourTypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/hours/${company}`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/hours/${company}`;
 
   const queryParams = new URLSearchParams();
 
@@ -78,8 +97,8 @@ export async function GetCompanyHours(
 export async function CreateHour(
   userId: string | { email: string },
   values: WorkingHourType,
-): Promise<{ message: string }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/hours`, {
+): Promise<{ message: string; success: boolean }> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/hours`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -89,9 +108,57 @@ export async function CreateHour(
   });
 
   if (!res) {
-    throw new Error("Erro ao cadastrar o cargo");
+    throw new Error("Erro ao cadastrar o horário");
   }
 
   const data = await res.json();
-  return data.message;
+  return data;
+}
+
+export async function UpdateHour(
+  userId: string | { email: string },
+  hourId: string,
+  values: WorkingHourType,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/hours/${hourId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+      body: JSON.stringify(values),
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao atualizar o horário");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function DeleteHour(
+  userId: string | { email: string },
+  hourId: string,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/hours/${hourId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao deletar o horário");
+  }
+
+  const data = await res.json();
+  return data;
 }

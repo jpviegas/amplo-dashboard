@@ -157,8 +157,9 @@ export const registerPositionSchema = z.object({
 export type WorkingHourType = z.infer<typeof registerWorkingHourSchema>;
 export type WorkingHourTypeWithId = WorkingHourType & { _id: string };
 export const registerWorkingHourSchema = z.object({
-  hour: z.string().min(1, "O nome é obrigarório"),
-  company: z.string().min(1, "O ID da empresa é obrigatório"),
+  initialHour: z.string().min(1, "A hora inicial é obrigatória"),
+  finalHour: z.string().min(1, "A hora final é obrigatória"),
+  company: z.string().min(1, "O ID da empresa é obrigatório").optional(),
 });
 
 export type DocumentsType = z.infer<typeof registerDocumentSchema>;

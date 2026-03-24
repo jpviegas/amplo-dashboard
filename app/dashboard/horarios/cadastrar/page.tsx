@@ -1,102 +1,33 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { registerWorkingHourSchema } from "@/zodSchemas";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft } from "lucide-react";
+import { Metadata } from "next";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import RegisterHourForm from "./registerHourForm";
 
-export default function NewWorkingHourForm() {
-  type FormValues = z.infer<typeof registerWorkingHourSchema>;
+export const metadata: Metadata = {
+  title: "Cadastrar horário - Amplo Serviços",
+  description: "Página para cadastro de horário da amplo serviços",
+};
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(registerWorkingHourSchema),
-    defaultValues: {
-      hour: "",
-      company: "",
-    },
-  });
-
-  function onSubmit(values: FormValues) {
-    console.log(values);
-
-    // Example error handling
-    try {
-      // API call or other logic
-      toast("O cargo foi cadastrado com sucesso.");
-    } catch {
-      toast("Não foi possível cadastrar o cargo.");
-    }
-  }
-
+export default async function NewHour() {
   return (
-    <main className="container mx-auto h-full">
-      <div className="flex items-center justify-between">
-        <h1 className="mt-8 text-3xl font-bold">Novo Horário</h1>
+    <main className="container mx-auto h-full w-11/12">
+      <div className="mb-8 flex items-center justify-between pt-8">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" asChild>
+            <Link href="/dashboard/horarios">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="text-3xl font-bold">Novo Horário</h1>
+        </div>
       </div>
+
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr,300px]">
         <Card>
           <CardContent className="p-6">
-            <Form {...form}>
-              <form
-                className="space-y-8"
-                onSubmit={form.handleSubmit(onSubmit)}
-              >
-                <div className="grid gap-4 md:grid-cols-3">
-                  <FormField
-                    control={form.control}
-                    name="hour"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nome" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="company"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Empresa</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Empresa" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="flex gap-4">
-                  <Button
-                    type="submit"
-                    onClick={() =>
-                      toast("Não foi possível cadastrar o cargo", {
-                        description:
-                          "falta preencher algum campo ou preencheu errado",
-                      })
-                    }
-                  >
-                    Salvar
-                  </Button>
-                  <Button asChild variant="outline" type="reset">
-                    <Link href="./">Cancelar</Link>
-                  </Button>
-                </div>
-              </form>
-            </Form>
+            <RegisterHourForm />
           </CardContent>
         </Card>
       </div>

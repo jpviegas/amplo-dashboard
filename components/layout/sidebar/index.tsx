@@ -36,7 +36,7 @@ export default function SidebarComponent() {
               icon: LuFileText,
               title: "Cadastros",
               items: [
-                { item: "Empresas", url: "/dashboard/empresas" },
+                // { item: "Empresas", url: "/dashboard/empresas" },
                 { item: "Funcionários", url: "/dashboard/funcionarios" },
                 { item: "Documentos", url: "/dashboard/documentos" },
                 { item: "Departamentos", url: "/dashboard/departamentos" },
@@ -57,7 +57,7 @@ export default function SidebarComponent() {
               icon: FaUserClock,
               title: "Relatórios",
               items: [
-                { item: "Empresa", url: "empresa" },
+                // { item: "Empresa", url: "empresa" },
                 { item: "Funcionário", url: "funcionario" },
                 { item: "Departamento", url: "departamento" },
                 { item: "Cargo", url: "cargo" },
