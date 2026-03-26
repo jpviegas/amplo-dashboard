@@ -16,6 +16,8 @@ import { registerPositionSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -23,6 +25,8 @@ import { z } from "zod";
 export default function NewPositionForm() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
+  const router = useRouter();
+  const [isReturning, setIsReturning] = useState(false);
 
   type FormValues = z.infer<typeof registerPositionSchema>;
 
@@ -32,6 +36,7 @@ export default function NewPositionForm() {
       positionName: "",
     },
   });
+  console.log(form.getValues());
 
   async function onSubmit(values: FormValues) {
     try {
@@ -46,6 +51,10 @@ export default function NewPositionForm() {
         toast.warning(message);
       } else {
         toast.success(message);
+        setIsReturning(true);
+        setTimeout(() => {
+          router.push("/dashboard/cargos");
+        }, 1000);
       }
     } catch {
       toast.error("Erro ao cadastrar o cargo.");
@@ -84,10 +93,22 @@ export default function NewPositionForm() {
           /> */}
         </div>
         <div className="flex gap-4">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            Salvar
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
+            {isReturning
+              ? "Voltando..."
+              : form.formState.isSubmitting
+                ? "Enviando..."
+                : "Salvar"}
           </Button>
-          <Button asChild variant="outline" type="reset">
+          <Button
+            asChild
+            variant="outline"
+            type="reset"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
             <Link href="./">Cancelar</Link>
           </Button>
         </div>

@@ -233,7 +233,7 @@ export function DepartmentsList() {
           <TableHeader>
             <TableRow>
               <TableHead>Departamento</TableHead>
-              {/* <TableHead>Quantidade de Funcionários</TableHead> */}
+              <TableHead>Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

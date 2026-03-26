@@ -16,6 +16,8 @@ import { registerDepartmentSchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -25,6 +27,8 @@ export default function NewDepartmentForm() {
   // const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
+  const router = useRouter();
+  const [isReturning, setIsReturning] = useState(false);
 
   // const fetchCompanies = async () => {
   //   try {
@@ -72,6 +76,10 @@ export default function NewDepartmentForm() {
         toast.warning(message);
       } else {
         toast.success(message);
+        setIsReturning(true);
+        setTimeout(() => {
+          router.push("/dashboard/departamentos");
+        }, 1000);
       }
     } catch {
       toast.error("Erro ao cadastrar o departamento.");
@@ -164,10 +172,23 @@ export default function NewDepartmentForm() {
           /> */}
         </div>
         <div className="flex gap-4">
-          <Button type="submit" className="cursor-pointer">
-            Salvar
+          <Button
+            type="submit"
+            className="cursor-pointer"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
+            {isReturning
+              ? "Voltando..."
+              : form.formState.isSubmitting
+                ? "Enviando..."
+                : "Salvar"}
           </Button>
-          <Button asChild variant="outline" type="reset">
+          <Button
+            asChild
+            variant="outline"
+            type="reset"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
             <Link href={"./"}>Cancelar</Link>
           </Button>
         </div>

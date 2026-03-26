@@ -24,7 +24,6 @@ import { Logout } from "@/lib/utils";
 import { FaUserClock } from "react-icons/fa6";
 import { IoIosArrowForward } from "react-icons/io";
 import { LuFileText, LuLogOut } from "react-icons/lu";
-import { MdOutlineSettingsInputSvideo } from "react-icons/md";
 
 export default function SidebarComponent() {
   return (
@@ -43,11 +42,11 @@ export default function SidebarComponent() {
                 { item: "Cargos", url: "/dashboard/cargos" },
               ],
             },
-            {
-              icon: MdOutlineSettingsInputSvideo,
-              title: "Equipamentos",
-              items: [],
-            },
+            // {
+            //   icon: MdOutlineSettingsInputSvideo,
+            //   title: "Equipamentos",
+            //   items: [],
+            // },
             {
               icon: FaUserClock,
               title: "Config. de Horários",

@@ -50,6 +50,20 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 export default function EditEmployeeForm() {
+  const onlyDigits = (s: string) => s.replace(/\D+/g, "");
+  const formatCpf = (value: string) => {
+    const v = onlyDigits(value).slice(0, 11);
+    if (v.length <= 3) return v;
+    if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, "$1.$2");
+    if (v.length <= 9) return v.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
+    return v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, "$1.$2.$3-$4");
+  };
+  const formatRg = (value: string) => {
+    const v = onlyDigits(value).slice(0, 9);
+    if (v.length <= 3) return v;
+    if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, "$1.$2");
+    return v.replace(/(\d{3})(\d{3})(\d{0,3})/, "$1.$2.$3");
+  };
   const [activeTab, setActiveTab] = useState("general");
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const [employee, setEmployee] = useState<EmployeeTypeWithId>();
@@ -171,9 +185,16 @@ export default function EditEmployeeForm() {
                     <FormControl>
                       <Input
                         placeholder="CPF"
-                        maxLength={11}
-                        min={0}
-                        {...field}
+                        maxLength={14}
+                        value={formatCpf(field.value ?? "")}
+                        onChange={(e) =>
+                          field.onChange(
+                            onlyDigits(e.target.value).slice(0, 11),
+                          )
+                        }
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
                       />
                     </FormControl>
                     <FormMessage />
@@ -501,9 +522,16 @@ export default function EditEmployeeForm() {
                           <div className="relative">
                             <Input
                               placeholder="RG"
-                              maxLength={9}
-                              min={0}
-                              {...field}
+                              maxLength={11}
+                              value={formatRg(field.value ?? "")}
+                              onChange={(e) =>
+                                field.onChange(
+                                  onlyDigits(e.target.value).slice(0, 9),
+                                )
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
                             />
                             <Search className="absolute top-2.5 right-3 size-4 text-gray-400" />
                             {/* <Search className="absolute ml-auto size-4 text-gray-400" /> */}

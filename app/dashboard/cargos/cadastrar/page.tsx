@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function Position() {
   return (
-    <main className="container mx-auto h-full">
+    <main className="container mx-auto h-full w-11/12">
       <div className="flex items-center justify-between">
         <h1 className="mt-8 text-3xl font-bold">Novo Cargo</h1>
       </div>

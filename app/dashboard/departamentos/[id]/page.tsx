@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -35,6 +35,8 @@ export default function DepartmentEditPage() {
   const departmentId = params?.id;
   const [isLoading, setIsLoading] = useState(false);
   const [department, setDepartment] = useState<DepartmentType>();
+  const router = useRouter();
+  const [isReturning, setIsReturning] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerDepartmentSchema),
@@ -109,6 +111,10 @@ export default function DepartmentEditPage() {
 
       toast.success(message);
       await fetchDepartment();
+      setIsReturning(true);
+      setTimeout(() => {
+        router.push("/dashboard/departamentos");
+      }, 1000);
     } catch (error) {
       console.error("Erro ao editar departamento:", error);
       toast.error("Erro ao editar o departamento.");
@@ -174,11 +180,16 @@ export default function DepartmentEditPage() {
                   <Button
                     type="submit"
                     className="cursor-pointer"
-                    disabled={isLoading}
+                    disabled={isLoading || isReturning}
                   >
-                    Salvar
+                    {isReturning ? "Voltando..." : isLoading ? "Enviando..." : "Salvar"}
                   </Button>
-                  <Button asChild variant="outline" type="reset">
+                  <Button
+                    asChild
+                    variant="outline"
+                    type="reset"
+                    disabled={isLoading || isReturning}
+                  >
                     <Link href="/dashboard/departamentos">Cancelar</Link>
                   </Button>
                 </div>
