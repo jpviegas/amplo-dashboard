@@ -114,7 +114,7 @@ export async function CreatePosition(
       "content-type": "application/json",
       Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
-    body: JSON.stringify(values),
+    body: JSON.stringify({ positionName: values.positionName }),
   });
 
   if (!res) {

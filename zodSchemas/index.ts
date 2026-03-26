@@ -167,6 +167,17 @@ export type DocumentsTypeWithId = DocumentsType & { _id: string };
 export const registerDocumentSchema = z.object({
   userId: z.string().min(1, "O ID do usuário é obrigatório"),
   signers: z.string().min(1, "O email dos assinantes é obrigatório"),
+  type: z.enum([
+    "codigo_conduta",
+    "contrato",
+    "diversos",
+    "ficha_epi",
+    "ficha_egistro",
+    "politica_interna",
+    "saude_ocupacional",
+    "termos",
+    "demais_documentos",
+  ]),
   file: z.string().min(1, "O arquivo é obrigatório"),
 });
 
