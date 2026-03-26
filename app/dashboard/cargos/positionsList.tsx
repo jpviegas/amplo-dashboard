@@ -31,6 +31,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -82,6 +83,7 @@ export function PositionsList() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
+  const TABLE_ROWS = 10;
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -223,102 +225,150 @@ export function PositionsList() {
         </form>
       </Form>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="mx-auto overflow-x-auto rounded-md border sm:w-[70%] lg:w-[50%]">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Cargo</TableHead>
-              {/* <TableHead>Quantidade de Funcionários</TableHead> */}
+              <TableHead className="w-[70%]">Cargo</TableHead>
+              <TableHead className="w-[30%]">Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={2} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                    Carregando...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : positions.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="text-muted-foreground h-24 text-center"
-                >
-                  Nenhum cargo encontrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              positions.map((position) => (
-                <TableRow key={position._id}>
-                  <TableCell className="w-1/2">
-                    {position.positionName}
-                  </TableCell>
-                  <TableCell className="flex w-full items-center justify-between">
-                    {/* 10 */}
-                    <div className="flex justify-end gap-2">
-                      <HoverCard openDelay={100} closeDelay={200}>
-                        <HoverCardTrigger>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8"
-                          >
-                            <Link href={`/dashboard/cargos/${position._id}`}>
-                              <Pencil className="size-4" />
-                            </Link>
-                          </Button>
-                        </HoverCardTrigger>
-                        <HoverCardContent>Editar</HoverCardContent>
-                      </HoverCard>
-
-                      <AlertDialog>
+            {isLoading
+              ? Array.from({ length: TABLE_ROWS }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="w-[70%]">
+                      <Skeleton className="h-4 w-full max-w-[250px]" />
+                    </TableCell>
+                    <TableCell className="w-[30%]">
+                      <div className="flex items-center justify-end gap-2">
+                        <Skeleton className="size-8 rounded-md" />
+                        <Skeleton className="size-8 rounded-md" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              : positions.map((position) => (
+                  <TableRow key={position._id}>
+                    <TableCell className="w-[70%]">
+                      <div
+                        className="truncate text-sm"
+                        title={position.positionName}
+                      >
+                        {position.positionName}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[30%]">
+                      <div className="flex gap-2">
                         <HoverCard openDelay={100} closeDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 cursor-pointer"
-                                disabled={
-                                  isLoading ||
-                                  deletingPositionId === position._id
+                          <HoverCardTrigger>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                            >
+                              <Link href={`/dashboard/cargos/${position._id}`}>
+                                <Pencil className="size-4" />
+                              </Link>
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent>Editar</HoverCardContent>
+                        </HoverCard>
+
+                        <AlertDialog>
+                          <HoverCard openDelay={100} closeDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 cursor-pointer"
+                                  disabled={
+                                    isLoading ||
+                                    deletingPositionId === position._id
+                                  }
+                                >
+                                  <Trash className="size-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </HoverCardTrigger>
+                            <HoverCardContent>Deletar</HoverCardContent>
+                          </HoverCard>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Deletar cargo?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Essa ação não pode ser desfeita. O cargo
+                                {position.positionName
+                                  ? ` "${position.positionName}"`
+                                  : ""}{" "}
+                                será removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() =>
+                                  handleDeletePosition(position._id)
                                 }
                               >
-                                <Trash className="size-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                          </HoverCardTrigger>
-                          <HoverCardContent>Deletar</HoverCardContent>
-                        </HoverCard>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Deletar cargo?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Essa ação não pode ser desfeita. O cargo
-                              {position.positionName
-                                ? ` "${position.positionName}"`
-                                : ""}{" "}
-                              será removido permanentemente.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              variant="destructive"
-                              onClick={() => handleDeletePosition(position._id)}
-                            >
-                              Deletar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            {!isLoading && (
+              <>
+                {positions.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={2}
+                      className="text-muted-foreground h-16 text-center"
+                    >
+                      Nenhum cargo encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {Array.from({
+                  length: Math.max(
+                    0,
+                    TABLE_ROWS -
+                      positions.length -
+                      (positions.length === 0 ? 1 : 0),
+                  ),
+                }).map((_, index) => (
+                  <TableRow key={`empty-${index}`}>
+                    <TableCell className="w-[70%]">&nbsp;</TableCell>
+                    <TableCell className="w-[30%]">
+                      <div className="flex justify-end gap-2 opacity-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             )}
           </TableBody>
         </Table>
@@ -326,7 +376,7 @@ export function PositionsList() {
 
       <TablePagination
         pagination={pagination}
-        itemsCount={positions.length}
+        itemsCount={pagination.total}
         onPageChange={handlePageChange}
       />
     </>

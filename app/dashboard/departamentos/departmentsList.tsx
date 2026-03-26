@@ -228,12 +228,12 @@ export function DepartmentsList() {
         </form>
       </Form>
 
-      <div className="rounded-md border">
+      <div className="mx-auto w-full overflow-x-auto rounded-md border sm:w-[70%] lg:w-[50%]">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Departamento</TableHead>
-              <TableHead>Ação</TableHead>
+              <TableHead className="w-[70%]">Departamento</TableHead>
+              <TableHead className="w-[30%]">Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

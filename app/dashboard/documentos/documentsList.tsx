@@ -309,14 +309,14 @@ export function DocumentsList() {
         </form>
       </Form>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="overflow-x-auto rounded-md border">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Funcionário</TableHead>
-              <TableHead>Documento</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">
+              <TableHead className="w-[35%] md:w-[30%]">Funcionário</TableHead>
+              <TableHead className="w-[45%] md:w-[45%]">Documento</TableHead>
+              <TableHead className="w-[20%] md:w-[10%]">Status</TableHead>
+              <TableHead className="hidden w-[15%] md:table-cell">
                 Assinado em
               </TableHead>
             </TableRow>
@@ -325,13 +325,16 @@ export function DocumentsList() {
             {isLoading ? (
               Array.from({ length: PAGE_SIZE }).map((_, index) => (
                 <TableRow key={index}>
-                  <TableCell className="w-1/2">
+                  <TableCell className="w-[35%]">
                     <Skeleton className="h-4 w-full max-w-[250px]" />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-[45%]">
                     <Skeleton className="h-4 w-full max-w-[150px]" />
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="w-[20%]">
+                    <Skeleton className="h-4 w-full max-w-[150px]" />
+                  </TableCell>
+                  <TableCell className="hidden w-[15%] md:table-cell">
                     <Skeleton className="h-4 w-full max-w-[150px]" />
                   </TableCell>
                 </TableRow>
@@ -341,7 +344,7 @@ export function DocumentsList() {
                 {documents.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={3}
+                      colSpan={4}
                       className="text-muted-foreground h-16 text-center"
                     >
                       Nenhum documento encontrado.
@@ -351,19 +354,41 @@ export function DocumentsList() {
 
                 {visibleDocuments.map((document) => (
                   <TableRow key={document.token}>
-                    <TableCell>{document.name}</TableCell>
-                    <TableCell className="">
+                    <TableCell className="w-[35%]">
+                      <div className="truncate text-sm" title={document.name}>
+                        {document.name}
+                      </div>
+                    </TableCell>
+                    <TableCell className="flex">
                       <Link
-                        className="hover:text-amplo-secondary flex items-center gap-2 hover:underline"
+                        className="hover:text-amplo-secondary flex min-w-0 items-center gap-2 hover:underline"
                         href={`https://sandbox.app.zapsign.com.br/verificar/${document.token}`}
                         target="_blank"
                       >
-                        {document.token} <GoLinkExternal />
+                        <span
+                          className="min-w-0 flex-1 truncate text-sm"
+                          title={document.token}
+                        >
+                          {document.token}
+                        </span>
+                        <GoLinkExternal className="shrink-0" />
                       </Link>
                     </TableCell>
-                    <TableCell>{document.status}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {document.signed_at ?? "-"}
+                    <TableCell className="w-[20%]">
+                      <div
+                        className="truncate text-xs md:text-sm"
+                        title={document.status}
+                      >
+                        {document.status}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden w-[15%] md:table-cell">
+                      <div
+                        className="truncate text-xs md:text-sm"
+                        title={document.signed_at ?? "-"}
+                      >
+                        {document.signed_at ?? "-"}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -377,9 +402,10 @@ export function DocumentsList() {
                   ),
                 }).map((_, index) => (
                   <TableRow key={`empty-${index}`}>
-                    <TableCell className="w-1/2">&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell className="w-[35%]">&nbsp;</TableCell>
+                    <TableCell className="w-[45%]">&nbsp;</TableCell>
+                    <TableCell className="w-[20%]">&nbsp;</TableCell>
+                    <TableCell className="hidden w-[10%] md:table-cell">
                       &nbsp;
                     </TableCell>
                   </TableRow>

@@ -32,6 +32,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -85,6 +86,7 @@ export function HoursList() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
+  const TABLE_ROWS = 10;
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -272,165 +274,209 @@ export function HoursList() {
         </form>
       </Form>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="mx-auto overflow-x-auto rounded-md border sm:w-[70%] lg:w-[50%]">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Horário de trabalho</TableHead>
-              <TableHead>Ação</TableHead>
+              <TableHead className="w-[70%]">Horário de trabalho</TableHead>
+              <TableHead className="w-[30%]">Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={2} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="border-primary h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
-                    Carregando...
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : hours.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={2}
-                  className="text-muted-foreground h-24 text-center"
-                >
-                  Nenhum horário encontrado.
-                </TableCell>
-              </TableRow>
-            ) : (
-              hours.map((hour) => (
-                <TableRow key={hour._id}>
-                  <TableCell className="w-1/2">
-                    {hour.initialHour} / {hour.finalHour}
-                  </TableCell>
-                  <TableCell className="flex w-full items-center justify-between">
-                    <div className="flex justify-end gap-2">
-                      <AlertDialog
-                        open={editingHourId === hour._id}
-                        onOpenChange={(open) => {
-                          if (!open) setEditingHourId(null);
-                        }}
-                      >
-                        <HoverCard openDelay={100} closeDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 cursor-pointer"
-                                onClick={() => handleOpenEdit(hour)}
-                                disabled={isLoading}
+            {isLoading
+              ? Array.from({ length: TABLE_ROWS }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="w-[70%]">
+                      <Skeleton className="h-4 w-full max-w-[250px]" />
+                    </TableCell>
+                    <TableCell className="w-[30%]">
+                      <div className="flex items-center justify-end gap-2">
+                        <Skeleton className="size-8 rounded-md" />
+                        <Skeleton className="size-8 rounded-md" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              : hours.map((hour) => (
+                  <TableRow key={hour._id}>
+                    <TableCell className="w-[70%]">
+                      <div className="truncate text-sm">
+                        {hour.initialHour} / {hour.finalHour}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[30%]">
+                      <div className="flex gap-2">
+                        <AlertDialog
+                          open={editingHourId === hour._id}
+                          onOpenChange={(open) => {
+                            if (!open) setEditingHourId(null);
+                          }}
+                        >
+                          <HoverCard openDelay={100} closeDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 cursor-pointer"
+                                  onClick={() => handleOpenEdit(hour)}
+                                  disabled={isLoading}
+                                >
+                                  <Pencil className="size-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </HoverCardTrigger>
+                            <HoverCardContent>Editar</HoverCardContent>
+                          </HoverCard>
+
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Editar horário
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Atualize as horas inicial e final.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+
+                            <Form {...editForm}>
+                              <form
+                                id={`edit-hour-${hour._id}`}
+                                className="space-y-4"
+                                onSubmit={editForm.handleSubmit(
+                                  handleUpdateHour,
+                                )}
                               >
-                                <Pencil className="size-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                          </HoverCardTrigger>
-                          <HoverCardContent>Editar</HoverCardContent>
-                        </HoverCard>
+                                <div className="grid gap-4 md:grid-cols-2">
+                                  <FormField
+                                    control={editForm.control}
+                                    name="initialHour"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Hora Inicial</FormLabel>
+                                        <FormControl>
+                                          <Input type="time" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={editForm.control}
+                                    name="finalHour"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Hora Final</FormLabel>
+                                        <FormControl>
+                                          <Input type="time" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+                              </form>
+                            </Form>
 
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Editar horário</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Atualize as horas inicial e final.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-
-                          <Form {...editForm}>
-                            <form
-                              id={`edit-hour-${hour._id}`}
-                              className="space-y-4"
-                              onSubmit={editForm.handleSubmit(handleUpdateHour)}
-                            >
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <FormField
-                                  control={editForm.control}
-                                  name="initialHour"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Hora Inicial</FormLabel>
-                                      <FormControl>
-                                        <Input type="time" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={editForm.control}
-                                  name="finalHour"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Hora Final</FormLabel>
-                                      <FormControl>
-                                        <Input type="time" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                            </form>
-                          </Form>
-
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              type="submit"
-                              form={`edit-hour-${hour._id}`}
-                            >
-                              Salvar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      <AlertDialog>
-                        <HoverCard openDelay={100} closeDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 cursor-pointer"
-                                disabled={
-                                  isLoading || deletingHourId === hour._id
-                                }
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                type="submit"
+                                form={`edit-hour-${hour._id}`}
                               >
-                                <Trash className="size-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                          </HoverCardTrigger>
-                          <HoverCardContent>Deletar</HoverCardContent>
-                        </HoverCard>
+                                Salvar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
 
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Deletar horário?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Essa ação não pode ser desfeita. O horário será
-                              removido permanentemente.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              variant="destructive"
-                              onClick={() => handleDeleteHour(hour._id)}
-                            >
-                              Deletar
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                        <AlertDialog>
+                          <HoverCard openDelay={100} closeDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 cursor-pointer"
+                                  disabled={
+                                    isLoading || deletingHourId === hour._id
+                                  }
+                                >
+                                  <Trash className="size-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </HoverCardTrigger>
+                            <HoverCardContent>Deletar</HoverCardContent>
+                          </HoverCard>
+
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Deletar horário?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Essa ação não pode ser desfeita. O horário será
+                                removido permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() => handleDeleteHour(hour._id)}
+                              >
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            {!isLoading && (
+              <>
+                {hours.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={2}
+                      className="text-muted-foreground h-16 text-center"
+                    >
+                      Nenhum horário encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {Array.from({
+                  length: Math.max(
+                    0,
+                    TABLE_ROWS - hours.length - (hours.length === 0 ? 1 : 0),
+                  ),
+                }).map((_, index) => (
+                  <TableRow key={`empty-${index}`}>
+                    <TableCell className="w-[70%]">&nbsp;</TableCell>
+                    <TableCell className="w-[30%]">
+                      <div className="flex justify-end gap-2 opacity-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8"
+                          disabled
+                        >
+                          <Trash className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </>
             )}
           </TableBody>
         </Table>
@@ -438,7 +484,7 @@ export function HoursList() {
 
       <TablePagination
         pagination={pagination}
-        itemsCount={hours.length}
+        itemsCount={pagination.total}
         onPageChange={handlePageChange}
       />
     </>

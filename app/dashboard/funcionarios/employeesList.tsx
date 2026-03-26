@@ -228,24 +228,24 @@ export function EmployeesList() {
         </form>
       </Form>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="mx-auto overflow-x-auto rounded-md border sm:w-[70%] lg:w-[50%]">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Funcionário</TableHead>
-              <TableHead>Ação</TableHead>
+              <TableHead className="w-[70%]">Funcionário</TableHead>
+              <TableHead className="w-[30%]">Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: TABLE_ROWS }).map((_, index) => (
                 <TableRow key={index}>
-                  <TableCell className="w-1/2">
+                  <TableCell className="w-[70%]">
                     <Skeleton className="h-4 w-full max-w-[250px]" />
                   </TableCell>
-                  <TableCell className="flex w-full items-center justify-between">
+                  <TableCell className="w-[30%]">
                     <Skeleton className="h-4 w-full max-w-[150px]" />
-                    <div className="flex justify-end gap-2">
+                    <div className="mt-2 flex justify-end gap-2 md:mt-0">
                       <Skeleton className="size-8 rounded-md" />
                       <Skeleton className="size-8 rounded-md" />
                     </div>
@@ -266,73 +266,84 @@ export function EmployeesList() {
                 )}
                 {employees.map((employee) => (
                   <TableRow key={employee._id}>
-                    <TableCell className="w-1/2">{employee.name}</TableCell>
-                    <TableCell className="flex w-full items-center justify-between">
-                      {employee.companyName}
-                      <div className="flex justify-end gap-2">
-                        <HoverCard openDelay={100} closeDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              asChild
-                            >
-                              <Link
-                                href={`/dashboard/funcionarios/${employee._id}`}
-                              >
-                                <Pencil className="size-4" />
-                              </Link>
-                            </Button>
-                          </HoverCardTrigger>
-                          <HoverCardContent>Editar</HoverCardContent>
-                        </HoverCard>
-
-                        <AlertDialog>
+                    <TableCell>
+                      <div className="truncate text-sm" title={employee.name}>
+                        {employee.name}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="flex justify-start gap-2">
                           <HoverCard openDelay={100} closeDelay={200}>
                             <HoverCardTrigger asChild>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 cursor-pointer"
-                                  disabled={
-                                    isLoading ||
-                                    deletingEmployeeId === employee._id
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
+                                asChild
+                              >
+                                <Link
+                                  href={`/dashboard/funcionarios/${employee._id}`}
+                                >
+                                  <Pencil className="size-4" />
+                                </Link>
+                              </Button>
+                            </HoverCardTrigger>
+                            <HoverCardContent>Editar</HoverCardContent>
+                          </HoverCard>
+
+                          <AlertDialog>
+                            <HoverCard openDelay={100} closeDelay={200}>
+                              <HoverCardTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8 cursor-pointer"
+                                    disabled={
+                                      isLoading ||
+                                      deletingEmployeeId === employee._id
+                                    }
+                                  >
+                                    <Trash className="size-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                              </HoverCardTrigger>
+                              <HoverCardContent>Deletar</HoverCardContent>
+                            </HoverCard>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Deletar funcionário?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Essa ação não pode ser desfeita. O funcionário
+                                  {employee.name
+                                    ? ` "${employee.name}"`
+                                    : ""}{" "}
+                                  será removido permanentemente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  variant="destructive"
+                                  onClick={() =>
+                                    handleDeleteEmployee(employee._id)
                                   }
                                 >
-                                  <Trash className="size-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                            </HoverCardTrigger>
-                            <HoverCardContent>Deletar</HoverCardContent>
-                          </HoverCard>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Deletar funcionário?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Essa ação não pode ser desfeita. O funcionário
-                                {employee.name
-                                  ? ` "${employee.name}"`
-                                  : ""}{" "}
-                                será removido permanentemente.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                variant="destructive"
-                                onClick={() =>
-                                  handleDeleteEmployee(employee._id)
-                                }
-                              >
-                                Deletar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                  Deletar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                        <div
+                          className="min-w-0 flex-1 truncate text-xs md:text-sm"
+                          title={employee.companyName}
+                        >
+                          {employee.companyName}
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -346,26 +357,28 @@ export function EmployeesList() {
                   ),
                 }).map((_, index) => (
                   <TableRow key={`empty-${index}`}>
-                    <TableCell className="w-1/2">&nbsp;</TableCell>
-                    <TableCell className="flex w-full items-center justify-between">
-                      &nbsp;
-                      <div className="flex justify-end gap-2 opacity-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          disabled
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          disabled
-                        >
-                          <Trash className="size-4" />
-                        </Button>
+                    <TableCell className="w-[45%]">&nbsp;</TableCell>
+                    <TableCell className="w-[55%]">
+                      <div className="flex items-center justify-between">
+                        &nbsp;
+                        <div className="flex justify-end gap-2 opacity-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            disabled
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            disabled
+                          >
+                            <Trash className="size-4" />
+                          </Button>
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -378,7 +391,7 @@ export function EmployeesList() {
 
       <TablePagination
         pagination={pagination}
-        itemsCount={employees.length}
+        itemsCount={pagination.total}
         onPageChange={handlePageChange}
       />
     </>

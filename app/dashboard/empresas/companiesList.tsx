@@ -11,14 +11,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import Cookies from "js-cookie";
 
@@ -30,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import { useUser } from "@/context/UserContext";
 import { CompanyTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -181,26 +174,26 @@ export function CompaniesList() {
           />
         </form>
       </Form>
-      <div className="rounded-md border">
-        <Table>
+      <div className="overflow-x-auto rounded-md border">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>CNPJ</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead className="w-[45%]">Nome</TableHead>
+              <TableHead className="w-[30%]">CNPJ</TableHead>
+              <TableHead className="w-[25%]">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               Array.from({ length: TABLE_ROWS }).map((_, index) => (
                 <TableRow key={index}>
-                  <TableCell>
+                  <TableCell className="w-[45%]">
                     <Skeleton className="h-4 w-full max-w-[250px]" />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="w-[30%]">
                     <Skeleton className="h-4 w-full max-w-[150px]" />
                   </TableCell>
-                  <TableCell className="flex items-center justify-end">
+                  <TableCell className="w-[25%]">
                     <div className="flex justify-end gap-2">
                       <Skeleton className="size-8 rounded-md" />
                       <Skeleton className="size-8 rounded-md" />
@@ -222,9 +215,20 @@ export function CompaniesList() {
                 )}
                 {companies.map((company) => (
                   <TableRow key={company._id}>
-                    <TableCell>{company.companyName}</TableCell>
-                    <TableCell>{company.cnpj}</TableCell>
-                    <TableCell className="flex items-center justify-end">
+                    <TableCell className="w-[45%]">
+                      <div
+                        className="truncate text-sm"
+                        title={company.companyName}
+                      >
+                        {company.companyName}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[30%]">
+                      <div className="truncate text-xs md:text-sm" title={company.cnpj}>
+                        {company.cnpj}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[25%]">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="icon" className="size-8">
                           <Link href={`empresas/${company._id}`}>
@@ -247,9 +251,9 @@ export function CompaniesList() {
                   ),
                 }).map((_, index) => (
                   <TableRow key={`empty-${index}`}>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell>&nbsp;</TableCell>
-                    <TableCell className="flex items-center justify-end">
+                    <TableCell className="w-[45%]">&nbsp;</TableCell>
+                    <TableCell className="w-[30%]">&nbsp;</TableCell>
+                    <TableCell className="w-[25%]">
                       <div className="flex justify-end gap-2 opacity-0">
                         <Button
                           variant="ghost"
@@ -277,99 +281,11 @@ export function CompaniesList() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between py-4">
-        <p className="text-muted-foreground text-sm">
-          {companies.length > 0 ? (
-            <>
-              Mostrando{" "}
-              {pagination.page === 1 ? 1 : (pagination.page - 1) * 10 + 1}
-              {" a "}
-              {pagination.page * 10 > pagination.total
-                ? pagination.total
-                : pagination.page * 10}
-              {" de "}
-              {pagination.total}
-              {" resultados"}
-            </>
-          ) : (
-            "Nenhum resultado encontrado"
-          )}
-        </p>
-
-        {pagination.totalPages > 1 && (
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => {
-                    if (pagination.hasPrevPage && pagination.prevPage) {
-                      handlePageChange(pagination.prevPage);
-                    }
-                  }}
-                  className={
-                    !pagination.hasPrevPage
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                >
-                  Anterior
-                </PaginationPrevious>
-              </PaginationItem>
-
-              {Array.from({ length: pagination.totalPages }).map((_, index) => {
-                const pageNumber = index + 1;
-                const shouldShowPage =
-                  pageNumber === 1 ||
-                  pageNumber === pagination.totalPages ||
-                  Math.abs(pageNumber - pagination.page) <= 1;
-
-                if (!shouldShowPage) {
-                  if (
-                    pageNumber === 2 ||
-                    pageNumber === pagination.totalPages - 1
-                  ) {
-                    return (
-                      <PaginationItem key={pageNumber}>
-                        <span className="px-2">...</span>
-                      </PaginationItem>
-                    );
-                  }
-                  return null;
-                }
-
-                return (
-                  <PaginationItem key={pageNumber}>
-                    <PaginationLink
-                      onClick={() => handlePageChange(pageNumber)}
-                      isActive={pagination.page === pageNumber}
-                      className="cursor-pointer"
-                    >
-                      {pageNumber}
-                    </PaginationLink>
-                  </PaginationItem>
-                );
-              })}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => {
-                    if (pagination.hasNextPage && pagination.nextPage) {
-                      handlePageChange(pagination.nextPage);
-                    }
-                  }}
-                  className={
-                    !pagination.hasNextPage
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                >
-                  Próximo
-                </PaginationNext>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
-      </div>
+      <TablePagination
+        pagination={pagination}
+        itemsCount={pagination.total}
+        onPageChange={handlePageChange}
+      />
     </>
   );
 }
