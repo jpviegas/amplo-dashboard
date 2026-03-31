@@ -14,6 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import Cookies from "js-cookie";
 
+import { TablePagination } from "@/components/layout/dashboard/TablePagination";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   Table,
   TableBody,
@@ -22,7 +28,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import { useUser } from "@/context/UserContext";
 import { CompanyTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -224,20 +229,47 @@ export function CompaniesList() {
                       </div>
                     </TableCell>
                     <TableCell className="w-[30%]">
-                      <div className="truncate text-xs md:text-sm" title={company.cnpj}>
+                      <div
+                        className="truncate text-xs md:text-sm"
+                        title={company.cnpj}
+                      >
                         {company.cnpj}
                       </div>
                     </TableCell>
                     <TableCell className="w-[25%]">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <Link href={`empresas/${company._id}`}>
-                            <Pencil className="size-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <Trash className="size-4" />
-                        </Button>
+                        <HoverCard openDelay={100} closeDelay={0}>
+                          <HoverCardTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              asChild
+                            >
+                              <Link href={`empresas/${company._id}`}>
+                                <Pencil className="size-4" />
+                              </Link>
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="pointer-events-none">
+                            Editar
+                          </HoverCardContent>
+                        </HoverCard>
+
+                        <HoverCard openDelay={100} closeDelay={0}>
+                          <HoverCardTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                            >
+                              <Trash className="size-4" />
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="pointer-events-none">
+                            Deletar
+                          </HoverCardContent>
+                        </HoverCard>
                       </div>
                     </TableCell>
                   </TableRow>

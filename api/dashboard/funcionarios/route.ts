@@ -3,6 +3,7 @@ import { EmployeeType, EmployeeTypeWithId } from "@/zodSchemas";
 export async function GetAllEmployees(
   userId: string | { email: string },
   search?: string,
+  status?: "active" | "inactive",
   page?: string,
 ): Promise<{
   success: boolean;
@@ -28,6 +29,10 @@ export async function GetAllEmployees(
 
   if (search) {
     queryParams.append("search", search);
+  }
+
+  if (status) {
+    queryParams.append("status", status);
   }
 
   if (page) {
@@ -133,14 +138,17 @@ export async function CreateEmployee(
   userId: string | { email: string },
   values: EmployeeType,
 ): Promise<{ message: string; success: boolean }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+      body: JSON.stringify(values),
     },
-    body: JSON.stringify(values),
-  });
+  );
 
   if (!res) {
     throw new Error("Erro ao cadastrar a funcionário");

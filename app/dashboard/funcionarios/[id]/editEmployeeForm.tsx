@@ -1,10 +1,12 @@
 "use client";
 
+import { GetAllCities } from "@/api/dashboard/cities/route";
 import { GetAllCompanies } from "@/api/dashboard/empresas/route";
 import {
   GetCompanyEmployeeById,
   UpdateEmployee,
 } from "@/api/dashboard/funcionarios/route";
+import { GetAllHours } from "@/api/dashboard/horarios/route";
 import Loading from "@/app/loading";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -35,16 +37,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import {
+  CityType,
   CompanyTypeWithId,
   EmployeeTypeWithId,
   registerEmployeeSchema,
   ufsBrasil,
+  WorkingHourTypeWithId,
 } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MapPin, Phone, Plus, Search, User } from "lucide-react";
+import { MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -66,6 +70,8 @@ export default function EditEmployeeForm() {
   };
   const [activeTab, setActiveTab] = useState("general");
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
+  const [hours, setHours] = useState<WorkingHourTypeWithId[]>([]);
+  const [cities, setCities] = useState<CityType[]>([]);
   const [employee, setEmployee] = useState<EmployeeTypeWithId>();
   const { user } = useUser();
   const { id }: { id: string } = useParams();
@@ -89,6 +95,38 @@ export default function EditEmployeeForm() {
     }
   };
 
+  const fetchHours = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, hours } = await GetAllHours(user._id);
+      if (success) {
+        setHours(Array.isArray(hours) ? hours : []);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar horários:", error);
+      toast.error("Não foi possível carregar os horários.");
+    }
+  };
+
+  const fetchCities = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, cities } = await GetAllCities(user._id);
+      if (success) {
+        setCities(Array.isArray(cities) ? cities : []);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar cidades:", error);
+      toast.error("Não foi possível carregar as cidades.");
+    }
+  };
+
   const fetchEmployee = async () => {
     try {
       const { success, message, user } = await GetCompanyEmployeeById(id);
@@ -109,6 +147,8 @@ export default function EditEmployeeForm() {
 
   useEffect(() => {
     fetchCompanies();
+    fetchHours();
+    fetchCities();
     fetchEmployee();
   }, [user?._id]);
 
@@ -120,10 +160,25 @@ export default function EditEmployeeForm() {
     if (employee) {
       const parsedEmployee = {
         ...employee,
+        city:
+          typeof (employee as unknown as { city?: unknown })?.city === "string"
+            ? (employee as unknown as { city?: string }).city
+            : ((employee as unknown as { city?: { city?: string } })?.city
+                ?.city ?? ""),
       };
       form.reset(parsedEmployee as FormValues);
     }
   }, [employee, form]);
+
+  const cityOptions = useMemo(() => {
+    const normalized = cities
+      .map((c) => c?.city)
+      .filter((c): c is string => Boolean(c))
+      .map((c) => c.trim())
+      .filter(Boolean);
+
+    return Array.from(new Set(normalized));
+  }, [cities]);
 
   async function onSubmit(values: FormValues) {
     if (!user?._id) {
@@ -289,8 +344,11 @@ export default function EditEmployeeForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="hour1">08:00 / 17:00</SelectItem>
-                        <SelectItem value="hour2">18:00 / 06:00</SelectItem>
+                        {hours.map((hour) => (
+                          <SelectItem key={hour._id} value={hour._id}>
+                            {hour.initialHour} / {hour.finalHour}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {/* <Button variant="outline" size="sm" className="gap-2">
@@ -397,10 +455,10 @@ export default function EditEmployeeForm() {
                             </SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button variant="outline" size="sm" className="gap-2">
+                        {/* <Button variant="outline" size="sm" className="gap-2">
                           <Plus className="size-4" />
                           Criar novo departamento
-                        </Button>
+                        </Button> */}
                       </FormItem>
                     )}
                   />
@@ -424,10 +482,10 @@ export default function EditEmployeeForm() {
                             <SelectItem value="cost2">Centro 2</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Button variant="outline" size="sm" className="gap-2">
+                        {/* <Button variant="outline" size="sm" className="gap-2">
                           <Plus className="size-4" />
                           Criar novo centro de custo
-                        </Button>
+                        </Button> */}
                       </FormItem>
                     )}
                   />
@@ -602,7 +660,20 @@ export default function EditEmployeeForm() {
                         <FormLabel>CNH</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input placeholder="CNH" {...field} />
+                            <Input
+                              placeholder="CNH"
+                              maxLength={11}
+                              inputMode="numeric"
+                              value={onlyDigits(field.value ?? "").slice(0, 11)}
+                              onChange={(e) =>
+                                field.onChange(
+                                  onlyDigits(e.target.value).slice(0, 11),
+                                )
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
                             <Search className="absolute top-2.5 right-3 size-4 text-gray-400" />
                           </div>
                         </FormControl>
@@ -725,12 +796,23 @@ export default function EditEmployeeForm() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Cidade</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input placeholder="Cidade" {...field} />
-                            <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
-                          </div>
-                        </FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a cidade" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {cityOptions.map((city) => (
+                              <SelectItem key={city} value={city}>
+                                {city}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

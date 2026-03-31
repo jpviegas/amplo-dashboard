@@ -43,9 +43,9 @@ import {
 } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, MapPin, Phone, Plus, Search, User } from "lucide-react";
+import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -58,6 +58,11 @@ export default function RegisterEmployeeForm({
   initialData,
 }: EmployeeFormProps) {
   const onlyDigits = (s: string) => s.replace(/\D+/g, "");
+  const formatCep = (value: string) => {
+    const v = onlyDigits(value).slice(0, 8);
+    if (v.length <= 5) return v;
+    return v.replace(/(\d{5})(\d+)/, "$1-$2");
+  };
   const formatCpf = (value: string) => {
     const v = onlyDigits(value).slice(0, 11);
     if (v.length <= 3) return v;
@@ -74,6 +79,11 @@ export default function RegisterEmployeeForm({
   const [activeTab, setActiveTab] = useState("general");
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
+  const [isCepLoading, setIsCepLoading] = useState(false);
+  const lastCepLookupRef = useRef<string | null>(
+    initialData?.cep ? onlyDigits(initialData.cep) : null,
+  );
+  const cepAbortRef = useRef<AbortController | null>(null);
   const { user } = useUser();
 
   type FormValues = z.infer<typeof registerEmployeeSchema>;
@@ -123,8 +133,109 @@ export default function RegisterEmployeeForm({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerEmployeeSchema),
-    defaultValues: initialData,
+    defaultValues: {
+      ...(initialData ?? {}),
+      status: initialData?.status ?? "active",
+      name: initialData?.name ?? "",
+      email: initialData?.email ?? "",
+      pis: initialData?.pis ?? "",
+      cpf: initialData?.cpf ?? "",
+      registration: initialData?.registration ?? "",
+      sheetNumber: initialData?.sheetNumber ?? "",
+      ctps: initialData?.ctps ?? "",
+      rg: initialData?.rg ?? "",
+      socialName: initialData?.socialName ?? "",
+      cnh: initialData?.cnh ?? "",
+      cep: initialData?.cep ?? "",
+      address: initialData?.address ?? "",
+      neighborhood: initialData?.neighborhood ?? "",
+      city: typeof initialData?.city === "string" ? initialData.city : "",
+      phone: initialData?.phone ?? "",
+      extension: initialData?.extension ?? "",
+      fatherName: initialData?.fatherName ?? "",
+      motherName: initialData?.motherName ?? "",
+      nationality: initialData?.nationality ?? "",
+      placeOfBirth: initialData?.placeOfBirth ?? "",
+    },
   });
+
+  const cepValue = form.watch("cep");
+  useEffect(() => {
+    const cepDigits = onlyDigits(cepValue ?? "");
+    if (cepDigits.length !== 8) return;
+    if (lastCepLookupRef.current === cepDigits) return;
+
+    lastCepLookupRef.current = cepDigits;
+    cepAbortRef.current?.abort();
+    const controller = new AbortController();
+    cepAbortRef.current = controller;
+
+    const run = async () => {
+      try {
+        setIsCepLoading(true);
+        const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error("Erro ao buscar CEP");
+        }
+
+        const data: {
+          erro?: boolean;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        } = await res.json();
+
+        if (data.erro) {
+          toast.error("CEP não encontrado.");
+          return;
+        }
+
+        if (data.logradouro) {
+          form.setValue("address", data.logradouro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.bairro) {
+          form.setValue("neighborhood", data.bairro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.localidade) {
+          form.setValue("city", data.localidade, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.uf) {
+          form.setValue("state", data.uf, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+      } catch (error) {
+        if ((error as { name?: string } | null)?.name === "AbortError") return;
+        toast.error("Não foi possível buscar o CEP.");
+      } finally {
+        setIsCepLoading(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      controller.abort();
+    };
+  }, [cepValue, form]);
 
   async function onSubmit(values: FormValues) {
     if (!user?._id) {
@@ -419,7 +530,7 @@ export default function RegisterEmployeeForm({
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button variant="outline" size="sm" className="gap-2">
+                    {/* <Button variant="outline" size="sm" className="gap-2">
                       <Link
                         href="/dashboard/departamentos/cadastrar"
                         className="flex items-center gap-2"
@@ -427,7 +538,7 @@ export default function RegisterEmployeeForm({
                         <Plus className="size-4" />
                         Criar novo departamento
                       </Link>
-                    </Button>
+                    </Button> */}
                   </FormItem>
                 )}
               />
@@ -698,7 +809,20 @@ export default function RegisterEmployeeForm({
                     <FormLabel>CEP</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input placeholder="CEP" {...field} />
+                        <Input
+                          placeholder="CEP"
+                          maxLength={9}
+                          value={formatCep(field.value ?? "")}
+                          onChange={(e) =>
+                            field.onChange(
+                              onlyDigits(e.target.value).slice(0, 8),
+                            )
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                          disabled={isCepLoading}
+                        />
                         <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
                       </div>
                     </FormControl>
@@ -759,10 +883,7 @@ export default function RegisterEmployeeForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>UF</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a UF" />

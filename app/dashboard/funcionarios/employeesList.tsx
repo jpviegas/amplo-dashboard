@@ -31,6 +31,8 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -54,6 +56,7 @@ import { z } from "zod";
 
 const FormSchema = z.object({
   search: z.string(),
+  status: z.enum(["all", "active", "inactive"]).optional(),
 });
 
 export function EmployeesList() {
@@ -90,6 +93,7 @@ export function EmployeesList() {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       search: "",
+      status: "all",
     },
   });
 
@@ -107,6 +111,9 @@ export function EmployeesList() {
       } = await GetAllEmployees(
         userId,
         values.search,
+        values.status === "active" || values.status === "inactive"
+          ? values.status
+          : undefined,
         pagination.page.toString(),
       );
 
@@ -160,6 +167,10 @@ export function EmployeesList() {
       } = await GetAllEmployees(
         userId,
         form.getValues("search"),
+        (() => {
+          const s = form.getValues("status");
+          return s === "active" || s === "inactive" ? s : undefined;
+        })(),
         newPage.toString(),
       );
 
@@ -212,19 +223,50 @@ export function EmployeesList() {
           className="flex items-center justify-between"
           onSubmit={form.handleSubmit(fetchEmployees)}
         >
-          <FormField
-            control={form.control}
-            name="search"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-4">
-                <FormLabel>Buscar:</FormLabel>
-                <FormControl>
-                  <Input placeholder="buscar funcionário" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex flex-wrap items-center gap-6">
+            <FormField
+              control={form.control}
+              name="search"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-4">
+                  <FormLabel>Buscar:</FormLabel>
+                  <FormControl>
+                    <Input placeholder="buscar funcionário" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="flex items-center gap-4">
+                  <FormLabel>Status:</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      className="flex items-center gap-4"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem id="status-all" value="all" />
+                        <Label htmlFor="status-all">Todos</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem id="status-active" value="active" />
+                        <Label htmlFor="status-active">Ativos</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem id="status-inactive" value="inactive" />
+                        <Label htmlFor="status-inactive">Inativos</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
         </form>
       </Form>
 
@@ -274,7 +316,7 @@ export function EmployeesList() {
                     <TableCell>
                       <div className="flex min-w-0 items-center gap-2">
                         <div className="flex justify-start gap-2">
-                          <HoverCard openDelay={100} closeDelay={200}>
+                          <HoverCard openDelay={100} closeDelay={0}>
                             <HoverCardTrigger asChild>
                               <Button
                                 variant="ghost"
@@ -289,11 +331,13 @@ export function EmployeesList() {
                                 </Link>
                               </Button>
                             </HoverCardTrigger>
-                            <HoverCardContent>Editar</HoverCardContent>
+                            <HoverCardContent className="pointer-events-none">
+                              Editar
+                            </HoverCardContent>
                           </HoverCard>
 
                           <AlertDialog>
-                            <HoverCard openDelay={100} closeDelay={200}>
+                            <HoverCard openDelay={100} closeDelay={0}>
                               <HoverCardTrigger asChild>
                                 <AlertDialogTrigger asChild>
                                   <Button
@@ -309,7 +353,9 @@ export function EmployeesList() {
                                   </Button>
                                 </AlertDialogTrigger>
                               </HoverCardTrigger>
-                              <HoverCardContent>Deletar</HoverCardContent>
+                              <HoverCardContent className="pointer-events-none">
+                                Deletar
+                              </HoverCardContent>
                             </HoverCard>
                             <AlertDialogContent>
                               <AlertDialogHeader>

@@ -24,7 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -69,10 +69,19 @@ function getCurrentSignerQuery(raw: string): string {
 }
 
 function mergeSignerEmail(raw: string, email: string): string {
-  const emails = parseSignerEmails(raw);
   const nextEmail = email.trim();
+
+  const lastSeparatorIndex = Math.max(
+    raw.lastIndexOf(","),
+    raw.lastIndexOf(";"),
+    raw.lastIndexOf("\n"),
+  );
+
+  const head =
+    lastSeparatorIndex >= 0 ? raw.slice(0, lastSeparatorIndex + 1) : "";
+  const existingEmails = parseSignerEmails(head);
   const merged = Array.from(
-    new Set([...emails, nextEmail].map((e) => e.toLowerCase())),
+    new Set([...existingEmails, nextEmail].map((e) => e.toLowerCase())),
   );
   return merged.join(", ");
 }
@@ -86,6 +95,9 @@ export default function RegisterDocumentForm() {
 
   const form = useForm<UploadDocumentValues>({
     resolver: zodResolver(uploadDocumentSchema),
+    mode: "onChange",
+    reValidateMode: "onChange",
+    criteriaMode: "firstError",
     defaultValues: {
       userId,
       signers: "",
@@ -147,6 +159,17 @@ export default function RegisterDocumentForm() {
       .slice(0, 10);
   }, [users, signerQuery]);
 
+  function onInvalid(errors: FieldErrors<UploadDocumentValues>) {
+    const messages = Object.values(errors)
+      .map((error) => error?.message)
+      .filter((message): message is string => Boolean(message));
+
+    const uniqueMessages = Array.from(new Set(messages));
+    for (const message of uniqueMessages) {
+      toast.error(message);
+    }
+  }
+
   async function onSubmit(values: UploadDocumentValues) {
     try {
       const signerEmails = parseSignerEmails(values.signers);
@@ -154,6 +177,7 @@ export default function RegisterDocumentForm() {
 
       if (signerEmails.length === 0) {
         form.setError("signers", { message: "Informe pelo menos um email." });
+        toast.error("Informe pelo menos um email.");
         return;
       }
 
@@ -161,6 +185,7 @@ export default function RegisterDocumentForm() {
         form.setError("signers", {
           message: `Emails inválidos: ${invalidEmails.join(", ")}`,
         });
+        toast.error(`Emails inválidos: ${invalidEmails.join(", ")}`);
         return;
       }
 
@@ -187,12 +212,28 @@ export default function RegisterDocumentForm() {
     }
   }
 
-  console.log(form.getValues());
-
   return (
     <Form {...form}>
-      <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="space-y-6"
+        onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      >
         <input type="hidden" {...form.register("userId")} />
+
+        {form.formState.isSubmitted &&
+          Object.keys(form.formState.errors).length > 0 && (
+            <div className="text-destructive space-y-1 text-sm font-medium">
+              {Array.from(
+                new Set(
+                  Object.values(form.formState.errors)
+                    .map((error) => error?.message)
+                    .filter((message): message is string => Boolean(message)),
+                ),
+              ).map((message) => (
+                <div key={message}>{message}</div>
+              ))}
+            </div>
+          )}
 
         <FormField
           control={form.control}
@@ -200,8 +241,8 @@ export default function RegisterDocumentForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assinantes (emails separados por vírgula)</FormLabel>
-              <FormControl>
-                <div className="relative">
+              <div className="relative">
+                <FormControl>
                   <Input
                     placeholder="Digite um nome ou email"
                     {...field}
@@ -216,49 +257,49 @@ export default function RegisterDocumentForm() {
                       }, 150);
                     }}
                   />
-                  {isSignerSearchOpen && signerQuery && (
-                    <div className="bg-popover text-popover-foreground absolute top-full z-50 mt-1 w-full overflow-hidden rounded-md border shadow-md">
-                      {isUsersLoading ? (
-                        <div className="text-muted-foreground p-2 text-sm">
-                          Carregando...
-                        </div>
-                      ) : filteredUsers.length === 0 ? (
-                        <div className="text-muted-foreground p-2 text-sm">
-                          Nenhum resultado
-                        </div>
-                      ) : (
-                        <div className="max-h-60 overflow-auto">
-                          {filteredUsers.map((u) => (
-                            <button
-                              key={u._id}
-                              type="button"
-                              className="hover:bg-accent hover:text-accent-foreground w-full px-3 py-2 text-left text-sm"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                const nextValue = mergeSignerEmail(
-                                  form.getValues("signers"),
-                                  u.email,
-                                );
-                                form.setValue("signers", nextValue, {
-                                  shouldDirty: true,
-                                  shouldTouch: true,
-                                  shouldValidate: true,
-                                });
-                                setIsSignerSearchOpen(false);
-                              }}
-                            >
-                              <div className="font-medium">{u.name}</div>
-                              <div className="text-muted-foreground text-xs">
-                                {u.email}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </FormControl>
+                </FormControl>
+                {isSignerSearchOpen && signerQuery && (
+                  <div className="bg-popover text-popover-foreground absolute top-full z-50 mt-1 w-full overflow-hidden rounded-md border shadow-md">
+                    {isUsersLoading ? (
+                      <div className="text-muted-foreground p-2 text-sm">
+                        Carregando...
+                      </div>
+                    ) : filteredUsers.length === 0 ? (
+                      <div className="text-muted-foreground p-2 text-sm">
+                        Nenhum resultado
+                      </div>
+                    ) : (
+                      <div className="max-h-60 overflow-auto">
+                        {filteredUsers.map((u) => (
+                          <button
+                            key={u._id}
+                            type="button"
+                            className="hover:bg-accent hover:text-accent-foreground w-full px-3 py-2 text-left text-sm"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              const nextValue = mergeSignerEmail(
+                                form.getValues("signers"),
+                                u.email,
+                              );
+                              form.setValue("signers", nextValue, {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true,
+                              });
+                              setIsSignerSearchOpen(false);
+                            }}
+                          >
+                            <div className="font-medium">{u.name}</div>
+                            <div className="text-muted-foreground text-xs">
+                              {u.email}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -322,8 +363,11 @@ export default function RegisterDocumentForm() {
         />
 
         <div className="flex justify-end gap-4">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            Enviar documento
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting || !form.formState.isValid}
+          >
+            {form.formState.isSubmitting ? "Enviando..." : "Enviar documento"}
           </Button>
           <Button asChild variant="outline" type="reset">
             <Link href={"./"}>Cancelar</Link>

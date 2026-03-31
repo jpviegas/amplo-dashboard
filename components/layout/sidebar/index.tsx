@@ -60,6 +60,7 @@ export default function SidebarComponent() {
                 { item: "Funcionário", url: "funcionario" },
                 { item: "Departamento", url: "departamento" },
                 { item: "Cargo", url: "cargo" },
+                { item: "Cidade", url: "cidade" },
               ],
             },
             {

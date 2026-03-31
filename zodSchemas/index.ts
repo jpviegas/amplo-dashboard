@@ -110,13 +110,7 @@ export const registerEmployeeSchema = z.object({
   cep: z.string().optional(),
   address: z.string().optional(),
   neighborhood: z.string().optional(),
-  city: z
-    .object({
-      city: z.string().optional(),
-      meal: z.number().optional(),
-      transport: z.number().optional(),
-    })
-    .optional(),
+  city: z.string().optional(),
   state: z.string().optional(),
   phone: z.string().optional(),
   extension: z.string().optional(),
@@ -190,3 +184,13 @@ export const servicechema = z.object({
   status: z.string().min(1, "O arquivo é obrigatório"),
   name: z.string().min(1, "O arquivo é obrigatório"),
 });
+
+export type CityType = z.infer<typeof citychema>;
+export type CityTypeWithId = CityType & { _id: string };
+export const citychema = z
+  .object({
+    city: z.string().optional(),
+    meal: z.number().optional(),
+    transport: z.number().optional(),
+  })
+  .optional();

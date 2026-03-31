@@ -271,7 +271,7 @@ export function DepartmentsList() {
                     </TableCell>
                     <TableCell className="flex w-full items-center justify-between">
                       <div className="flex justify-end gap-2">
-                        <HoverCard openDelay={100} closeDelay={200}>
+                        <HoverCard openDelay={100} closeDelay={0}>
                           <HoverCardTrigger>
                             <Button
                               variant="ghost"
@@ -283,12 +283,14 @@ export function DepartmentsList() {
                               </Link>
                             </Button>
                           </HoverCardTrigger>
-                          <HoverCardContent>Editar</HoverCardContent>
+                          <HoverCardContent className="pointer-events-none">
+                            Editar
+                          </HoverCardContent>
                         </HoverCard>
                         <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <HoverCard openDelay={100} closeDelay={200}>
-                              <HoverCardTrigger>
+                          <HoverCard openDelay={100} closeDelay={0}>
+                            <HoverCardTrigger asChild>
+                              <AlertDialogTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -300,10 +302,12 @@ export function DepartmentsList() {
                                 >
                                   <Trash className="size-4" />
                                 </Button>
-                                <HoverCardContent>Deletar</HoverCardContent>
-                              </HoverCardTrigger>
-                            </HoverCard>
-                          </AlertDialogTrigger>
+                              </AlertDialogTrigger>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="pointer-events-none">
+                              Deletar
+                            </HoverCardContent>
+                          </HoverCard>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
