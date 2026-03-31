@@ -1,6 +1,7 @@
 "use client";
 
 import { GetAllPositions } from "@/api/dashboard/cargos/route";
+import { GetAllCities } from "@/api/dashboard/cities/route";
 import { GetAllDepartments } from "@/api/dashboard/departamentos/route";
 import {
   CreateEmployee,
@@ -35,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import {
+  CityType,
   DepartmentTypeWithId,
   EmployeeTypeWithId,
   PositionTypeWithId,
@@ -45,7 +47,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -79,6 +81,7 @@ export default function RegisterEmployeeForm({
   const [activeTab, setActiveTab] = useState("general");
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
+  const [cities, setCities] = useState<CityType[]>([]);
   const [isCepLoading, setIsCepLoading] = useState(false);
   const lastCepLookupRef = useRef<string | null>(
     initialData?.cep ? onlyDigits(initialData.cep) : null,
@@ -126,9 +129,26 @@ export default function RegisterEmployeeForm({
     }
   };
 
+  const fetchCities = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, cities } = await GetAllCities(user._id);
+      if (success) {
+        setCities(Array.isArray(cities) ? cities : []);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar cidades:", error);
+      toast.error("Não foi possível carregar as cidades.");
+    }
+  };
+
   useEffect(() => {
     fetchDepartments();
     fetchPositions();
+    fetchCities();
   }, [user?._id]);
 
   const form = useForm<FormValues>({
@@ -149,8 +169,8 @@ export default function RegisterEmployeeForm({
       cep: initialData?.cep ?? "",
       address: initialData?.address ?? "",
       neighborhood: initialData?.neighborhood ?? "",
-      city: typeof initialData?.city === "string" ? initialData.city : "",
-      phone: initialData?.phone ?? "",
+      city:
+        typeof initialData?.city === "string" ? initialData.city : undefined,
       extension: initialData?.extension ?? "",
       fatherName: initialData?.fatherName ?? "",
       motherName: initialData?.motherName ?? "",
@@ -158,6 +178,16 @@ export default function RegisterEmployeeForm({
       placeOfBirth: initialData?.placeOfBirth ?? "",
     },
   });
+
+  const cityOptions = useMemo(() => {
+    const normalized = cities
+      .map((c) => c?.city)
+      .filter((c): c is string => Boolean(c))
+      .map((c) => c.trim())
+      .filter(Boolean);
+
+    return Array.from(new Set(normalized));
+  }, [cities]);
 
   const cepValue = form.watch("cep");
   useEffect(() => {
@@ -867,12 +897,23 @@ export default function RegisterEmployeeForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cidade</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input placeholder="Cidade" {...field} />
-                        <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
-                      </div>
-                    </FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a cidade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {cityOptions.map((city) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

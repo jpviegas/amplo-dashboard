@@ -19,7 +19,7 @@ export async function GetAllDepartments(
   };
   departments: DepartmentTypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/deparments`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/departments`;
 
   const queryParams = new URLSearchParams();
 
