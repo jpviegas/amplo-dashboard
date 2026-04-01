@@ -57,7 +57,7 @@ export default function SidebarComponent() {
               title: "Relatórios",
               items: [
                 // { item: "Empresa", url: "empresa" },
-                { item: "Funcionário", url: "funcionario" },
+                { item: "Funcionário", url: "/dashboard/pontos" },
                 { item: "Departamento", url: "departamento" },
                 { item: "Cargo", url: "cargo" },
                 { item: "Cidade", url: "cidade" },

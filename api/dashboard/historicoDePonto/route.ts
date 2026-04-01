@@ -15,12 +15,13 @@ export async function GetAllPoints(
     prevPage: null | number;
   };
   points: Array<{
-    id?: string;
+    userId: string;
     name: string;
-    timestamp: string;
+    date: string;
+    timestamps: string[];
   }>;
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/timesheet/`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/timesheet`;
 
   const queryParams = new URLSearchParams();
   if (page) {

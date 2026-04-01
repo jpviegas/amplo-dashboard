@@ -19,13 +19,14 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type PointItem = {
-  id?: string;
+  userId?: string;
   name: string;
-  timestamp: string;
+  date: string;
+  timestamps: string[];
 };
 
-function formatPointDate(timestamp: string) {
-  const date = new Date(timestamp);
+function formatPointDate(dateString: string) {
+  const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
     return "-";
   }
@@ -150,12 +151,14 @@ export default function LastPoints() {
                   )}
 
                   {points.map((point) => (
-                    <TableRow
-                      key={`${point.id ?? point.timestamp}-${point.name}`}
-                    >
+                    <TableRow key={`${point.userId}-${point.date}`}>
                       <TableCell>{point.name}</TableCell>
-                      <TableCell>{formatPointDate(point.timestamp)}</TableCell>
-                      <TableCell>{formatPointTime(point.timestamp)}</TableCell>
+                      <TableCell>{formatPointDate(point.date)}</TableCell>
+                      <TableCell>
+                        {formatPointTime(
+                          point.timestamps?.[point.timestamps.length - 1],
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </>
