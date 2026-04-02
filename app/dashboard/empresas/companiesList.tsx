@@ -237,7 +237,7 @@ export function CompaniesList() {
                       </div>
                     </TableCell>
                     <TableCell className="w-[25%]">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-start gap-2">
                         <HoverCard openDelay={100} closeDelay={0}>
                           <HoverCardTrigger asChild>
                             <Button

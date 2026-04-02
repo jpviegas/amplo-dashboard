@@ -3,10 +3,12 @@
 import { GetAllPositions } from "@/api/dashboard/cargos/route";
 import { GetAllCities } from "@/api/dashboard/cities/route";
 import { GetAllDepartments } from "@/api/dashboard/departamentos/route";
+import { GetAllCompanies } from "@/api/dashboard/empresas/route";
 import {
   CreateEmployee,
   UpdateEmployee,
 } from "@/api/dashboard/funcionarios/route";
+import { GetAllHours } from "@/api/dashboard/horarios/route";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -37,18 +39,20 @@ import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import {
   CityType,
+  CompanyTypeWithId,
   DepartmentTypeWithId,
   EmployeeTypeWithId,
   PositionTypeWithId,
   registerEmployeeSchema,
   ufsBrasil,
+  WorkingHourTypeWithId,
 } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -78,7 +82,47 @@ export default function RegisterEmployeeForm({
     if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, "$1.$2");
     return v.replace(/(\d{3})(\d{3})(\d{0,3})/, "$1.$2.$3");
   };
+  const toDate = (value: unknown) => {
+    if (!value) return undefined;
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? undefined : value;
+    }
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  };
+  const parseCtpsParts = (value: unknown) => {
+    const raw = String(value ?? "").trim();
+    const digits = raw.match(/\d+/g) ?? [];
+
+    const ufCandidate =
+      raw
+        .toUpperCase()
+        .match(/\b[A-Z]{2}\b/g)
+        ?.find((uf) => ufsBrasil.includes(uf)) ?? "";
+
+    return {
+      number: digits[0] ?? "",
+      series: digits[1] ?? "",
+      uf: ufCandidate,
+    };
+  };
+  const buildCtpsValue = (parts: {
+    number?: string;
+    series?: string;
+    uf?: string;
+  }) => {
+    const number = onlyDigits(parts.number ?? "");
+    const series = onlyDigits(parts.series ?? "");
+    const uf = String(parts.uf ?? "").toUpperCase();
+
+    if (!number && !series && !uf) return "";
+    return [number, series, uf].filter(Boolean).join("-");
+  };
+  const currentYear = new Date().getFullYear();
+
   const [activeTab, setActiveTab] = useState("general");
+  const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
+  const [hours, setHours] = useState<WorkingHourTypeWithId[]>([]);
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const [cities, setCities] = useState<CityType[]>([]);
@@ -105,6 +149,39 @@ export default function RegisterEmployeeForm({
     } catch (error) {
       console.error("Erro ao buscar cargos:", error);
       toast.error("Não foi possível carregar os cargos.");
+    }
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, companies } = await GetAllCompanies(user._id, "", "1");
+
+      if (success) {
+        setCompanies(companies);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar empresas:", error);
+      toast.error("Não foi possível carregar as empresas.");
+    }
+  };
+
+  const fetchHours = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, hours } = await GetAllHours(user._id);
+      if (success) {
+        setHours(Array.isArray(hours) ? hours : []);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar horários:", error);
+      toast.error("Não foi possível carregar os horários.");
     }
   };
 
@@ -146,6 +223,8 @@ export default function RegisterEmployeeForm({
   };
 
   useEffect(() => {
+    fetchCompanies();
+    fetchHours();
     fetchDepartments();
     fetchPositions();
     fetchCities();
@@ -176,7 +255,13 @@ export default function RegisterEmployeeForm({
       motherName: initialData?.motherName ?? "",
       nationality: initialData?.nationality ?? "",
       placeOfBirth: initialData?.placeOfBirth ?? "",
+      children: initialData?.children ?? [],
     },
+  });
+
+  const childrenFieldArray = useFieldArray({
+    control: form.control,
+    name: "children",
   });
 
   const cityOptions = useMemo(() => {
@@ -379,42 +464,49 @@ export default function RegisterEmployeeForm({
           />
           <FormField
             name="admissionDate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Data da admissão</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "dd/MM/yyyy")
-                        ) : (
-                          <span>Selecione uma data</span>
-                        )}
-                        <CalendarIcon className="ml-auto size-4" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const selectedDate = toDate(field.value);
+              return (
+                <FormItem>
+                  <FormLabel>Data da admissão</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !selectedDate && "text-muted-foreground",
+                          )}
+                        >
+                          {selectedDate ? (
+                            format(selectedDate, "dd/MM/yyyy")
+                          ) : (
+                            <span>Selecione uma data</span>
+                          )}
+                          <CalendarIcon className="ml-auto size-4" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        captionLayout="dropdown"
+                        fromYear={1900}
+                        toYear={currentYear}
+                        selected={selectedDate}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
-          {/* <FormField
+
+          <FormField
             control={form.control}
             name="company"
             render={({ field }) => (
@@ -440,8 +532,8 @@ export default function RegisterEmployeeForm({
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
-          {/* <FormField
+          />
+          <FormField
             name="workingHours"
             render={({ field }) => (
               <FormItem className="space-y-2">
@@ -453,18 +545,21 @@ export default function RegisterEmployeeForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="hour1">08:00 / 17:00</SelectItem>
-                    <SelectItem value="hour2">18:00 / 06:00</SelectItem>
+                    {hours.map((hour) => (
+                      <SelectItem key={hour._id} value={hour._id}>
+                        {hour.initialHour} / {hour.finalHour}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" className="gap-2">
-                          <Plus className="size-4" />
-                          Criar novo Horário
-                        </Button>
+                {/* <Button variant="outline" size="sm" className="gap-2">
+                  <Plus className="size-4" />
+                  Criar novo Horário
+                </Button> */}
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
+          />
           <FormField
             name="status"
             render={({ field }) => (
@@ -504,6 +599,7 @@ export default function RegisterEmployeeForm({
             >
               Informações Gerais
             </TabsTrigger>
+
             <TabsTrigger
               value="personal"
               className={cn(
@@ -513,6 +609,16 @@ export default function RegisterEmployeeForm({
               onClick={() => setActiveTab("personal")}
             >
               Dados Pessoais
+            </TabsTrigger>
+            <TabsTrigger
+              value="children"
+              className={cn(
+                "rounded-none border-b-2 border-transparent pb-2",
+                activeTab === "children" && "border-primary",
+              )}
+              onClick={() => setActiveTab("children")}
+            >
+              Dependentes
             </TabsTrigger>
             {/* <TabsTrigger
                       value="credentials"
@@ -621,44 +727,82 @@ export default function RegisterEmployeeForm({
               />
 
               <FormField
-                name="sheetNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número da Folha</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Número da Folha" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
                 name="ctps"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-3">
                     <FormLabel>CTPS</FormLabel>
-                    <FormControl>
-                      <Input placeholder="CTPS" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                    <div className="grid gap-6 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label>Número</Label>
+                        <FormControl>
+                          <Input
+                            placeholder="Número"
+                            inputMode="numeric"
+                            value={parseCtpsParts(field.value).number}
+                            onChange={(e) => {
+                              const current = parseCtpsParts(field.value);
+                              field.onChange(
+                                buildCtpsValue({
+                                  ...current,
+                                  number: e.target.value,
+                                }),
+                              );
+                            }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                      </div>
 
-              <FormField
-                name="directSuperior"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Superior direto</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="sup1">Superior 1</SelectItem>
-                        <SelectItem value="sup2">Superior 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <div className="space-y-2">
+                        <Label>Série</Label>
+                        <FormControl>
+                          <Input
+                            placeholder="Série"
+                            inputMode="numeric"
+                            value={parseCtpsParts(field.value).series}
+                            onChange={(e) => {
+                              const current = parseCtpsParts(field.value);
+                              field.onChange(
+                                buildCtpsValue({
+                                  ...current,
+                                  series: e.target.value,
+                                }),
+                              );
+                            }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>UF</Label>
+                        <Select
+                          value={parseCtpsParts(field.value).uf || undefined}
+                          onValueChange={(uf) => {
+                            const current = parseCtpsParts(field.value);
+                            field.onChange(buildCtpsValue({ ...current, uf }));
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a UF" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {ufsBrasil.map((uf) => (
+                              <SelectItem key={uf} value={uf}>
+                                {uf}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -668,6 +812,138 @@ export default function RegisterEmployeeForm({
                       <Label>Observações para o Cartão de Ponto</Label>
                       <Textarea className="min-h-[100px]" />
                     </div> */}
+          </TabsContent>
+
+          <TabsContent value="children" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-base leading-none font-medium">
+                  Dependentes
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Adicione um ou mais dependentes.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  childrenFieldArray.append({
+                    name: "",
+                    cpf: "",
+                    birthDate: undefined,
+                  })
+                }
+              >
+                Adicionar dependente
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {childrenFieldArray.fields.map((child, index) => (
+                <div key={child.id} className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-medium">
+                      Dependente {index + 1}
+                    </h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => childrenFieldArray.remove(index)}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+
+                  <div className="mt-4 grid gap-6 md:grid-cols-3">
+                    <FormField
+                      name={`children.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nome" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      name={`children.${index}.cpf`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CPF</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="CPF"
+                              maxLength={14}
+                              value={formatCpf(field.value ?? "")}
+                              onChange={(e) =>
+                                field.onChange(
+                                  onlyDigits(e.target.value).slice(0, 11),
+                                )
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      name={`children.${index}.birthDate`}
+                      render={({ field }) => {
+                        const selectedDate = toDate(field.value);
+                        return (
+                          <FormItem>
+                            <FormLabel>Data de nascimento</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !selectedDate && "text-muted-foreground",
+                                    )}
+                                  >
+                                    {selectedDate ? (
+                                      format(selectedDate, "dd/MM/yyyy")
+                                    ) : (
+                                      <span>Selecione uma data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto size-4" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  mode="single"
+                                  captionLayout="dropdown"
+                                  fromYear={1900}
+                                  toYear={currentYear}
+                                  selected={selectedDate}
+                                  onSelect={field.onChange}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </TabsContent>
 
           <TabsContent value="personal" className="space-y-6">
@@ -703,39 +979,45 @@ export default function RegisterEmployeeForm({
 
               <FormField
                 name="birthDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data da nascimento</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione uma data</span>
-                            )}
-                            <CalendarIcon className="ml-auto size-4" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const selectedDate = toDate(field.value);
+                  return (
+                    <FormItem>
+                      <FormLabel>Data da nascimento</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !selectedDate && "text-muted-foreground",
+                              )}
+                            >
+                              {selectedDate ? (
+                                format(selectedDate, "dd/MM/yyyy")
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto size-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            captionLayout="dropdown"
+                            fromYear={1900}
+                            toYear={currentYear}
+                            selected={selectedDate}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
@@ -822,6 +1104,9 @@ export default function RegisterEmployeeForm({
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
+                          captionLayout="dropdown"
+                          fromYear={1900}
+                          toYear={new Date().getFullYear() + 20}
                           selected={field.value}
                           onSelect={field.onChange}
                           initialFocus

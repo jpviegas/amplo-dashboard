@@ -1,6 +1,8 @@
 "use client";
 
+import { GetAllPositions } from "@/api/dashboard/cargos/route";
 import { GetAllCities } from "@/api/dashboard/cities/route";
+import { GetAllDepartments } from "@/api/dashboard/departamentos/route";
 import { GetAllCompanies } from "@/api/dashboard/empresas/route";
 import {
   GetCompanyEmployeeById,
@@ -39,17 +41,20 @@ import { cn } from "@/lib/utils";
 import {
   CityType,
   CompanyTypeWithId,
+  DepartmentTypeWithId,
   EmployeeTypeWithId,
+  PositionTypeWithId,
   registerEmployeeSchema,
   ufsBrasil,
   WorkingHourTypeWithId,
 } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MapPin, Phone, Search, User } from "lucide-react";
+import { format } from "date-fns";
+import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -68,10 +73,49 @@ export default function EditEmployeeForm() {
     if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, "$1.$2");
     return v.replace(/(\d{3})(\d{3})(\d{0,3})/, "$1.$2.$3");
   };
+  const toDate = (value: unknown) => {
+    if (!value) return undefined;
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? undefined : value;
+    }
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  };
+  const parseCtpsParts = (value: unknown) => {
+    const raw = String(value ?? "").trim();
+    const digits = raw.match(/\d+/g) ?? [];
+
+    const ufCandidate =
+      raw
+        .toUpperCase()
+        .match(/\b[A-Z]{2}\b/g)
+        ?.find((uf) => ufsBrasil.includes(uf)) ?? "";
+
+    return {
+      number: digits[0] ?? "",
+      series: digits[1] ?? "",
+      uf: ufCandidate,
+    };
+  };
+  const buildCtpsValue = (parts: {
+    number?: string;
+    series?: string;
+    uf?: string;
+  }) => {
+    const number = onlyDigits(parts.number ?? "");
+    const series = onlyDigits(parts.series ?? "");
+    const uf = String(parts.uf ?? "").toUpperCase();
+
+    if (!number && !series && !uf) return "";
+    return [number, series, uf].filter(Boolean).join("-");
+  };
+  const currentYear = new Date().getFullYear();
   const [activeTab, setActiveTab] = useState("general");
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const [hours, setHours] = useState<WorkingHourTypeWithId[]>([]);
   const [cities, setCities] = useState<CityType[]>([]);
+  const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
+  const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const [employee, setEmployee] = useState<EmployeeTypeWithId>();
   const { user } = useUser();
   const { id }: { id: string } = useParams();
@@ -127,6 +171,42 @@ export default function EditEmployeeForm() {
     }
   };
 
+  const fetchPositions = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, positions } = await GetAllPositions(user._id);
+      if (success) {
+        setPositions(Array.isArray(positions) ? positions : []);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar cargos:", error);
+      toast.error("Não foi possível carregar os cargos.");
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      if (!user?._id) {
+        return;
+      }
+
+      const { success, departments } = await GetAllDepartments(
+        user._id,
+        "",
+        "1",
+      );
+      if (success) {
+        setDepartments(Array.isArray(departments) ? departments : []);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar departamentos:", error);
+      toast.error("Não foi possível carregar os departamentos.");
+    }
+  };
+
   const fetchEmployee = async () => {
     try {
       const { success, message, user } = await GetCompanyEmployeeById(id);
@@ -149,11 +229,18 @@ export default function EditEmployeeForm() {
     fetchCompanies();
     fetchHours();
     fetchCities();
+    fetchDepartments();
+    fetchPositions();
     fetchEmployee();
   }, [user?._id]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerEmployeeSchema),
+  });
+
+  const childrenFieldArray = useFieldArray({
+    control: form.control,
+    name: "children",
   });
 
   useEffect(() => {
@@ -165,6 +252,23 @@ export default function EditEmployeeForm() {
             ? (employee as unknown as { city?: string }).city
             : ((employee as unknown as { city?: { city?: string } })?.city
                 ?.city ?? ""),
+        department:
+          typeof (employee as unknown as { department?: unknown })
+            ?.department === "string"
+            ? (employee as unknown as { department?: string }).department
+            : ((employee as unknown as { department?: { _id?: string } })
+                ?.department?._id ?? ""),
+        position:
+          typeof (employee as unknown as { position?: unknown })?.position ===
+          "string"
+            ? (employee as unknown as { position?: string }).position
+            : ((employee as unknown as { position?: { _id?: string } })
+                ?.position?._id ?? ""),
+        children: Array.isArray(
+          (employee as unknown as { children?: unknown })?.children,
+        )
+          ? ((employee as unknown as { children?: unknown[] }).children ?? [])
+          : [],
       };
       form.reset(parsedEmployee as FormValues);
     }
@@ -221,6 +325,18 @@ export default function EditEmployeeForm() {
                 )}
               />
               <FormField
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input placeholder="E-mail" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
                 name="pis"
                 render={({ field }) => (
                   <FormItem>
@@ -270,40 +386,46 @@ export default function EditEmployeeForm() {
               />
               <FormField
                 name="admissionDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data da admissão</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          {/* <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione uma data</span>
-                            )}
-                            <CalendarIcon className="ml-auto size-4" />
-                          </Button> */}
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const selectedDate = toDate(field.value);
+                  return (
+                    <FormItem>
+                      <FormLabel>Data da admissão</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !selectedDate && "text-muted-foreground",
+                              )}
+                            >
+                              {selectedDate ? (
+                                format(selectedDate, "dd/MM/yyyy")
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto size-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            captionLayout="dropdown"
+                            fromYear={1900}
+                            toYear={currentYear}
+                            selected={selectedDate}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
               <FormField
                 control={form.control}
@@ -408,6 +530,16 @@ export default function EditEmployeeForm() {
                 >
                   Dados Pessoais
                 </TabsTrigger>
+                <TabsTrigger
+                  value="children"
+                  className={cn(
+                    "rounded-none border-b-2 border-transparent pb-2",
+                    activeTab === "children" && "border-primary",
+                  )}
+                  onClick={() => setActiveTab("children")}
+                >
+                  Dependentes
+                </TabsTrigger>
                 {/* <TabsTrigger
                       value="credentials"
                       className={cn(
@@ -447,12 +579,14 @@ export default function EditEmployeeForm() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="dept1">
-                              Departamento 1
-                            </SelectItem>
-                            <SelectItem value="dept2">
-                              Departamento 2
-                            </SelectItem>
+                            {departments.map((department) => (
+                              <SelectItem
+                                key={department._id}
+                                value={department._id}
+                              >
+                                {department.departmentName}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         {/* <Button variant="outline" size="sm" className="gap-2">
@@ -463,7 +597,7 @@ export default function EditEmployeeForm() {
                     )}
                   />
 
-                  <FormField
+                  {/* <FormField
                     name="costCenter"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
@@ -482,13 +616,13 @@ export default function EditEmployeeForm() {
                             <SelectItem value="cost2">Centro 2</SelectItem>
                           </SelectContent>
                         </Select>
-                        {/* <Button variant="outline" size="sm" className="gap-2">
+                        <Button variant="outline" size="sm" className="gap-2">
                           <Plus className="size-4" />
                           Criar novo centro de custo
-                        </Button> */}
+                        </Button>
                       </FormItem>
                     )}
-                  />
+                  /> */}
 
                   <FormField
                     name="position"
@@ -505,18 +639,21 @@ export default function EditEmployeeForm() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {/* {roles.map((role, index) => (
-                                  <SelectItem key={index} value={role.role}>
-                                    {role.role}
-                                  </SelectItem>
-                                ))} */}
+                            {positions.map((position) => (
+                              <SelectItem
+                                key={position._id}
+                                value={position._id}
+                              >
+                                {position.positionName}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </FormItem>
                     )}
                   />
 
-                  <FormField
+                  {/* <FormField
                     name="sheetNumber"
                     render={({ field }) => (
                       <FormItem>
@@ -526,20 +663,93 @@ export default function EditEmployeeForm() {
                         </FormControl>
                       </FormItem>
                     )}
-                  />
+                  /> */}
                   <FormField
                     name="ctps"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="md:col-span-3">
                         <FormLabel>CTPS</FormLabel>
-                        <FormControl>
-                          <Input placeholder="CTPS" {...field} />
-                        </FormControl>
+                        <div className="grid gap-6 md:grid-cols-3">
+                          <div className="space-y-2">
+                            <Label>Número</Label>
+                            <FormControl>
+                              <Input
+                                placeholder="Número"
+                                inputMode="numeric"
+                                value={parseCtpsParts(field.value).number}
+                                onChange={(e) => {
+                                  const current = parseCtpsParts(field.value);
+                                  field.onChange(
+                                    buildCtpsValue({
+                                      ...current,
+                                      number: e.target.value,
+                                    }),
+                                  );
+                                }}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                              />
+                            </FormControl>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Série</Label>
+                            <FormControl>
+                              <Input
+                                placeholder="Série"
+                                inputMode="numeric"
+                                value={parseCtpsParts(field.value).series}
+                                onChange={(e) => {
+                                  const current = parseCtpsParts(field.value);
+                                  field.onChange(
+                                    buildCtpsValue({
+                                      ...current,
+                                      series: e.target.value,
+                                    }),
+                                  );
+                                }}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                              />
+                            </FormControl>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>UF</Label>
+                            <Select
+                              value={
+                                parseCtpsParts(field.value).uf || undefined
+                              }
+                              onValueChange={(uf) => {
+                                const current = parseCtpsParts(field.value);
+                                field.onChange(
+                                  buildCtpsValue({ ...current, uf }),
+                                );
+                              }}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione a UF" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {ufsBrasil.map((uf) => (
+                                  <SelectItem key={uf} value={uf}>
+                                    {uf}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
+                  {/* <FormField
                     name="directSuperior"
                     render={({ field }) => (
                       <FormItem>
@@ -560,13 +770,146 @@ export default function EditEmployeeForm() {
                         </Select>
                       </FormItem>
                     )}
-                  />
+                  /> */}
                 </div>
 
                 {/* <div>
                       <Label>Observações para o Cartão de Ponto</Label>
                       <Textarea className="min-h-[100px]" />
                     </div> */}
+              </TabsContent>
+
+              <TabsContent value="children" className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-base leading-none font-medium">
+                      Dependentes
+                    </h3>
+                    <p className="text-muted-foreground text-sm">
+                      Adicione um ou mais dependentes.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      childrenFieldArray.append({
+                        name: "",
+                        cpf: "",
+                        birthDate: undefined,
+                      })
+                    }
+                  >
+                    Adicionar dependente
+                  </Button>
+                </div>
+
+                <div className="space-y-6">
+                  {childrenFieldArray.fields.map((child, index) => (
+                    <div key={child.id} className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">
+                          Dependente {index + 1}
+                        </h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => childrenFieldArray.remove(index)}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+
+                      <div className="mt-4 grid gap-6 md:grid-cols-3">
+                        <FormField
+                          name={`children.${index}.name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nome" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          name={`children.${index}.cpf`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>CPF</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="CPF"
+                                  maxLength={14}
+                                  value={formatCpf(field.value ?? "")}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      onlyDigits(e.target.value).slice(0, 11),
+                                    )
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          name={`children.${index}.birthDate`}
+                          render={({ field }) => {
+                            const selectedDate = toDate(field.value);
+                            return (
+                              <FormItem>
+                                <FormLabel>Data de nascimento</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant="outline"
+                                        className={cn(
+                                          "w-full pl-3 text-left font-normal",
+                                          !selectedDate &&
+                                            "text-muted-foreground",
+                                        )}
+                                      >
+                                        {selectedDate ? (
+                                          format(selectedDate, "dd/MM/yyyy")
+                                        ) : (
+                                          <span>Selecione uma data</span>
+                                        )}
+                                        <CalendarIcon className="ml-auto size-4" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    className="w-auto p-0"
+                                    align="start"
+                                  >
+                                    <Calendar
+                                      mode="single"
+                                      captionLayout="dropdown"
+                                      fromYear={1900}
+                                      toYear={currentYear}
+                                      selected={selectedDate}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </TabsContent>
 
               <TabsContent value="personal" className="space-y-6">
@@ -602,39 +945,48 @@ export default function EditEmployeeForm() {
 
                   <FormField
                     name="birthDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data da nascimento</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              {/* <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "dd/MM/yyyy")
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto size-4" />
-                              </Button> */}
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const selectedDate = toDate(field.value);
+                      return (
+                        <FormItem>
+                          <FormLabel>Data da nascimento</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !selectedDate && "text-muted-foreground",
+                                  )}
+                                >
+                                  {selectedDate ? (
+                                    format(selectedDate, "dd/MM/yyyy")
+                                  ) : (
+                                    <span>Selecione uma data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto size-4" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                captionLayout="dropdown"
+                                fromYear={1900}
+                                toYear={currentYear}
+                                selected={selectedDate}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <FormField
@@ -709,39 +1061,48 @@ export default function EditEmployeeForm() {
 
                   <FormField
                     name="cnhExpiration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Data da vencimento da CNH</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              {/* <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "dd/MM/yyyy")
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto size-4" />
-                              </Button> */}
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const selectedDate = toDate(field.value);
+                      return (
+                        <FormItem>
+                          <FormLabel>Data da vencimento da CNH</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !selectedDate && "text-muted-foreground",
+                                  )}
+                                >
+                                  {selectedDate ? (
+                                    format(selectedDate, "dd/MM/yyyy")
+                                  ) : (
+                                    <span>Selecione uma data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto size-4" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                captionLayout="dropdown"
+                                fromYear={1900}
+                                toYear={currentYear + 20}
+                                selected={selectedDate}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <FormField
