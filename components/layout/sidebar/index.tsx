@@ -98,7 +98,7 @@ export default function SidebarComponent() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenuButton asChild>
-          <Button onClick={Logout}>
+          <Button onClick={Logout} variant="outline">
             <LuLogOut className="text-destructive" />
             <span>Sair</span>
           </Button>

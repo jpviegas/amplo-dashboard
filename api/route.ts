@@ -92,3 +92,48 @@ export async function createUser(values: LoginType) {
     return data;
   }
 }
+
+export type ValidatePasswordTokenType = {
+  success: boolean;
+  message: string;
+};
+
+export async function ValidatePasswordToken(values: {
+  token: string;
+  type: "first-access";
+}): Promise<ValidatePasswordTokenType> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/password/validate-token`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(values),
+    },
+  );
+
+  const data = await res.json();
+  return data;
+}
+
+export type ConsumePasswordTokenType = {
+  success: boolean;
+  message: string;
+};
+
+export async function ConsumePasswordToken(values: {
+  token: string;
+  type: "first-access";
+  newPassword: string;
+}): Promise<ConsumePasswordTokenType> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/password/consume-token`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(values),
+    },
+  );
+
+  const data = await res.json();
+  return data;
+}

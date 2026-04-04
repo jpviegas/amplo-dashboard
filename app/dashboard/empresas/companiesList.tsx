@@ -1,6 +1,6 @@
 "use client";
 
-import { GetAllCompanies } from "@/api/dashboard/empresas/route";
+import { DeleteCompany, GetAllCompanies } from "@/api/dashboard/empresas/route";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,6 +15,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Cookies from "js-cookie";
 
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   HoverCard,
   HoverCardContent,
@@ -44,7 +55,18 @@ const FormSchema = z.object({
 });
 
 export function CompaniesList() {
+  const onlyDigits = (s: string) => s.replace(/\D+/g, "");
+  const formatCnpj = (value?: string | null) => {
+    const raw = String(value ?? "");
+    const v = onlyDigits(raw).slice(0, 14);
+    if (v.length !== 14) return raw;
+    return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  };
+
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
+  const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(
+    null,
+  );
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -101,6 +123,34 @@ export function CompaniesList() {
       toast.error("Não foi possível carregar as empresas.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteCompany = async (companyId: string) => {
+    try {
+      if (!userId) {
+        toast.error("Usuário não identificado.");
+        return;
+      }
+
+      setDeletingCompanyId(companyId);
+      const { success, message } = await DeleteCompany(userId, companyId);
+      if (!success) {
+        toast.warning(message || "Não foi possível deletar a empresa.");
+        return;
+      }
+      toast.success(message || "Empresa deletada.");
+
+      const isLastItemOnPage = companies.length === 1;
+      const nextPage = isLastItemOnPage
+        ? Math.max(1, pagination.page - 1)
+        : pagination.page;
+      await handlePageChange(nextPage);
+    } catch (error) {
+      console.error("Erro ao deletar empresa:", error);
+      toast.error("Não foi possível deletar a empresa.");
+    } finally {
+      setDeletingCompanyId(null);
     }
   };
 
@@ -231,9 +281,9 @@ export function CompaniesList() {
                     <TableCell className="w-[30%]">
                       <div
                         className="truncate text-xs md:text-sm"
-                        title={company.cnpj}
+                        title={formatCnpj(company.cnpj)}
                       >
-                        {company.cnpj}
+                        {formatCnpj(company.cnpj)}
                       </div>
                     </TableCell>
                     <TableCell className="w-[25%]">
@@ -255,21 +305,51 @@ export function CompaniesList() {
                             Editar
                           </HoverCardContent>
                         </HoverCard>
-
-                        <HoverCard openDelay={100} closeDelay={0}>
-                          <HoverCardTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                            >
-                              <Trash className="size-4" />
-                            </Button>
-                          </HoverCardTrigger>
-                          <HoverCardContent className="pointer-events-none">
-                            Deletar
-                          </HoverCardContent>
-                        </HoverCard>
+                        <AlertDialog>
+                          <HoverCard openDelay={100} closeDelay={0}>
+                            <HoverCardTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 cursor-pointer"
+                                  disabled={
+                                    isLoading ||
+                                    deletingCompanyId === company._id
+                                  }
+                                >
+                                  <Trash className="size-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="pointer-events-none">
+                              Deletar
+                            </HoverCardContent>
+                          </HoverCard>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Deletar empresa?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Essa ação não pode ser desfeita. O empresa
+                                {company.companyName
+                                  ? ` "${company.companyName}"`
+                                  : ""}{" "}
+                                será removida permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() => handleDeleteCompany(company._id)}
+                              >
+                                Deletar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
