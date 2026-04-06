@@ -65,7 +65,8 @@ export type EmployeeTypeWithId = EmployeeType & { _id: string };
 export const registerEmployeeSchema = z.object({
   name: z.string().min(10, "O nome é obrigarório"),
   email: z.string().min(1, "O email é obrigatório"),
-  pis: z.string().min(1, "O PIS é obrigatório").optional(),
+  // pis: z.string().min(1, "O PIS é obrigatório").optional(),
+  pis: z.string().optional(),
   cpf: z
     .string()
     .nonempty("O CPF é obrigatório")
@@ -73,7 +74,7 @@ export const registerEmployeeSchema = z.object({
     .optional(),
   registration: z
     .string()
-    .min(1, "O número de matrícula é obrigatório")
+    // .min(1, "O número de matrícula é obrigatório")
     .optional(),
   admissionDate: z
     .string({
