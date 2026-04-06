@@ -69,6 +69,18 @@ export default function RegisterEmployeeForm({
     if (v.length <= 5) return v;
     return v.replace(/(\d{5})(\d+)/, "$1-$2");
   };
+  const formatPhone = (value: string) => {
+    const v = onlyDigits(value).slice(0, 11);
+    const ddd = v.slice(0, 2);
+    const rest = v.slice(2);
+
+    if (!v) return "";
+    if (v.length <= 2) return `(${ddd}`;
+    if (v.length <= 6) return `(${ddd}) ${rest}`;
+    if (v.length <= 10)
+      return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`.replace(/-$/, "");
+    return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`.replace(/-$/, "");
+  };
   const formatCpf = (value: string) => {
     const v = onlyDigits(value).slice(0, 11);
     if (v.length <= 3) return v;
@@ -250,6 +262,7 @@ export default function RegisterEmployeeForm({
       neighborhood: initialData?.neighborhood ?? "",
       city:
         typeof initialData?.city === "string" ? initialData.city : undefined,
+      phone: onlyDigits(initialData?.phone ?? ""),
       extension: initialData?.extension ?? "",
       fatherName: initialData?.fatherName ?? "",
       motherName: initialData?.motherName ?? "",
@@ -1235,7 +1248,20 @@ export default function RegisterEmployeeForm({
                     <FormLabel>Telefone</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input placeholder="Telefone" {...field} />
+                        <Input
+                          placeholder="(00) 00000-0000"
+                          inputMode="numeric"
+                          maxLength={15}
+                          value={formatPhone(field.value ?? "")}
+                          onChange={(e) =>
+                            field.onChange(
+                              onlyDigits(e.target.value).slice(0, 11),
+                            )
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
                         <Phone className="absolute top-2.5 right-3 size-4 text-gray-400" />
                       </div>
                     </FormControl>
