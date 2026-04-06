@@ -53,13 +53,24 @@ import { format } from "date-fns";
 import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 export default function EditEmployeeForm() {
   const onlyDigits = (s: string) => s.replace(/\D+/g, "");
+  const formatCep = (value: string) => {
+    const v = onlyDigits(value).slice(0, 8);
+    if (v.length <= 5) return v;
+    return v.replace(/(\d{5})(\d+)/, "$1-$2");
+  };
+  const normalizeUf = (value: unknown) => {
+    const uf = String(value ?? "")
+      .trim()
+      .toUpperCase();
+    return ufsBrasil.includes(uf) ? uf : "";
+  };
   const formatCpf = (value: string) => {
     const v = onlyDigits(value).slice(0, 11);
     if (v.length <= 3) return v;
@@ -117,6 +128,9 @@ export default function EditEmployeeForm() {
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const [employee, setEmployee] = useState<EmployeeTypeWithId>();
+  const [isCepLoading, setIsCepLoading] = useState(false);
+  const lastCepLookupRef = useRef<string | null>(null);
+  const cepAbortRef = useRef<AbortController | null>(null);
   const { user } = useUser();
   const { id }: { id: string } = useParams();
 
@@ -264,6 +278,7 @@ export default function EditEmployeeForm() {
             ? (employee as unknown as { position?: string }).position
             : ((employee as unknown as { position?: { _id?: string } })
                 ?.position?._id ?? ""),
+        state: normalizeUf((employee as unknown as { state?: unknown })?.state),
         children: Array.isArray(
           (employee as unknown as { children?: unknown })?.children,
         )
@@ -271,6 +286,9 @@ export default function EditEmployeeForm() {
           : [],
       };
       form.reset(parsedEmployee as FormValues);
+      lastCepLookupRef.current = onlyDigits(
+        (parsedEmployee as { cep?: string | null } | null)?.cep ?? "",
+      );
     }
   }, [employee, form]);
 
@@ -283,6 +301,84 @@ export default function EditEmployeeForm() {
 
     return Array.from(new Set(normalized));
   }, [cities]);
+
+  const cepValue = form.watch("cep");
+  useEffect(() => {
+    const cepDigits = onlyDigits(cepValue ?? "");
+    if (cepDigits.length !== 8) return;
+    if (lastCepLookupRef.current === cepDigits) return;
+
+    lastCepLookupRef.current = cepDigits;
+    cepAbortRef.current?.abort();
+    const controller = new AbortController();
+    cepAbortRef.current = controller;
+
+    const run = async () => {
+      try {
+        setIsCepLoading(true);
+        const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error("Erro ao buscar CEP");
+        }
+
+        const data: {
+          erro?: boolean;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        } = await res.json();
+
+        if (data.erro) {
+          toast.error("CEP não encontrado.");
+          return;
+        }
+
+        if (data.logradouro) {
+          form.setValue("address", data.logradouro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.bairro) {
+          form.setValue("neighborhood", data.bairro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.localidade) {
+          form.setValue("city", data.localidade, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.uf) {
+          form.setValue("state", data.uf, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+      } catch (error) {
+        if ((error as { name?: string } | null)?.name === "AbortError") return;
+        toast.error("Não foi possível buscar o CEP.");
+      } finally {
+        setIsCepLoading(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      controller.abort();
+    };
+  }, [cepValue, form]);
 
   async function onSubmit(values: FormValues) {
     if (!user?._id) {
@@ -1112,7 +1208,20 @@ export default function EditEmployeeForm() {
                         <FormLabel>CEP</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input placeholder="CEP" {...field} />
+                            <Input
+                              placeholder="CEP"
+                              maxLength={9}
+                              value={formatCep(field.value ?? "")}
+                              onChange={(e) =>
+                                field.onChange(
+                                  onlyDigits(e.target.value).slice(0, 8),
+                                )
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              disabled={isCepLoading}
+                            />
                             <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
                           </div>
                         </FormControl>
@@ -1186,7 +1295,7 @@ export default function EditEmployeeForm() {
                         <FormLabel>UF</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value ? field.value : undefined}
                         >
                           <FormControl>
                             <SelectTrigger>

@@ -29,10 +29,10 @@ import {
 } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -49,6 +49,20 @@ export default function CompanyEditPage() {
   const [isReturning, setIsReturning] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const onlyDigits = (s: string) => s.replace(/\D+/g, "");
+  const normalizeUf = (value: unknown) => {
+    const uf = String(value ?? "")
+      .trim()
+      .toUpperCase();
+    return ufsBrasil.includes(uf) ? uf : "";
+  };
+  const formatCep = (value: string) => {
+    const v = onlyDigits(value).slice(0, 8);
+    if (v.length <= 5) return v;
+    return v.replace(/(\d{5})(\d+)/, "$1-$2");
+  };
+  const [isCepLoading, setIsCepLoading] = useState(false);
+  const lastCepLookupRef = useRef<string | null>(null);
+  const cepAbortRef = useRef<AbortController | null>(null);
   const formatCnpj = (value?: string | null) => {
     const digits = onlyDigits(String(value ?? "")).slice(0, 14);
     const parts = [
@@ -86,12 +100,12 @@ export default function CompanyEditPage() {
       district: "",
       city: "",
       uf: "",
-      page: "",
-      registration: "",
-      responsibleCpf: "",
-      responsibleName: "",
-      responsibleRole: "",
-      companyEmail: "",
+      // page: "",
+      // registration: "",
+      // responsibleCpf: "",
+      // responsibleName: "",
+      // responsibleRole: "",
+      // companyEmail: "",
     },
   });
 
@@ -126,14 +140,15 @@ export default function CompanyEditPage() {
         address: company.address ?? "",
         district: company.district ?? "",
         city: company.city ?? "",
-        uf: company.uf ?? "",
-        page: company.page ?? "",
-        registration: company.registration ?? "",
-        responsibleCpf: company.responsibleCpf ?? "",
-        responsibleName: company.responsibleName ?? "",
-        responsibleRole: company.responsibleRole ?? "",
-        companyEmail: company.companyEmail ?? "",
+        uf: normalizeUf(company.uf),
+        // page: company.page ?? "",
+        // registration: company.registration ?? "",
+        // responsibleCpf: company.responsibleCpf ?? "",
+        // responsibleName: company.responsibleName ?? "",
+        // responsibleRole: company.responsibleRole ?? "",
+        // companyEmail: company.companyEmail ?? "",
       });
+      lastCepLookupRef.current = onlyDigits(company.cep ?? "");
     } catch (error) {
       console.error("Erro ao carregar empresa:", error);
       toast.error("Não foi possível carregar a empresa.");
@@ -145,6 +160,84 @@ export default function CompanyEditPage() {
   useEffect(() => {
     fetchCompany();
   }, [fetchCompany]);
+
+  const cepValue = form.watch("cep");
+  useEffect(() => {
+    const cepDigits = onlyDigits(cepValue ?? "");
+    if (cepDigits.length !== 8) return;
+    if (lastCepLookupRef.current === cepDigits) return;
+
+    lastCepLookupRef.current = cepDigits;
+    cepAbortRef.current?.abort();
+    const controller = new AbortController();
+    cepAbortRef.current = controller;
+
+    const run = async () => {
+      try {
+        setIsCepLoading(true);
+        const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error("Erro ao buscar CEP");
+        }
+
+        const data: {
+          erro?: boolean;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        } = await res.json();
+
+        if (data.erro) {
+          toast.error("CEP não encontrado.");
+          return;
+        }
+
+        if (data.logradouro) {
+          form.setValue("address", data.logradouro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.bairro) {
+          form.setValue("district", data.bairro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.localidade) {
+          form.setValue("city", data.localidade, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.uf) {
+          form.setValue("uf", data.uf, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+      } catch (error) {
+        if ((error as { name?: string } | null)?.name === "AbortError") return;
+        toast.error("Não foi possível buscar o CEP.");
+      } finally {
+        setIsCepLoading(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      controller.abort();
+    };
+  }, [cepValue, form]);
 
   async function onSubmit(values: FormValues) {
     try {
@@ -229,7 +322,7 @@ export default function CompanyEditPage() {
                     >
                       Informações Gerais
                     </TabsTrigger>
-                    <TabsTrigger
+                    {/* <TabsTrigger
                       value="personal"
                       className={cn(
                         "rounded-none border-b-2 border-transparent pb-2",
@@ -238,7 +331,7 @@ export default function CompanyEditPage() {
                       onClick={() => setActiveTab("personal")}
                     >
                       Responsável Legal
-                    </TabsTrigger>
+                    </TabsTrigger> */}
                   </TabsList>
 
                   <TabsContent value="general" className="space-y-6">
@@ -302,12 +395,23 @@ export default function CompanyEditPage() {
                           <FormItem>
                             <FormLabel>CEP</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="CEP"
-                                maxLength={7}
-                                min={0}
-                                {...field}
-                              />
+                              <div className="relative">
+                                <Input
+                                  placeholder="CEP"
+                                  maxLength={9}
+                                  value={formatCep(field.value ?? "")}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      onlyDigits(e.target.value).slice(0, 8),
+                                    )
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  disabled={isCepLoading}
+                                />
+                                <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -365,7 +469,7 @@ export default function CompanyEditPage() {
                             <FormControl>
                               <Select
                                 onValueChange={field.onChange}
-                                defaultValue={field.value}
+                                value={field.value ? field.value : undefined}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione a UF" />
@@ -384,7 +488,7 @@ export default function CompanyEditPage() {
                         )}
                       />
 
-                      <FormField
+                      {/* <FormField
                         control={form.control}
                         name="page"
                         render={({ field }) => (
@@ -396,9 +500,9 @@ export default function CompanyEditPage() {
                             <FormMessage />
                           </FormItem>
                         )}
-                      />
+                      /> */}
 
-                      <FormField
+                      {/* <FormField
                         control={form.control}
                         name="registration"
                         render={({ field }) => (
@@ -413,11 +517,11 @@ export default function CompanyEditPage() {
                             <FormMessage />
                           </FormItem>
                         )}
-                      />
+                      /> */}
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="personal" className="space-y-6">
+                  {/* <TabsContent value="personal" className="space-y-6">
                     <div className="grid gap-4 md:grid-cols-3">
                       <FormField
                         control={form.control}
@@ -486,7 +590,7 @@ export default function CompanyEditPage() {
                         )}
                       />
                     </div>
-                  </TabsContent>
+                  </TabsContent> */}
                 </Tabs>
 
                 <div className="flex gap-4">

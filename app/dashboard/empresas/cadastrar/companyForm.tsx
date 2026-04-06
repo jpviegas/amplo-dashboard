@@ -9,6 +9,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import Cookies from "js-cookie";
@@ -25,9 +26,9 @@ import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import { registerCompanySchema, ufsBrasil } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Upload, User } from "lucide-react";
+import { MapPin } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -36,6 +37,40 @@ export default function RegisterCompanyPage() {
   const [activeTab, setActiveTab] = useState("general");
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
+  const onlyDigits = (s: string) => s.replace(/\D+/g, "");
+  const formatCep = (value: string) => {
+    const v = onlyDigits(value).slice(0, 8);
+    if (v.length <= 5) return v;
+    return v.replace(/(\d{5})(\d+)/, "$1-$2");
+  };
+  const formatCnpj = (value?: string | null) => {
+    const digits = onlyDigits(String(value ?? "")).slice(0, 14);
+    const parts = [
+      digits.slice(0, 2),
+      digits.slice(2, 5),
+      digits.slice(5, 8),
+      digits.slice(8, 12),
+      digits.slice(12, 14),
+    ].filter(Boolean);
+
+    if (digits.length <= 2) return parts[0] ?? "";
+    if (digits.length <= 5)
+      return `${parts[0]}.${parts[1] ?? ""}`.replace(/\.$/, "");
+    if (digits.length <= 8)
+      return `${parts[0]}.${parts[1]}.${parts[2] ?? ""}`.replace(/\.$/, "");
+    if (digits.length <= 12)
+      return `${parts[0]}.${parts[1]}.${parts[2]}/${parts[3] ?? ""}`.replace(
+        /\/$/,
+        "",
+      );
+    return `${parts[0]}.${parts[1]}.${parts[2]}/${parts[3]}-${parts[4] ?? ""}`.replace(
+      /-$/,
+      "",
+    );
+  };
+  const [isCepLoading, setIsCepLoading] = useState(false);
+  const lastCepLookupRef = useRef<string | null>(null);
+  const cepAbortRef = useRef<AbortController | null>(null);
 
   type FormValues = z.infer<typeof registerCompanySchema>;
 
@@ -50,14 +85,92 @@ export default function RegisterCompanyPage() {
       district: "",
       city: "",
       uf: "",
-      page: "",
-      registration: "",
-      responsibleCpf: "",
-      responsibleName: "",
-      responsibleRole: "",
-      companyEmail: "",
+      // page: "",
+      // registration: "",
+      // responsibleCpf: "",
+      // responsibleName: "",
+      // responsibleRole: "",
+      // companyEmail: "",
     },
   });
+
+  const cepValue = form.watch("cep");
+  useEffect(() => {
+    const cepDigits = onlyDigits(cepValue ?? "");
+    if (cepDigits.length !== 8) return;
+    if (lastCepLookupRef.current === cepDigits) return;
+
+    lastCepLookupRef.current = cepDigits;
+    cepAbortRef.current?.abort();
+    const controller = new AbortController();
+    cepAbortRef.current = controller;
+
+    const run = async () => {
+      try {
+        setIsCepLoading(true);
+        const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error("Erro ao buscar CEP");
+        }
+
+        const data: {
+          erro?: boolean;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        } = await res.json();
+
+        if (data.erro) {
+          toast.error("CEP não encontrado.");
+          return;
+        }
+
+        if (data.logradouro) {
+          form.setValue("address", data.logradouro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.bairro) {
+          form.setValue("district", data.bairro, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.localidade) {
+          form.setValue("city", data.localidade, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+        if (data.uf) {
+          form.setValue("uf", data.uf, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
+        }
+      } catch (error) {
+        if ((error as { name?: string } | null)?.name === "AbortError") return;
+        toast.error("Não foi possível buscar o CEP.");
+      } finally {
+        setIsCepLoading(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      controller.abort();
+    };
+  }, [cepValue, form]);
 
   async function onSubmit(userId: string, values: FormValues) {
     try {
@@ -103,7 +216,7 @@ export default function RegisterCompanyPage() {
                     >
                       Informações Gerais
                     </TabsTrigger>
-                    <TabsTrigger
+                    {/* <TabsTrigger
                       value="personal"
                       className={cn(
                         "rounded-none border-b-2 border-transparent pb-2",
@@ -112,8 +225,8 @@ export default function RegisterCompanyPage() {
                       onClick={() => setActiveTab("personal")}
                     >
                       Responsável Legal
-                    </TabsTrigger>
-                    <TabsTrigger
+                    </TabsTrigger> */}
+                    {/* <TabsTrigger
                       value="icon"
                       className={cn(
                         "rounded-none border-b-2 border-transparent pb-2",
@@ -122,7 +235,7 @@ export default function RegisterCompanyPage() {
                       onClick={() => setActiveTab("icon")}
                     >
                       Ícone
-                    </TabsTrigger>
+                    </TabsTrigger> */}
                   </TabsList>
 
                   <TabsContent value="general" className="space-y-6">
@@ -149,7 +262,7 @@ export default function RegisterCompanyPage() {
                           </FormItem>
                         )}
                       />
-                      <FormField
+                      {/* <FormField
                         name="cnpj"
                         render={({ field }) => (
                           <FormItem>
@@ -164,6 +277,29 @@ export default function RegisterCompanyPage() {
                             </FormControl>
                           </FormItem>
                         )}
+                      /> */}
+                      <FormField
+                        control={form.control}
+                        name="cnpj"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CNPJ</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="00.000.000/0000-00"
+                                inputMode="numeric"
+                                maxLength={18}
+                                value={formatCnpj(field.value)}
+                                onChange={(e) => {
+                                  field.onChange(
+                                    onlyDigits(e.target.value).slice(0, 14),
+                                  );
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                       <FormField
                         name="cep"
@@ -171,12 +307,23 @@ export default function RegisterCompanyPage() {
                           <FormItem>
                             <FormLabel>CEP</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="CEP"
-                                maxLength={7}
-                                min={0}
-                                {...field}
-                              />
+                              <div className="relative">
+                                <Input
+                                  placeholder="CEP"
+                                  maxLength={9}
+                                  value={formatCep(field.value ?? "")}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      onlyDigits(e.target.value).slice(0, 8),
+                                    )
+                                  }
+                                  onBlur={field.onBlur}
+                                  name={field.name}
+                                  ref={field.ref}
+                                  disabled={isCepLoading}
+                                />
+                                <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
+                              </div>
                             </FormControl>
                           </FormItem>
                         )}
@@ -241,7 +388,7 @@ export default function RegisterCompanyPage() {
                         )}
                       />
 
-                      <FormField
+                      {/* <FormField
                         name="page"
                         render={({ field }) => (
                           <FormItem>
@@ -251,9 +398,9 @@ export default function RegisterCompanyPage() {
                             </FormControl>
                           </FormItem>
                         )}
-                      />
+                      /> */}
 
-                      <FormField
+                      {/* <FormField
                         name="registration"
                         render={({ field }) => (
                           <FormItem>
@@ -266,11 +413,11 @@ export default function RegisterCompanyPage() {
                             </FormControl>
                           </FormItem>
                         )}
-                      />
+                      /> */}
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="personal" className="space-y-6">
+                  {/* <TabsContent value="personal" className="space-y-6">
                     <FormField
                       name="responsibleCpf"
                       render={({ field }) => (
@@ -326,9 +473,9 @@ export default function RegisterCompanyPage() {
                         </FormItem>
                       )}
                     />
-                  </TabsContent>
+                  </TabsContent> */}
 
-                  <TabsContent value="icon" className="space-y-6">
+                  {/* <TabsContent value="icon" className="space-y-6">
                     <Card>
                       <CardContent className="flex flex-col items-center gap-4 p-6">
                         <div className="relative h-64 w-64">
@@ -347,7 +494,7 @@ export default function RegisterCompanyPage() {
                         </div>
                       </CardContent>
                     </Card>
-                  </TabsContent>
+                  </TabsContent> */}
                 </Tabs>
                 <div className="flex gap-4">
                   <Button type="submit">Salvar</Button>

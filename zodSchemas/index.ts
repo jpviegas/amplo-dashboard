@@ -45,19 +45,19 @@ export const registerCompanySchema = z.object({
     .string()
     .nonempty()
     .length(14, "Preencha apenas os 14 números do CNPJ"),
-  cep: z.string().length(7, "O número do CEP é obrigatório"),
+  cep: z.string().length(8, "O número do CEP é obrigatório"),
   address: z.string().min(1, "O endereço é obrigatório"),
   district: z.string().min(1, "O bairro é obrigatório"),
   city: z.string().min(1, "A cidade é obrigatória"),
   uf: z.string().min(1, "A UF é obrigatória"),
-  page: z.string().min(1, "O número da folha obrigatório"),
-  registration: z.string().min(1, "A inscrição estadual é obrigatória"),
-  responsibleCpf: z
-    .string()
-    .length(11, "O número de CPF do responsável é obrigatório"),
-  responsibleName: z.string().min(1, "O nome do responsável é obrigatório"),
-  responsibleRole: z.string().min(1, "O cargo do responsável é obrigatória"),
-  companyEmail: z.string().email("O email da empresa é obrigatório"),
+  // page: z.string().min(1, "O número da folha obrigatório"),
+  // registration: z.string().min(1, "A inscrição estadual é obrigatória"),
+  // responsibleCpf: z
+  //   .string()
+  //   .length(11, "O número de CPF do responsável é obrigatório"),
+  // responsibleName: z.string().min(1, "O nome do responsável é obrigatório"),
+  // responsibleRole: z.string().min(1, "O cargo do responsável é obrigatória"),
+  // companyEmail: z.string().email("O email da empresa é obrigatório"),
 });
 
 export type EmployeeType = z.infer<typeof registerEmployeeSchema>;
