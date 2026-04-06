@@ -73,6 +73,7 @@ export default function PointsPage() {
   const userId = user?._id || Cookies.get("user");
 
   const [points, setPoints] = useState<PointItem[]>([]);
+  const [isExporting, setIsExporting] = useState<null | "excel" | "pdf">(null);
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -139,6 +140,171 @@ export default function PointsPage() {
     await fetchPoints(newPage.toString());
   };
 
+  function buildExportRows(items: PointItem[]) {
+    const headers = [
+      "Funcionário",
+      "Data",
+      "Entrada 1",
+      "Saída 1",
+      "Entrada 2",
+      "Saída 2",
+    ];
+    const rows = items.map((p) => {
+      const entradasSaidas = [0, 1, 2, 3].map((i) =>
+        formatPointTime(
+          Array.isArray(p.timestamps)
+            ? p.timestamps[i]
+            : i === 0
+              ? (p.timestamps?.[0] ?? null)
+              : null,
+        ),
+      );
+      return [
+        p.name ?? "-",
+        formatPointDate(
+          p.date ??
+            (typeof p.timestamps === "string"
+              ? p.timestamps
+              : (p.timestamps?.[0] ?? null)),
+        ),
+        entradasSaidas[0],
+        entradasSaidas[1],
+        entradasSaidas[2],
+        entradasSaidas[3],
+      ];
+    });
+    return { headers, rows };
+  }
+
+  function downloadBlob(content: Blob, filename: string) {
+    const url = URL.createObjectURL(content);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function timestampFilename(suffix: string) {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const name = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
+      now.getDate(),
+    )}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+    return `relatorio-pontos-${name}.${suffix}`;
+  }
+
+  const handleExportExcel = () => {
+    try {
+      setIsExporting("excel");
+      const { headers, rows } = buildExportRows(points);
+
+      const escapeHtml = (s: string) =>
+        String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+
+      const tableHead = `<tr>${headers
+        .map(
+          (h) =>
+            `<th style="border:1px solid #000;padding:4px;">${escapeHtml(h)}</th>`,
+        )
+        .join("")}</tr>`;
+      const tableRows = rows
+        .map(
+          (r) =>
+            `<tr>${r
+              .map(
+                (c) =>
+                  `<td style="border:1px solid #000;padding:4px;">${escapeHtml(
+                    c ?? "-",
+                  )}</td>`,
+              )
+              .join("")}</tr>`,
+        )
+        .join("");
+
+      const html = `
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+          </head>
+          <body>
+            <table>
+              <thead>${tableHead}</thead>
+              <tbody>${tableRows}</tbody>
+            </table>
+          </body>
+        </html>`;
+
+      const blob = new Blob([html], {
+        type: "application/vnd.ms-excel;charset=utf-8",
+      });
+      downloadBlob(blob, timestampFilename("xls"));
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
+  const handleExportPDF = () => {
+    try {
+      setIsExporting("pdf");
+      const { headers, rows } = buildExportRows(points);
+
+      const makeRow = (cells: string[], cellTag = "td") =>
+        `<tr>${cells
+          .map(
+            (c) =>
+              `<${cellTag} style="border:1px solid #999;padding:6px;font-size:12px;">${c}</${cellTag}>`,
+          )
+          .join("")}</tr>`;
+
+      const headHtml = makeRow(headers, "th");
+      const rowsHtml = rows.map((r) => makeRow(r)).join("");
+
+      const html = `
+        <html>
+          <head>
+            <meta charset="UTF-8" />
+            <title>Relatório de Pontos</title>
+            <style>
+              @page { size: A4 landscape; margin: 16mm; }
+              body { font-family: Arial, Helvetica, sans-serif; }
+              h1 { font-size: 18px; margin: 0 0 12px 0; }
+              table { border-collapse: collapse; width: 100%; }
+              th { background: #f2f2f2; text-align: left; }
+            </style>
+          </head>
+          <body>
+            <h1>Relatório de Pontos</h1>
+            <table>
+              <thead>${headHtml}</thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+            <script>
+              window.onload = function () {
+                setTimeout(function () {
+                  window.print();
+                }, 150);
+              }
+            </script>
+          </body>
+        </html>`;
+
+      const w = window.open("", "_blank");
+      if (!w) return;
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
   return (
     <main className="container mx-auto h-full w-11/12 pt-8">
       <div className="mb-8 flex items-center justify-between">
@@ -149,6 +315,26 @@ export default function PointsPage() {
             </Link>
           </Button>
           <h1 className="text-3xl font-bold">Relatório de Pontos</h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              disabled={
+                isLoading || points.length === 0 || isExporting !== null
+              }
+              onClick={handleExportExcel}
+            >
+              Exportar Excel
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={
+                isLoading || points.length === 0 || isExporting !== null
+              }
+              onClick={handleExportPDF}
+            >
+              Exportar PDF
+            </Button>
+          </div>
         </div>
       </div>
 

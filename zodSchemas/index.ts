@@ -175,14 +175,14 @@ export const registerDocumentSchema = z.object({
   file: z.string().min(1, "O arquivo é obrigatório"),
 });
 
-export type ServiceType = z.infer<typeof servicechema>;
+export type ServiceType = z.infer<typeof serviceSchema>;
 export type ServiceTypeWithId = ServiceType & { _id: string };
-export const servicechema = z.object({
+export const serviceSchema = z.object({
   type: z.string().min(1, "O ID do usuário é obrigatório"),
-  subject: z.string().min(1, "O email dos assinantes é obrigatório"),
-  text: z.string().min(1, "O arquivo é obrigatório"),
-  status: z.string().min(1, "O arquivo é obrigatório"),
-  name: z.string().min(1, "O arquivo é obrigatório"),
+  subject: z.string().min(1, "O assunto do serviço é obrigatório"),
+  text: z.string().min(1, "O texto do serviço é obrigatório"),
+  status: z.enum(["Pendente", "Aprovado", "Rejeitado"]),
+  name: z.string().min(1, "O nome do serviço é obrigatório"),
 });
 
 export type CityType = z.infer<typeof citychema>;

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { useUser } from "@/context/UserContext";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -30,6 +31,7 @@ export default function ServicesList() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const [services, setServices] = useState<ServiceItem[]>([]);
+  const router = useRouter();
   // const [pagination, setPagination] = useState<{
   //   total: number;
   //   page: number;
@@ -139,6 +141,23 @@ export default function ServicesList() {
                   {services.map((service) => (
                     <TableRow
                       key={`${service._id ?? service.subject}-${service.status}`}
+                      className={
+                        service._id
+                          ? "hover:text-amplo-secondary cursor-pointer hover:underline"
+                          : ""
+                      }
+                      role={service._id ? "link" : undefined}
+                      tabIndex={service._id ? 0 : -1}
+                      onClick={() => {
+                        if (!service._id) return;
+                        router.push(`/dashboard/atendimento/${service._id}`);
+                      }}
+                      onKeyDown={(e) => {
+                        if (!service._id) return;
+                        if (e.key !== "Enter" && e.key !== " ") return;
+                        e.preventDefault();
+                        router.push(`/dashboard/atendimento/${service._id}`);
+                      }}
                     >
                       <TableCell>{service.name ?? "-"}</TableCell>
                       <TableCell>{service.subject}</TableCell>

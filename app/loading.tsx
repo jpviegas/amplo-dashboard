@@ -1,4 +1,4 @@
-export default async function Loading() {
+export default function Loading() {
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center">
       <div className="flex flex-col items-center gap-4">

@@ -1,4 +1,4 @@
-import { ServiceType } from "@/zodSchemas";
+import { ServiceType, ServiceTypeWithId } from "@/zodSchemas";
 
 export async function GetAllServices(
   userId: string | { email: string },
@@ -24,6 +24,50 @@ export async function GetAllServices(
       Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
+
+  const data = await res.json();
+  return data;
+}
+
+export async function GetServiceById(
+  userId: string | { email: string },
+  serviceId: string,
+): Promise<{ success: boolean; service: ServiceTypeWithId }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/services/${serviceId}`,
+    {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+    },
+  );
+
+  const data = await res.json();
+  return data;
+}
+
+export async function UpdateService(
+  userId: string | { email: string },
+  serviceId: string,
+  values: Pick<ServiceType, "status">,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/services/${serviceId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+      body: JSON.stringify(values),
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao atualizar o atendimento");
+  }
 
   const data = await res.json();
   return data;
