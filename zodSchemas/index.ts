@@ -41,7 +41,8 @@ export type CompanyTypeWithId = CompanyType & { _id: string };
 export const registerCompanySchema = z.object({
   companyName: z
     .string({ required_error: "O nome é obrigatório" })
-    .min(10, "O nome deve conter pelo menos 10 caracteres"),
+    .nonempty("O nome é obrigatório")
+    .min(1, "O nome deve conter pelo menos 1 caractere"),
   nickname: z.string().min(1, "O nome fantasia é obrigatório"),
   cnpj: z
     .string({ required_error: "Preencha apenas os 14 números do CNPJ" })
@@ -91,9 +92,9 @@ export const registerEmployeeSchema = z.object({
     .string({
       required_error: "A data de admissão é obrigatória",
     })
-    .optional(),
-  company: z.string().min(1, "O código da empresa é obrigatório").optional(),
-  workingHours: z.string().optional(),
+    .nonempty("A data de admissão é obrigatória"),
+  company: z.string().nonempty().min(1, "O código da empresa é obrigatório"),
+  workingHours: z.string().nonempty("As horas de trabalho são obrigatórias"),
   status: z.enum(["active", "inactive"]),
   department: z.string().optional(),
   costCenter: z.string().optional(),

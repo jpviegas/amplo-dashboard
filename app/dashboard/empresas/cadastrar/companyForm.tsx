@@ -28,6 +28,7 @@ import { registerCompanySchema, ufsBrasil } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -38,6 +39,8 @@ export default function RegisterCompanyPage() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const onlyDigits = (s: string) => s.replace(/\D+/g, "");
+  const router = useRouter();
+
   const formatCep = (value: string) => {
     const v = onlyDigits(value).slice(0, 8);
     if (v.length <= 5) return v;
@@ -176,9 +179,12 @@ export default function RegisterCompanyPage() {
     try {
       const { message, success } = await CreateCompany(userId, values);
       if (!success) {
-        toast.error(`${message}`);
+        toast.error(message);
       } else {
-        toast.success(`${message}`);
+        toast.success(message);
+        setTimeout(() => {
+          router.push("/dashboard/empresas");
+        }, 1000);
       }
     } catch (message) {
       toast.error(`${message}`);
@@ -376,7 +382,7 @@ export default function RegisterCompanyPage() {
                             <FormControl>
                               <Select
                                 onValueChange={field.onChange}
-                                defaultValue={field.value}
+                                value={field.value ? field.value : undefined}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione a UF" />

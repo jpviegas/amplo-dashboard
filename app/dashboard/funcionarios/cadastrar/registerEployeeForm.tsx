@@ -51,6 +51,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -139,6 +140,7 @@ export default function RegisterEmployeeForm({
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const [cities, setCities] = useState<CityType[]>([]);
   const [isCepLoading, setIsCepLoading] = useState(false);
+  const router = useRouter();
   const lastCepLookupRef = useRef<string | null>(
     initialData?.cep ? onlyDigits(initialData.cep) : null,
   );
@@ -390,6 +392,9 @@ export default function RegisterEmployeeForm({
           toast.error(message);
         } else {
           toast.success(message);
+          setTimeout(() => {
+            router.push("/dashboard/funcionarios");
+          }, 1000);
         }
       }
     } catch {
