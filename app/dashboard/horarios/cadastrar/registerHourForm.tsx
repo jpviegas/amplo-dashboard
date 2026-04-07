@@ -110,6 +110,7 @@ export default function NewWorkingHourForm() {
                         type="time"
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
