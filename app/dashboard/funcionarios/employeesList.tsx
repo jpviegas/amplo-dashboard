@@ -60,6 +60,22 @@ const FormSchema = z.object({
 });
 
 export function EmployeesList() {
+  const slugify = (value: string) => {
+    const raw = String(value ?? "")
+      .trim()
+      .toLowerCase();
+    const noDiacritics = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const slug = noDiacritics
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug;
+  };
+  const buildEmployeeHref = (employee: EmployeeTypeWithId) => {
+    const base = employee.name || "funcionario";
+    const slug = slugify(base) || "funcionario";
+    return `/dashboard/funcionarios/${slug}-${employee._id}`;
+  };
   const [employees, setEmployees] = useState<
     (EmployeeTypeWithId & { companyName: string })[]
   >([]);
@@ -324,9 +340,7 @@ export function EmployeesList() {
                                 className="size-8"
                                 asChild
                               >
-                                <Link
-                                  href={`/dashboard/funcionarios/${employee._id}`}
-                                >
+                                <Link href={buildEmployeeHref(employee)}>
                                   <Pencil className="size-4" />
                                 </Link>
                               </Button>

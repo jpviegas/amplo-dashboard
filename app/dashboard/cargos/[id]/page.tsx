@@ -22,7 +22,7 @@ import Cookies from "js-cookie";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -32,7 +32,12 @@ export default function PositionEditPage() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const params = useParams<{ id: string }>();
-  const positionId = params?.id;
+  const rawPositionId = params?.id;
+  const positionId = useMemo(() => {
+    const raw = String(rawPositionId ?? "");
+    const match = raw.match(/[a-f0-9]{24}$/i);
+    return match?.[0] ?? rawPositionId;
+  }, [rawPositionId]);
   const [isLoading, setIsLoading] = useState(false);
   const [position, setPosition] = useState<PositionTypeWithId>();
   const router = useRouter();

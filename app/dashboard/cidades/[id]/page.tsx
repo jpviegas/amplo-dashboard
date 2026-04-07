@@ -19,7 +19,7 @@ import Cookies from "js-cookie";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FieldErrors, FieldPath, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -30,7 +30,12 @@ export default function CityEditPage() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const params = useParams<{ id: string }>();
-  const cityId = params?.id;
+  const rawCityId = params?.id;
+  const cityId = useMemo(() => {
+    const raw = String(rawCityId ?? "");
+    const match = raw.match(/[a-f0-9]{24}$/i);
+    return match?.[0] ?? rawCityId;
+  }, [rawCityId]);
   const [isLoading, setIsLoading] = useState(false);
   const [city, setCity] = useState<CityTypeWithId>();
   const router = useRouter();

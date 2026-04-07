@@ -54,6 +54,21 @@ const FormSchema = z.object({
 });
 
 export function CitiesList() {
+  const slugify = (value: string) => {
+    const raw = String(value ?? "").trim().toLowerCase();
+    const noDiacritics = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const slug = noDiacritics
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug;
+  };
+  const buildCityHref = (city: CityTypeWithId) => {
+    const base = city.city || "cidade";
+    const slug = slugify(base) || "cidade";
+    return `/dashboard/cidades/${slug}-${city._id}`;
+  };
+
   const [cities, setCities] = useState<CityTypeWithId[]>([]);
   const [deletingCityId, setDeletingCityId] = useState<string | null>(null);
   const [pagination, setPagination] = useState<{
@@ -275,7 +290,7 @@ export function CitiesList() {
                               size="icon"
                               className="size-8"
                             >
-                              <Link href={`/dashboard/cidades/${city._id}`}>
+                              <Link href={buildCityHref(city)}>
                                 <Pencil className="size-4" />
                               </Link>
                             </Button>

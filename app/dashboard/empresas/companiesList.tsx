@@ -62,6 +62,20 @@ export function CompaniesList() {
     if (v.length !== 14) return raw;
     return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
   };
+  const slugify = (value: string) => {
+    const raw = String(value ?? "").trim().toLowerCase();
+    const noDiacritics = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const slug = noDiacritics
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug;
+  };
+  const buildCompanyHref = (company: CompanyTypeWithId) => {
+    const base = company.nickname || company.companyName || "empresa";
+    const slug = slugify(base) || "empresa";
+    return `empresas/${slug}-${company._id}`;
+  };
 
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const [deletingCompanyId, setDeletingCompanyId] = useState<string | null>(
@@ -296,7 +310,7 @@ export function CompaniesList() {
                               className="size-8"
                               asChild
                             >
-                              <Link href={`empresas/${company._id}`}>
+                              <Link href={buildCompanyHref(company)}>
                                 <Pencil className="size-4" />
                               </Link>
                             </Button>

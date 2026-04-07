@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Página de detalhes do funcionário",
 };
 
-export default async function EmployeePage() {
+export default function EmployeePage() {
   return (
     <main className="container mx-auto h-full w-11/12 pt-8">
       <div className="mb-8 flex items-center justify-between">

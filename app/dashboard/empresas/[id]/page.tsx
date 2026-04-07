@@ -32,7 +32,7 @@ import Cookies from "js-cookie";
 import { ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -42,10 +42,18 @@ export default function CompanyEditPage() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const params = useParams<{ id: string }>();
-  const companyId = params?.id;
+  console.log(params);
+
+  const rawCompanyId = params?.id;
+  const companyId = useMemo(() => {
+    const raw = String(rawCompanyId ?? "");
+    const match = raw.match(/[a-f0-9]{24}$/i);
+    return match?.[0] ?? rawCompanyId;
+  }, [rawCompanyId]);
   const [isLoading, setIsLoading] = useState(false);
   const [company, setCompany] = useState<CompanyType>();
   const router = useRouter();
+
   const [isReturning, setIsReturning] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const onlyDigits = (s: string) => s.replace(/\D+/g, "");

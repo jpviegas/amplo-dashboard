@@ -57,6 +57,23 @@ const FormSchema = z.object({
 });
 
 export function PositionsList() {
+  const slugify = (value: string) => {
+    const raw = String(value ?? "")
+      .trim()
+      .toLowerCase();
+    const noDiacritics = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const slug = noDiacritics
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug;
+  };
+  const buildPositionHref = (position: PositionTypeWithId) => {
+    const base = position.positionName || "cargo";
+    const slug = slugify(base) || "cargo";
+    return `/dashboard/cargos/${slug}-${position._id}`;
+  };
+
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const [deletingPositionId, setDeletingPositionId] = useState<string | null>(
     null,
@@ -267,7 +284,7 @@ export function PositionsList() {
                               size="icon"
                               className="size-8"
                             >
-                              <Link href={`/dashboard/cargos/${position._id}`}>
+                              <Link href={buildPositionHref(position)}>
                                 <Pencil className="size-4" />
                               </Link>
                             </Button>

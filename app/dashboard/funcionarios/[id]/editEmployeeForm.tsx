@@ -145,6 +145,11 @@ export default function EditEmployeeForm() {
   const cepAbortRef = useRef<AbortController | null>(null);
   const { user } = useUser();
   const { id }: { id: string } = useParams();
+  const employeeId = useMemo(() => {
+    const raw = String(id ?? "");
+    const match = raw.match(/[a-f0-9]{24}$/i);
+    return match?.[0] ?? id;
+  }, [id]);
 
   type FormValues = z.infer<typeof registerEmployeeSchema>;
 
@@ -235,7 +240,8 @@ export default function EditEmployeeForm() {
 
   const fetchEmployee = async () => {
     try {
-      const { success, message, user } = await GetCompanyEmployeeById(id);
+      const { success, message, user } =
+        await GetCompanyEmployeeById(employeeId);
       if (!success) {
         toast.error(message);
         return;
@@ -291,7 +297,9 @@ export default function EditEmployeeForm() {
             : ((employee as unknown as { position?: { _id?: string } })
                 ?.position?._id ?? ""),
         state: normalizeUf((employee as unknown as { state?: unknown })?.state),
-        phone: onlyDigits((employee as unknown as { phone?: string })?.phone ?? ""),
+        phone: onlyDigits(
+          (employee as unknown as { phone?: string })?.phone ?? "",
+        ),
         children: Array.isArray(
           (employee as unknown as { children?: unknown })?.children,
         )
@@ -303,7 +311,7 @@ export default function EditEmployeeForm() {
         (parsedEmployee as { cep?: string | null } | null)?.cep ?? "",
       );
     }
-  }, [employee, form]);
+  }, [employee, id]);
 
   const cityOptions = useMemo(() => {
     const normalized = cities
@@ -400,7 +408,11 @@ export default function EditEmployeeForm() {
     }
 
     try {
-      const { message, success } = await UpdateEmployee(user._id, values, id);
+      const { message, success } = await UpdateEmployee(
+        user._id,
+        values,
+        employeeId,
+      );
       if (!success) {
         toast.error(message);
       } else {

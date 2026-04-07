@@ -56,6 +56,21 @@ const FormSchema = z.object({
 });
 
 export function DepartmentsList() {
+  const slugify = (value: string) => {
+    const raw = String(value ?? "").trim().toLowerCase();
+    const noDiacritics = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const slug = noDiacritics
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug;
+  };
+  const buildDepartmentHref = (department: DepartmentTypeWithId) => {
+    const base = department.departmentName || "departamento";
+    const slug = slugify(base) || "departamento";
+    return `departamentos/${slug}-${department._id}`;
+  };
+
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [deletingDepartmentId, setDeletingDepartmentId] = useState<
     string | null
@@ -278,7 +293,7 @@ export function DepartmentsList() {
                               size="icon"
                               className="size-8"
                             >
-                              <Link href={`departamentos/${job._id}`}>
+                              <Link href={buildDepartmentHref(job)}>
                                 <Pencil className="size-4" />
                               </Link>
                             </Button>
