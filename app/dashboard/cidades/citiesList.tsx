@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  DeletePosition,
-  GetCompanyPositions,
-} from "@/api/dashboard/cargos/route";
+import { DeleteCity, GetAllCities } from "@/api/dashboard/cities/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import {
   AlertDialog,
@@ -41,7 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useUser } from "@/context/UserContext";
-import { PositionTypeWithId } from "@/zodSchemas";
+import { CityTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import debounce from "lodash/debounce";
@@ -56,11 +53,9 @@ const FormSchema = z.object({
   search: z.string(),
 });
 
-export function PositionsList() {
-  const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
-  const [deletingPositionId, setDeletingPositionId] = useState<string | null>(
-    null,
-  );
+export function CitiesList() {
+  const [cities, setCities] = useState<CityTypeWithId[]>([]);
+  const [deletingCityId, setDeletingCityId] = useState<string | null>(null);
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -92,7 +87,7 @@ export function PositionsList() {
     },
   });
 
-  const fetchPositions = async (values: z.infer<typeof FormSchema>) => {
+  const fetchCities = async (values: z.infer<typeof FormSchema>) => {
     try {
       setIsLoading(true);
       if (!userId) {
@@ -102,45 +97,41 @@ export function PositionsList() {
       const {
         success,
         pagination: paginationData,
-        positions,
-      } = await GetCompanyPositions(
-        userId,
-        values.search,
-        pagination.page.toString(),
-      );
+        cities,
+      } = await GetAllCities(userId, values.search, pagination.page.toString());
 
       if (success) {
-        setPositions(positions);
+        setCities(cities);
         setPagination(paginationData);
       }
     } catch (error) {
-      console.error("Erro ao buscar cargos da empresa:", error);
-      toast.error("Não foi possível carregar os cargos da empresa.");
+      console.error("Erro ao buscar cidades:", error);
+      toast.error("Não foi possível carregar as cidades.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const debouncedFetchPositions = useCallback(
+  const debouncedFetchCities = useCallback(
     debounce((values: z.infer<typeof FormSchema>) => {
-      fetchPositions(values);
+      fetchCities(values);
     }, 500),
     [userId],
   );
 
   useEffect(() => {
     const subscription = form.watch((values) => {
-      debouncedFetchPositions(values as z.infer<typeof FormSchema>);
+      debouncedFetchCities(values as z.infer<typeof FormSchema>);
     });
 
     return () => {
       subscription.unsubscribe();
-      debouncedFetchPositions.cancel();
+      debouncedFetchCities.cancel();
     };
-  }, [form, debouncedFetchPositions]);
+  }, [form, debouncedFetchCities]);
 
   useEffect(() => {
-    fetchPositions(form.getValues());
+    fetchCities(form.getValues());
   }, [form]);
 
   const handlePageChange = async (newPage: number) => {
@@ -153,15 +144,15 @@ export function PositionsList() {
       const {
         success,
         pagination: paginationData,
-        positions,
-      } = await GetCompanyPositions(
+        cities,
+      } = await GetAllCities(
         userId,
         form.getValues("search"),
         newPage.toString(),
       );
 
       if (success) {
-        setPositions(positions);
+        setCities(cities);
         setPagination(paginationData);
       }
     } catch (error) {
@@ -172,15 +163,15 @@ export function PositionsList() {
     }
   };
 
-  const handleDeletePosition = async (positionId: string) => {
+  const handleDeleteCity = async (cityId: string) => {
     try {
       if (!userId) {
         toast.error("Usuário não identificado.");
         return;
       }
 
-      setDeletingPositionId(positionId);
-      const { success, message } = await DeletePosition(userId, positionId);
+      setDeletingCityId(cityId);
+      const { success, message } = await DeleteCity(userId, cityId);
 
       if (!success) {
         toast.warning(message);
@@ -189,16 +180,16 @@ export function PositionsList() {
 
       toast.success(message);
 
-      const isLastItemOnPage = positions.length === 1;
+      const isLastItemOnPage = cities.length === 1;
       const nextPage = isLastItemOnPage
         ? Math.max(1, pagination.page - 1)
         : pagination.page;
       await handlePageChange(nextPage);
     } catch (error) {
-      console.error("Erro ao deletar cargo:", error);
-      toast.error("Não foi possível deletar o cargo.");
+      console.error("Erro ao deletar cidade:", error);
+      toast.error("Não foi possível deletar a cidade.");
     } finally {
-      setDeletingPositionId(null);
+      setDeletingCityId(null);
     }
   };
 
@@ -207,7 +198,7 @@ export function PositionsList() {
       <Form {...form}>
         <form
           className="flex items-center justify-between"
-          onSubmit={form.handleSubmit(fetchPositions)}
+          onSubmit={form.handleSubmit(fetchCities)}
         >
           <FormField
             control={form.control}
@@ -216,7 +207,7 @@ export function PositionsList() {
               <FormItem className="flex items-center gap-4">
                 <FormLabel>Buscar:</FormLabel>
                 <FormControl>
-                  <Input placeholder="buscar cargo" {...field} />
+                  <Input placeholder="buscar cidade" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -225,22 +216,30 @@ export function PositionsList() {
         </form>
       </Form>
 
-      <div className="mx-auto overflow-x-auto rounded-md border sm:w-[70%] lg:w-[50%]">
+      <div className="mx-auto overflow-x-auto rounded-md border lg:w-[70%]">
         <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[70%]">Cargo</TableHead>
-              <TableHead className="w-[30%]">Ação</TableHead>
+              <TableHead className="w-[40%]">Cidade</TableHead>
+              <TableHead className="w-[20%]">Vale-Refeição</TableHead>
+              <TableHead className="w-[20%]">Vale-Transporte</TableHead>
+              <TableHead className="w-[20%]">Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading
               ? Array.from({ length: TABLE_ROWS }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell className="w-[70%]">
+                    <TableCell className="w-[40%]">
                       <Skeleton className="h-4 w-full max-w-[250px]" />
                     </TableCell>
-                    <TableCell className="w-[30%]">
+                    <TableCell className="w-[20%]">
+                      <Skeleton className="h-4 w-full max-w-[100px]" />
+                    </TableCell>
+                    <TableCell className="w-[20%]">
+                      <Skeleton className="h-4 w-full max-w-[100px]" />
+                    </TableCell>
+                    <TableCell className="w-[20%]">
                       <div className="flex items-center justify-end gap-2">
                         <Skeleton className="size-8 rounded-md" />
                         <Skeleton className="size-8 rounded-md" />
@@ -248,17 +247,26 @@ export function PositionsList() {
                     </TableCell>
                   </TableRow>
                 ))
-              : positions.map((position) => (
-                  <TableRow key={position._id}>
-                    <TableCell className="w-[70%]">
-                      <div
-                        className="truncate text-sm"
-                        title={position.positionName}
-                      >
-                        {position.positionName}
+              : cities.map((city) => (
+                  <TableRow key={city._id}>
+                    <TableCell className="w-[40%]">
+                      <div className="truncate text-sm" title={city.city ?? ""}>
+                        {city.city ?? "-"}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[30%]">
+                    <TableCell className="w-[20%]">
+                      <div className="truncate text-sm">
+                        {typeof city.meal === "number" ? city.meal : "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[20%]">
+                      <div className="truncate text-sm">
+                        {typeof city.transport === "number"
+                          ? city.transport
+                          : "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[20%]">
                       <div className="flex gap-2">
                         <HoverCard openDelay={100} closeDelay={0}>
                           <HoverCardTrigger>
@@ -267,7 +275,7 @@ export function PositionsList() {
                               size="icon"
                               className="size-8"
                             >
-                              <Link href={`/dashboard/cargos/${position._id}`}>
+                              <Link href={`/dashboard/cidades/${city._id}`}>
                                 <Pencil className="size-4" />
                               </Link>
                             </Button>
@@ -286,8 +294,7 @@ export function PositionsList() {
                                   size="icon"
                                   className="size-8 cursor-pointer"
                                   disabled={
-                                    isLoading ||
-                                    deletingPositionId === position._id
+                                    isLoading || deletingCityId === city._id
                                   }
                                 >
                                   <Trash className="size-4" />
@@ -301,23 +308,19 @@ export function PositionsList() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Deletar cargo?
+                                Deletar cidade?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Essa ação não pode ser desfeita. O cargo
-                                {position.positionName
-                                  ? ` "${position.positionName}"`
-                                  : ""}{" "}
-                                será removido permanentemente.
+                                Essa ação não pode ser desfeita. A cidade
+                                {city.city ? ` "${city.city}"` : ""} será
+                                removido permanentemente.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 variant="destructive"
-                                onClick={() =>
-                                  handleDeletePosition(position._id)
-                                }
+                                onClick={() => handleDeleteCity(city._id)}
                               >
                                 Deletar
                               </AlertDialogAction>
@@ -330,27 +333,27 @@ export function PositionsList() {
                 ))}
             {!isLoading && (
               <>
-                {positions.length === 0 && (
+                {cities.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={2}
+                      colSpan={4}
                       className="text-muted-foreground h-16 text-center"
                     >
-                      Nenhum cargo encontrado.
+                      Nenhuma cidade encontrada.
                     </TableCell>
                   </TableRow>
                 )}
                 {Array.from({
                   length: Math.max(
                     0,
-                    TABLE_ROWS -
-                      positions.length -
-                      (positions.length === 0 ? 1 : 0),
+                    TABLE_ROWS - cities.length - (cities.length === 0 ? 1 : 0),
                   ),
                 }).map((_, index) => (
                   <TableRow key={`empty-${index}`}>
-                    <TableCell className="w-[70%]">&nbsp;</TableCell>
-                    <TableCell className="w-[30%]">
+                    <TableCell className="w-[40%]">&nbsp;</TableCell>
+                    <TableCell className="w-[20%]">&nbsp;</TableCell>
+                    <TableCell className="w-[20%]">&nbsp;</TableCell>
+                    <TableCell className="w-[20%]">
                       <div className="flex justify-end gap-2 opacity-0">
                         <Button
                           variant="ghost"

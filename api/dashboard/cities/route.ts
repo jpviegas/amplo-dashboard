@@ -1,7 +1,9 @@
-import { CityType } from "@/zodSchemas";
+import { CityType, CityTypeWithId } from "@/zodSchemas";
 
 export async function GetAllCities(
   userId: string | { email: string },
+  search?: string,
+  page?: string,
 ): Promise<{
   success: boolean;
   count: number;
@@ -15,9 +17,16 @@ export async function GetAllCities(
     nextPage: null | number;
     prevPage: null | number;
   };
-  cities: CityType[];
+  cities: CityTypeWithId[];
 }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cities/`, {
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/cities/`;
+
+  const queryParams = new URLSearchParams();
+  if (search) queryParams.append("search", search);
+  if (page) queryParams.append("page", page);
+  if (queryParams.toString()) url += `?${queryParams.toString()}`;
+
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       "content-type": "application/json",
@@ -120,7 +129,7 @@ export async function DeleteCity(
   );
 
   if (!res) {
-    throw new Error("Erro ao deletar o cargo");
+    throw new Error("Erro ao deletar a cidade");
   }
 
   const data = await res.json();

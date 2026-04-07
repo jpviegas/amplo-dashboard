@@ -270,7 +270,7 @@ export function EmployeesList() {
         </form>
       </Form>
 
-      <div className="mx-auto overflow-x-auto rounded-md border sm:w-[70%] lg:w-[50%]">
+      <div className="mx-auto overflow-x-auto rounded-md border lg:w-[70%]">
         <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>

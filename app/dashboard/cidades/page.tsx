@@ -1,18 +1,18 @@
 import DashboardHeader from "@/components/layout/dashboard/header";
 import { Metadata } from "next";
-import { PositionsList } from "./citiesList";
+import { CitiesList } from "./citiesList";
 
 export const metadata: Metadata = {
-  title: "Cargos - Amplo Serviços",
-  description: "Página de cargos da amplo serviços",
+  title: "Cidades - Amplo Serviços",
+  description: "Página de cidades da amplo serviços",
 };
 
-export default async function PositionsPage() {
+export default async function CitiesPage() {
   return (
     <main className="container mx-auto flex h-full w-11/12 flex-col justify-evenly gap-8">
-      <DashboardHeader title="Cargos" link="cargos/cadastrar" />
+      <DashboardHeader title="Cidades" link="cidades/cadastrar" />
 
-      <PositionsList />
+      <CitiesList />
     </main>
   );
 }

@@ -39,13 +39,17 @@ export const loginSchema = z.object({
 export type CompanyType = z.infer<typeof registerCompanySchema>;
 export type CompanyTypeWithId = CompanyType & { _id: string };
 export const registerCompanySchema = z.object({
-  companyName: z.string().min(10, "O nome é obrigarório"),
+  companyName: z
+    .string({ required_error: "O nome é obrigatório" })
+    .min(10, "O nome deve conter pelo menos 10 caracteres"),
   nickname: z.string().min(1, "O nome fantasia é obrigatório"),
   cnpj: z
-    .string()
-    .nonempty()
-    .length(14, "Preencha apenas os 14 números do CNPJ"),
-  cep: z.string().length(8, "O número do CEP é obrigatório"),
+    .string({ required_error: "Preencha apenas os 14 números do CNPJ" })
+    .length(14, "Preencha apenas os 14 números do CNPJ")
+    .nonempty(),
+  cep: z
+    .string({ required_error: "O número do CEP é obrigatório" })
+    .length(8, "Preencha apenas os 8 números do CEP"),
   address: z.string().min(1, "O endereço é obrigatório"),
   district: z.string().min(1, "O bairro é obrigatório"),
   city: z.string().min(1, "A cidade é obrigatória"),
@@ -63,22 +67,29 @@ export const registerCompanySchema = z.object({
 export type EmployeeType = z.infer<typeof registerEmployeeSchema>;
 export type EmployeeTypeWithId = EmployeeType & { _id: string };
 export const registerEmployeeSchema = z.object({
-  name: z.string().min(10, "O nome é obrigarório"),
-  email: z.string().min(1, "O email é obrigatório"),
+  name: z
+    .string()
+    .nonempty("O nome é obrigatório")
+    .min(10, "O nome deve conter pelo menos 10 caracteres"),
+  email: z
+    .string()
+    .nonempty("O email é obrigatório")
+    .min(1, "O email é obrigatório")
+    .email("Email inválido"),
   // pis: z.string().min(1, "O PIS é obrigatório").optional(),
   pis: z.string().optional(),
   cpf: z
     .string()
     .nonempty("O CPF é obrigatório")
-    .length(11, "Preencha apenas os 11 números do CPF")
-    .optional(),
+    .length(11, "Preencha apenas os 11 números do CPF"),
+  // .optional(),
   registration: z
     .string()
     // .min(1, "O número de matrícula é obrigatório")
     .optional(),
   admissionDate: z
     .string({
-      error: "A data de admissão é obrigatória",
+      required_error: "A data de admissão é obrigatória",
     })
     .optional(),
   company: z.string().min(1, "O código da empresa é obrigatório").optional(),
@@ -97,7 +108,7 @@ export const registerEmployeeSchema = z.object({
     .optional(),
   birthDate: z
     .string({
-      error: "A data de nascimento é obrigatória",
+      required_error: "A data de nascimento é obrigatória",
     })
     .optional(),
   socialName: z.string().optional(),
@@ -105,7 +116,7 @@ export const registerEmployeeSchema = z.object({
   cnhCategory: z.string().optional(),
   cnhExpiration: z
     .string({
-      error: "A data de expiração da CNH é obrigatória",
+      required_error: "A data de expiração da CNH é obrigatória",
     })
     .optional(),
   cep: z.string().optional(),
@@ -138,9 +149,9 @@ export type DepartmentType = z.infer<typeof registerDepartmentSchema>;
 export type DepartmentTypeWithId = DepartmentType & { _id: string };
 export const registerDepartmentSchema = z.object({
   departmentName: z.string().min(1, "O nome é obrigarório"),
-  company: z.string().min(1, "A empresa é obrigarória").optional(),
-  approvalFlow: z.string().optional(),
-  sheetNumber: z.string().min(1, "O número da folha é obrigarório").optional(),
+  // company: z.string().min(1, "A empresa é obrigarória").optional(),
+  // approvalFlow: z.string().optional(),
+  // sheetNumber: z.string().min(1, "O número da folha é obrigarório").optional(),
 });
 
 export type PositionType = z.infer<typeof registerPositionSchema>;
@@ -186,12 +197,16 @@ export const serviceSchema = z.object({
   name: z.string().min(1, "O nome do serviço é obrigatório"),
 });
 
-export type CityType = z.infer<typeof citychema>;
+export type CityType = z.infer<typeof citySchema>;
 export type CityTypeWithId = CityType & { _id: string };
-export const citychema = z
-  .object({
-    city: z.string().optional(),
-    meal: z.number().optional(),
-    transport: z.number().optional(),
-  })
-  .optional();
+export const citySchema = z.object({
+  city: z.string().nonempty("O nome da cidade é obrigatório"),
+  meal: z
+    .number({ required_error: "O valor do vale refeição é obrigatório" })
+    .nonnegative({ message: "O valor do vale refeição deve ser positivo" })
+    .min(1, "O valor do vale refeição é obrigatório"),
+  transport: z
+    .number({ required_error: "O valor do vale transporte é obrigatório" })
+    .nonnegative({ message: "O valor do vale transporte deve ser positivo" })
+    .min(1, "O valor do vale transporte é obrigatório"),
+});

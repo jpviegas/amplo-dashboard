@@ -1,6 +1,6 @@
 "use client";
 
-import { CreatePosition } from "@/api/dashboard/cargos/route";
+import { CreateCity } from "@/api/dashboard/cities/route";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/context/UserContext";
-import { registerPositionSchema } from "@/zodSchemas";
+import { citySchema } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import Link from "next/link";
@@ -22,21 +22,23 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-export default function NewPositionForm() {
+export default function NewCityForm() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const router = useRouter();
   const [isReturning, setIsReturning] = useState(false);
 
-  type FormValues = z.infer<typeof registerPositionSchema>;
+  const cityFormSchema = citySchema;
+  type FormValues = z.infer<typeof cityFormSchema>;
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(registerPositionSchema),
+    resolver: zodResolver(cityFormSchema),
     defaultValues: {
-      positionName: "",
+      city: "",
+      meal: undefined,
+      transport: undefined,
     },
   });
-  console.log(form.getValues());
 
   async function onSubmit(values: FormValues) {
     try {
@@ -45,7 +47,7 @@ export default function NewPositionForm() {
         return;
       }
 
-      const { success, message } = await CreatePosition(userId, values);
+      const { success, message } = await CreateCity(userId, values);
 
       if (!success) {
         toast.warning(message);
@@ -53,44 +55,102 @@ export default function NewPositionForm() {
         toast.success(message);
         setIsReturning(true);
         setTimeout(() => {
-          router.push("/dashboard/cargos");
+          router.push("/dashboard/cidades");
         }, 1000);
       }
-    } catch {
-      toast.error("Erro ao cadastrar o cargo.");
+    } catch (error) {
+      toast.error(`${error}`);
     }
   }
 
   return (
     <Form {...form}>
-      <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        className="space-y-8"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          try {
+            form.clearErrors();
+            await form.handleSubmit(async (values) => {
+              await onSubmit(values);
+            })(e);
+          } catch (error) {
+            toast.error(`${error}`);
+          }
+        }}
+      >
         <div className="grid gap-4 md:grid-cols-3">
           <FormField
             control={form.control}
-            name="positionName"
+            name="city"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nome</FormLabel>
+                <FormLabel>Cidade</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nome do cargo" {...field} />
+                  <Input placeholder="Nome da cidade" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          {/* <FormField
+          <FormField
             control={form.control}
-            name="company"
+            name="meal"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Empresa</FormLabel>
+                <FormLabel>Vale-Refeição</FormLabel>
                 <FormControl>
-                  <Input placeholder="Preencha o ID da empresa" {...field} />
+                  <Input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (!raw.trim()) {
+                        field.onChange(undefined);
+                        return;
+                      }
+                      const n = Number(raw);
+                      field.onChange(Number.isNaN(n) ? undefined : n);
+                    }}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
+          />
+          <FormField
+            control={form.control}
+            name="transport"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Vale-Transporte</FormLabel>
+                <FormControl>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (!raw.trim()) {
+                        field.onChange(undefined);
+                        return;
+                      }
+                      const n = Number(raw);
+                      field.onChange(Number.isNaN(n) ? undefined : n);
+                    }}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         <div className="flex gap-4">
           <Button
@@ -109,7 +169,7 @@ export default function NewPositionForm() {
             type="reset"
             disabled={form.formState.isSubmitting || isReturning}
           >
-            <Link href="./">Cancelar</Link>
+            <Link href="/dashboard/cidades">Cancelar</Link>
           </Button>
         </div>
       </form>

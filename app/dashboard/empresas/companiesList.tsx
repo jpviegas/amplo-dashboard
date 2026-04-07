@@ -229,7 +229,7 @@ export function CompaniesList() {
           />
         </form>
       </Form>
-      <div className="overflow-x-auto rounded-md border">
+      <div className="mx-auto overflow-x-auto rounded-md border lg:w-[70%]">
         <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>

@@ -2,7 +2,6 @@
 
 import { GetAllServices } from "@/api/dashboard/atendimento/route";
 // import { TablePagination } from "@/components/layout/dashboard/TablePagination";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -92,93 +91,85 @@ export default function ServicesList() {
   // };
 
   return (
-    <Card className="w-full self-center p-6 lg:w-2/3">
-      <CardTitle>
-        {/* <h1 className="border-b-2 text-2xl font-bold">Atendimentos</h1> */}
-      </CardTitle>
-      <CardContent className="flex flex-col gap-4 pt-6">
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Assunto</TableHead>
-                <TableHead>Justificativa</TableHead>
-                <TableHead>Situação</TableHead>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Usuário</TableHead>
+            <TableHead>Assunto</TableHead>
+            <TableHead>Justificativa</TableHead>
+            <TableHead>Situação</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: TABLE_ROWS }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Skeleton className="h-4 w-full max-w-[250px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full max-w-[150px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full max-w-[250px]" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-full max-w-[100px]" />
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: TABLE_ROWS }).map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-full max-w-[250px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-full max-w-[150px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-full max-w-[250px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-full max-w-[100px]" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <>
-                  {services.length === 0 && (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-muted-foreground h-16 text-center"
-                      >
-                        Nenhum atendimento encontrado.
-                      </TableCell>
-                    </TableRow>
-                  )}
-
-                  {services.map((service) => (
-                    <TableRow
-                      key={`${service._id ?? service.subject}-${service.status}`}
-                      className={
-                        service._id
-                          ? "hover:text-amplo-secondary cursor-pointer hover:underline"
-                          : ""
-                      }
-                      role={service._id ? "link" : undefined}
-                      tabIndex={service._id ? 0 : -1}
-                      onClick={() => {
-                        if (!service._id) return;
-                        router.push(`/dashboard/atendimento/${service._id}`);
-                      }}
-                      onKeyDown={(e) => {
-                        if (!service._id) return;
-                        if (e.key !== "Enter" && e.key !== " ") return;
-                        e.preventDefault();
-                        router.push(`/dashboard/atendimento/${service._id}`);
-                      }}
-                    >
-                      <TableCell>{service.name ?? "-"}</TableCell>
-                      <TableCell>{service.subject}</TableCell>
-                      <TableCell className="max-w-[420px] truncate">
-                        {service.text}
-                      </TableCell>
-                      <TableCell>{service.status}</TableCell>
-                    </TableRow>
-                  ))}
-                </>
+            ))
+          ) : (
+            <>
+              {services.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-muted-foreground h-16 text-center"
+                  >
+                    Nenhum atendimento encontrado.
+                  </TableCell>
+                </TableRow>
               )}
-            </TableBody>
-          </Table>
-        </div>
 
-        {/* <TablePagination
-          pagination={pagination}
-          itemsCount={services.length}
-          onPageChange={handlePageChange}
-        /> */}
-      </CardContent>
-    </Card>
+              {services.map((service) => (
+                <TableRow
+                  key={`${service._id ?? service.subject}-${service.status}`}
+                  className={
+                    service._id
+                      ? "hover:text-amplo-secondary cursor-pointer hover:underline"
+                      : ""
+                  }
+                  role={service._id ? "link" : undefined}
+                  tabIndex={service._id ? 0 : -1}
+                  onClick={() => {
+                    if (!service._id) return;
+                    router.push(`/dashboard/atendimento/${service._id}`);
+                  }}
+                  onKeyDown={(e) => {
+                    if (!service._id) return;
+                    if (e.key !== "Enter" && e.key !== " ") return;
+                    e.preventDefault();
+                    router.push(`/dashboard/atendimento/${service._id}`);
+                  }}
+                >
+                  <TableCell>{service.name ?? "-"}</TableCell>
+                  <TableCell>{service.subject}</TableCell>
+                  <TableCell className="max-w-[420px] truncate">
+                    {service.text}
+                  </TableCell>
+                  <TableCell>{service.status}</TableCell>
+                </TableRow>
+              ))}
+            </>
+          )}
+        </TableBody>
+      </Table>
+      {/* <TablePagination
+              pagination={pagination}
+              itemsCount={services.length}
+              onPageChange={handlePageChange}
+            />  */}
+    </div>
   );
 }

@@ -37,6 +37,7 @@ export default function SidebarComponent() {
               items: [
                 { item: "Empresas", url: "/dashboard/empresas" },
                 { item: "Funcionários", url: "/dashboard/funcionarios" },
+                { item: "Cidades", url: "/dashboard/cidades" },
                 { item: "Documentos", url: "/dashboard/documentos" },
                 { item: "Departamentos", url: "/dashboard/departamentos" },
                 { item: "Cargos", url: "/dashboard/cargos" },
@@ -57,10 +58,10 @@ export default function SidebarComponent() {
               title: "Relatórios",
               items: [
                 // { item: "Empresa", url: "empresa" },
-                { item: "Funcionário", url: "/dashboard/pontos" },
-                { item: "Departamento", url: "departamento" },
-                { item: "Cargo", url: "cargo" },
-                { item: "Cidade", url: "cidade" },
+                { item: "Folha de Pontos", url: "/dashboard/pontos" },
+                // { item: "Departamento", url: "departamento" },
+                // { item: "Cargo", url: "cargo" },
+                // { item: "Cidade", url: "cidade" },
               ],
             },
             {

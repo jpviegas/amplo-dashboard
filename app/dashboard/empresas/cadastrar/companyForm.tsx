@@ -248,6 +248,7 @@ export default function RegisterCompanyPage() {
                             <FormControl>
                               <Input placeholder="Nome da empresa" {...field} />
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -259,6 +260,7 @@ export default function RegisterCompanyPage() {
                             <FormControl>
                               <Input placeholder="Nome fantasia" {...field} />
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -325,6 +327,7 @@ export default function RegisterCompanyPage() {
                                 <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
                               </div>
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -336,6 +339,7 @@ export default function RegisterCompanyPage() {
                             <FormControl>
                               <Input placeholder="Endereço" {...field} />
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -347,6 +351,7 @@ export default function RegisterCompanyPage() {
                             <FormControl>
                               <Input placeholder="Bairro" {...field} />
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -358,6 +363,7 @@ export default function RegisterCompanyPage() {
                             <FormControl>
                               <Input placeholder="Cidade" {...field} />
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
@@ -384,6 +390,7 @@ export default function RegisterCompanyPage() {
                                 </SelectContent>
                               </Select>
                             </FormControl>
+                            <FormMessage />
                           </FormItem>
                         )}
                       />
