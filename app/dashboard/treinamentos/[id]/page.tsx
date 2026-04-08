@@ -39,7 +39,6 @@ export default function TrainingEditPage() {
     const match = raw.match(/[a-f0-9]{24}$/i);
     return match?.[0] ?? rawTrainingId;
   }, [rawTrainingId]);
-  const [isLoading, setIsLoading] = useState(false);
   const [training, setTraining] = useState<TrainingsTypeWithId>();
   const router = useRouter();
   const [isReturning, setIsReturning] = useState(false);
@@ -62,7 +61,6 @@ export default function TrainingEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, training } = await GetTrainingById(userId, trainingId);
 
       if (!success) {
@@ -85,7 +83,6 @@ export default function TrainingEditPage() {
       console.error("Erro ao carregar treinamento:", error);
       toast.error("Não foi possível carregar o treinamento.");
     } finally {
-      setIsLoading(false);
     }
   }, [trainingId, form, userId]);
 
@@ -104,7 +101,6 @@ export default function TrainingEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, message } = await UpdateTraining(userId, trainingId, {
         title: values.title,
         subTitle: values.subTitle,
@@ -118,15 +114,13 @@ export default function TrainingEditPage() {
 
       toast.success(message);
       await fetchTraining();
+      setIsReturning(true);
       setTimeout(() => {
         router.push("/dashboard/treinamentos");
       }, 1000);
-      setIsReturning(true);
     } catch (error) {
       console.error("Erro ao editar treinamento:", error);
       toast.error("Erro ao editar o treinamento.");
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -215,12 +209,11 @@ export default function TrainingEditPage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
-                    className="cursor-pointer"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
                     {isReturning
                       ? "Voltando..."
-                      : isLoading
+                      : form.formState.isSubmitting
                         ? "Enviando..."
                         : "Salvar"}
                   </Button>
@@ -228,9 +221,9 @@ export default function TrainingEditPage() {
                     asChild
                     variant="outline"
                     type="reset"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
-                    <Link href="/dashboard/treinamentos">Cancelar</Link>
+                    <Link href="./">Cancelar</Link>
                   </Button>
                 </div>
               </form>

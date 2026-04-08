@@ -174,7 +174,6 @@ export default function NewDepartmentForm() {
         <div className="flex gap-4">
           <Button
             type="submit"
-            className="cursor-pointer"
             disabled={form.formState.isSubmitting || isReturning}
           >
             {isReturning
@@ -189,7 +188,7 @@ export default function NewDepartmentForm() {
             type="reset"
             disabled={form.formState.isSubmitting || isReturning}
           >
-            <Link href={"./"}>Cancelar</Link>
+            <Link href="./">Cancelar</Link>
           </Button>
         </div>
       </form>

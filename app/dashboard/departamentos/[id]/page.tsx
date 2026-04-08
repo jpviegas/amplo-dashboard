@@ -38,7 +38,6 @@ export default function DepartmentEditPage() {
     const match = raw.match(/[a-f0-9]{24}$/i);
     return match?.[0] ?? rawDepartmentId;
   }, [rawDepartmentId]);
-  const [isLoading, setIsLoading] = useState(false);
   const [department, setDepartment] = useState<DepartmentType>();
   const router = useRouter();
   const [isReturning, setIsReturning] = useState(false);
@@ -59,7 +58,6 @@ export default function DepartmentEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, department } = await GetCompanyDepartmentById(
         userId,
         departmentId,
@@ -80,8 +78,6 @@ export default function DepartmentEditPage() {
     } catch (error) {
       console.error("Erro ao carregar departamento:", error);
       toast.error("Não foi possível carregar o departamento.");
-    } finally {
-      setIsLoading(false);
     }
   }, [departmentId, form, userId]);
 
@@ -100,7 +96,6 @@ export default function DepartmentEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, message } = await UpdateDepartment(
         userId,
         departmentId,
@@ -123,8 +118,6 @@ export default function DepartmentEditPage() {
     } catch (error) {
       console.error("Erro ao editar departamento:", error);
       toast.error("Erro ao editar o departamento.");
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -184,18 +177,21 @@ export default function DepartmentEditPage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
-                    className="cursor-pointer"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
-                    {isReturning ? "Voltando..." : isLoading ? "Enviando..." : "Salvar"}
+                    {isReturning
+                      ? "Voltando..."
+                      : form.formState.isSubmitting
+                        ? "Enviando..."
+                        : "Salvar"}
                   </Button>
                   <Button
                     asChild
                     variant="outline"
                     type="reset"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
-                    <Link href="/dashboard/departamentos">Cancelar</Link>
+                    <Link href="./">Cancelar</Link>
                   </Button>
                 </div>
               </form>

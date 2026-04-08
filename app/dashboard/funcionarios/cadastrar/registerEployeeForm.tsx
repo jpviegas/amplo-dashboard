@@ -38,7 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import {
-  CityType,
+  CityTypeWithId,
   CompanyTypeWithId,
   DepartmentTypeWithId,
   EmployeeTypeWithId,
@@ -95,6 +95,10 @@ export default function RegisterEmployeeForm({
     if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, "$1.$2");
     return v.replace(/(\d{3})(\d{3})(\d{0,3})/, "$1.$2.$3");
   };
+  const normalizeCityName = (value: unknown) =>
+    String(value ?? "")
+      .trim()
+      .toUpperCase();
   const toDate = (value: unknown) => {
     if (!value) return undefined;
     if (value instanceof Date) {
@@ -175,7 +179,7 @@ export default function RegisterEmployeeForm({
   const [hours, setHours] = useState<WorkingHourTypeWithId[]>([]);
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
-  const [cities, setCities] = useState<CityType[]>([]);
+  const [cities, setCities] = useState<CityTypeWithId[]>([]);
   const [isCepLoading, setIsCepLoading] = useState(false);
   const router = useRouter();
   const [isReturning, setIsReturning] = useState(false);
@@ -337,13 +341,14 @@ export default function RegisterEmployeeForm({
   });
 
   const cityOptions = useMemo(() => {
-    const normalized = cities
-      .map((c) => c?.city)
-      .filter((c): c is string => Boolean(c))
-      .map((c) => c.trim())
-      .filter(Boolean);
-
-    return Array.from(new Set(normalized));
+    const uniqueById = new Map<string, CityTypeWithId>();
+    for (const city of cities) {
+      if (city?._id && !uniqueById.has(city._id))
+        uniqueById.set(city._id, city);
+    }
+    return Array.from(uniqueById.values()).sort((a, b) =>
+      String(a.city ?? "").localeCompare(String(b.city ?? "")),
+    );
   }, [cities]);
 
   const cepValue = form.watch("cep");
@@ -396,7 +401,11 @@ export default function RegisterEmployeeForm({
           });
         }
         if (data.localidade) {
-          form.setValue("city", data.localidade, {
+          const match = cities.find(
+            (c) =>
+              normalizeCityName(c.city) === normalizeCityName(data.localidade),
+          );
+          form.setValue("city", match?._id ?? "", {
             shouldDirty: true,
             shouldTouch: true,
             shouldValidate: true,
@@ -422,7 +431,7 @@ export default function RegisterEmployeeForm({
     return () => {
       controller.abort();
     };
-  }, [cepValue, form]);
+  }, [cepValue, form, cities]);
 
   async function onSubmit(values: FormValues) {
     if (!user?._id) {
@@ -1313,7 +1322,7 @@ export default function RegisterEmployeeForm({
                     <FormLabel>Cidade</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value ?? undefined}
+                      value={field.value ? field.value : undefined}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -1322,8 +1331,8 @@ export default function RegisterEmployeeForm({
                       </FormControl>
                       <SelectContent>
                         {cityOptions.map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
+                          <SelectItem key={city._id} value={city._id}>
+                            {city.city}
                           </SelectItem>
                         ))}
                       </SelectContent>

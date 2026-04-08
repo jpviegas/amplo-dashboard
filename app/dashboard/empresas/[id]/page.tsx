@@ -49,7 +49,6 @@ export default function CompanyEditPage() {
     const match = raw.match(/[a-f0-9]{24}$/i);
     return match?.[0] ?? rawCompanyId;
   }, [rawCompanyId]);
-  const [isLoading, setIsLoading] = useState(false);
   const [company, setCompany] = useState<CompanyType>();
   const router = useRouter();
 
@@ -125,7 +124,6 @@ export default function CompanyEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, company } = await GetCompanyById(userId, companyId);
 
       if (!success) {
@@ -159,8 +157,6 @@ export default function CompanyEditPage() {
     } catch (error) {
       console.error("Erro ao carregar empresa:", error);
       toast.error("Não foi possível carregar a empresa.");
-    } finally {
-      setIsLoading(false);
     }
   }, [companyId, form, userId]);
 
@@ -257,7 +253,6 @@ export default function CompanyEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, message } = await UpdateCompany(
         userId,
         companyId,
@@ -278,8 +273,6 @@ export default function CompanyEditPage() {
     } catch (error) {
       console.error("Erro ao editar empresa:", error);
       toast.error("Erro ao editar a empresa.");
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -622,12 +615,11 @@ export default function CompanyEditPage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
-                    className="cursor-pointer"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
                     {isReturning
                       ? "Voltando..."
-                      : isLoading
+                      : form.formState.isSubmitting
                         ? "Enviando..."
                         : "Salvar"}
                   </Button>
@@ -635,9 +627,9 @@ export default function CompanyEditPage() {
                     asChild
                     variant="outline"
                     type="reset"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
-                    <Link href="/dashboard/empresas">Cancelar</Link>
+                    <Link href="./">Cancelar</Link>
                   </Button>
                 </div>
               </form>

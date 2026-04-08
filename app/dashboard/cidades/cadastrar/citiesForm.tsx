@@ -169,7 +169,7 @@ export default function NewCityForm() {
             type="reset"
             disabled={form.formState.isSubmitting || isReturning}
           >
-            <Link href="/dashboard/cidades">Cancelar</Link>
+            <Link href="./">Cancelar</Link>
           </Button>
         </div>
       </form>

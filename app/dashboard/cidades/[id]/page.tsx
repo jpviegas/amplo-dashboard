@@ -36,7 +36,6 @@ export default function CityEditPage() {
     const match = raw.match(/[a-f0-9]{24}$/i);
     return match?.[0] ?? rawCityId;
   }, [rawCityId]);
-  const [isLoading, setIsLoading] = useState(false);
   const [city, setCity] = useState<CityTypeWithId>();
   const router = useRouter();
   const [isReturning, setIsReturning] = useState(false);
@@ -126,7 +125,6 @@ export default function CityEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, city } = await GetCityById(userId, cityId);
 
       if (!success) {
@@ -154,8 +152,6 @@ export default function CityEditPage() {
     } catch (error) {
       console.error("Erro ao carregar cidade:", error);
       toast.error("Não foi possível carregar a cidade.");
-    } finally {
-      setIsLoading(false);
     }
   }, [cityId, form, userId]);
 
@@ -174,7 +170,6 @@ export default function CityEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, message } = await UpdateCity(userId, cityId, values);
 
       if (!success) {
@@ -197,10 +192,10 @@ export default function CityEditPage() {
           : "Cidade atualizada com sucesso.",
       );
       await fetchCity();
+      setIsReturning(true);
       setTimeout(() => {
         router.push("/dashboard/cidades");
       }, 1000);
-      setIsReturning(true);
     } catch (error) {
       const fieldErrors = extractFieldErrors(error);
       for (const { path, message } of fieldErrors) {
@@ -213,8 +208,6 @@ export default function CityEditPage() {
         (m) => m.trim().length > 0,
       );
       toast.error(messages[0] ?? "Erro ao editar a cidade.");
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -346,12 +339,11 @@ export default function CityEditPage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
-                    className="cursor-pointer"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
                     {isReturning
                       ? "Voltando..."
-                      : isLoading
+                      : form.formState.isSubmitting
                         ? "Enviando..."
                         : "Salvar"}
                   </Button>
@@ -359,9 +351,9 @@ export default function CityEditPage() {
                     asChild
                     variant="outline"
                     type="reset"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
-                    <Link href="/dashboard/cidades">Cancelar</Link>
+                    <Link href="./">Cancelar</Link>
                   </Button>
                 </div>
               </form>

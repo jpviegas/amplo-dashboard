@@ -39,6 +39,7 @@ export default function RegisterCompanyPage() {
   const userId = user?._id || Cookies.get("user");
   const onlyDigits = (s: string) => s.replace(/\D+/g, "");
   const router = useRouter();
+  const [isReturning, setIsReturning] = useState(false);
 
   const formatCep = (value: string) => {
     const v = onlyDigits(value).slice(0, 8);
@@ -182,6 +183,7 @@ export default function RegisterCompanyPage() {
         toast.error(message);
       } else {
         toast.success(message);
+        setIsReturning(true);
         setTimeout(() => {
           router.push("/dashboard/empresas");
         }, 1000);
@@ -515,9 +517,23 @@ export default function RegisterCompanyPage() {
                   </TabsContent> */}
         </Tabs>
         <div className="flex gap-4">
-          <Button type="submit">Salvar</Button>
-          <Button variant="outline" type="reset">
-            <Link href={"./"}>Cancelar</Link>
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
+            {isReturning
+              ? "Voltando..."
+              : form.formState.isSubmitting
+                ? "Enviando..."
+                : "Salvar"}
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            type="reset"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
+            <Link href="./">Cancelar</Link>
           </Button>
         </div>
       </form>

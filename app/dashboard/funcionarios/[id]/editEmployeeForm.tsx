@@ -39,7 +39,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/UserContext";
 import { cn } from "@/lib/utils";
 import {
-  CityType,
+  CityTypeWithId,
   CompanyTypeWithId,
   DepartmentTypeWithId,
   EmployeeTypeWithId,
@@ -71,6 +71,10 @@ export default function EditEmployeeForm() {
       .toUpperCase();
     return ufsBrasil.includes(uf) ? uf : "";
   };
+  const normalizeCityName = (value: unknown) =>
+    String(value ?? "")
+      .trim()
+      .toUpperCase();
   const formatPhone = (value: string) => {
     const v = onlyDigits(value).slice(0, 11);
     const ddd = v.slice(0, 2);
@@ -173,7 +177,7 @@ export default function EditEmployeeForm() {
   const [activeTab, setActiveTab] = useState("general");
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const [hours, setHours] = useState<WorkingHourTypeWithId[]>([]);
-  const [cities, setCities] = useState<CityType[]>([]);
+  const [cities, setCities] = useState<CityTypeWithId[]>([]);
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const [employee, setEmployee] = useState<EmployeeTypeWithId>();
@@ -347,8 +351,8 @@ export default function EditEmployeeForm() {
         });
       }
 
-      const embeddedPosition = (employee as unknown as { positionId?: unknown })
-        ?.positionId;
+      const embeddedPosition = (employee as unknown as { position?: unknown })
+        ?.position;
       if (
         embeddedPosition &&
         typeof embeddedPosition === "object" &&
@@ -372,20 +376,20 @@ export default function EditEmployeeForm() {
         city:
           typeof (employee as unknown as { city?: unknown })?.city === "string"
             ? (employee as unknown as { city?: string }).city
-            : ((employee as unknown as { city?: { city?: string } })?.city
-                ?.city ?? ""),
+            : ((employee as unknown as { city?: { _id?: string } })?.city
+                ?._id ?? ""),
         departmentId:
           typeof (employee as unknown as { departmentId?: unknown })
             ?.departmentId === "string"
             ? (employee as unknown as { departmentId?: string }).departmentId
             : ((employee as unknown as { departmentId?: { _id?: string } })
                 ?.departmentId?._id ?? ""),
-        positionId:
-          typeof (employee as unknown as { positionId?: unknown })
-            ?.positionId === "string"
-            ? (employee as unknown as { positionId?: string }).positionId
-            : ((employee as unknown as { positionId?: { _id?: string } })
-                ?.positionId?._id ?? ""),
+        position:
+          typeof (employee as unknown as { position?: unknown })?.position ===
+          "string"
+            ? (employee as unknown as { position?: string }).position
+            : ((employee as unknown as { position?: { _id?: string } })
+                ?.position?._id ?? ""),
         admissionDate: formatDateDigits(
           (employee as unknown as { admissionDate?: unknown })?.admissionDate,
         ),
@@ -428,13 +432,14 @@ export default function EditEmployeeForm() {
   }, [employee, id]);
 
   const cityOptions = useMemo(() => {
-    const normalized = cities
-      .map((c) => c?.city)
-      .filter((c): c is string => Boolean(c))
-      .map((c) => c.trim())
-      .filter(Boolean);
-
-    return Array.from(new Set(normalized));
+    const uniqueById = new Map<string, CityTypeWithId>();
+    for (const city of cities) {
+      if (city?._id && !uniqueById.has(city._id))
+        uniqueById.set(city._id, city);
+    }
+    return Array.from(uniqueById.values()).sort((a, b) =>
+      String(a.city ?? "").localeCompare(String(b.city ?? "")),
+    );
   }, [cities]);
 
   const cepValue = form.watch("cep");
@@ -487,7 +492,11 @@ export default function EditEmployeeForm() {
           });
         }
         if (data.localidade) {
-          form.setValue("city", data.localidade, {
+          const match = cities.find(
+            (c) =>
+              normalizeCityName(c.city) === normalizeCityName(data.localidade),
+          );
+          form.setValue("city", match?._id ?? "", {
             shouldDirty: true,
             shouldTouch: true,
             shouldValidate: true,
@@ -513,7 +522,7 @@ export default function EditEmployeeForm() {
     return () => {
       controller.abort();
     };
-  }, [cepValue, form]);
+  }, [cepValue, form, cities]);
 
   async function onSubmit(values: FormValues) {
     if (!user?._id) {
@@ -882,13 +891,13 @@ export default function EditEmployeeForm() {
                   /> */}
 
                   <FormField
-                    name="positionId"
+                    name="position"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
                         <FormLabel>Cargo</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value ? field.value : undefined}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -1461,7 +1470,7 @@ export default function EditEmployeeForm() {
                         <FormLabel>Cidade</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value ? field.value : undefined}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -1470,8 +1479,8 @@ export default function EditEmployeeForm() {
                           </FormControl>
                           <SelectContent>
                             {cityOptions.map((city) => (
-                              <SelectItem key={city} value={city}>
-                                {city}
+                              <SelectItem key={city._id} value={city._id}>
+                                {city.city}
                               </SelectItem>
                             ))}
                           </SelectContent>

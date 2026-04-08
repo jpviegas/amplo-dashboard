@@ -92,6 +92,7 @@ export default function RegisterDocumentForm() {
   const [users, setUsers] = useState<GetAllUsersType["users"]>([]);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [isSignerSearchOpen, setIsSignerSearchOpen] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
 
   const form = useForm<UploadDocumentValues>({
     resolver: zodResolver(uploadDocumentSchema),
@@ -201,6 +202,10 @@ export default function RegisterDocumentForm() {
       }
 
       toast.success(message || "Documento enviado com sucesso.");
+      setIsReturning(true);
+      setTimeout(() => {
+        setIsReturning(false);
+      }, 1000);
       form.reset({
         userId: values.userId,
         signers: "",
@@ -219,21 +224,6 @@ export default function RegisterDocumentForm() {
         onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       >
         <input type="hidden" {...form.register("userId")} />
-
-        {form.formState.isSubmitted &&
-          Object.keys(form.formState.errors).length > 0 && (
-            <div className="text-destructive space-y-1 text-sm font-medium">
-              {Array.from(
-                new Set(
-                  Object.values(form.formState.errors)
-                    .map((error) => error?.message)
-                    .filter((message): message is string => Boolean(message)),
-                ),
-              ).map((message) => (
-                <div key={message}>{message}</div>
-              ))}
-            </div>
-          )}
 
         <FormField
           control={form.control}
@@ -365,12 +355,25 @@ export default function RegisterDocumentForm() {
         <div className="flex justify-end gap-4">
           <Button
             type="submit"
-            disabled={form.formState.isSubmitting || !form.formState.isValid}
+            disabled={
+              form.formState.isSubmitting ||
+              !form.formState.isValid ||
+              isReturning
+            }
           >
-            {form.formState.isSubmitting ? "Enviando..." : "Enviar documento"}
+            {isReturning
+              ? "Voltando..."
+              : form.formState.isSubmitting
+                ? "Enviando..."
+                : "Enviar documento"}
           </Button>
-          <Button asChild variant="outline" type="reset">
-            <Link href={"./"}>Cancelar</Link>
+          <Button
+            asChild
+            variant="outline"
+            type="reset"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
+            <Link href="./">Cancelar</Link>
           </Button>
         </div>
       </form>

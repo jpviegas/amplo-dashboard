@@ -132,7 +132,6 @@ export default function NewTrainingForm() {
         <div className="flex gap-4">
           <Button
             type="submit"
-            className="cursor-pointer"
             disabled={form.formState.isSubmitting || isReturning}
           >
             {isReturning
@@ -147,7 +146,7 @@ export default function NewTrainingForm() {
             type="reset"
             disabled={form.formState.isSubmitting || isReturning}
           >
-            <Link href="/dashboard/treinamentos">Cancelar</Link>
+            <Link href="./">Cancelar</Link>
           </Button>
         </div>
       </form>
