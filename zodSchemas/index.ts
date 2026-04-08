@@ -241,3 +241,15 @@ export const trainingSchema = z.object({
     .nonempty("O subtítulo é obrigatório"),
   image: z.string().optional(),
 });
+
+export type EPIType = z.infer<typeof epiSchema>;
+export type EPITypeWithId = EPIType & { _id: string };
+export const epiSchema = z.object({
+  name: z
+    .string()
+    .nonempty("O nome do E.P.I. é obrigatório")
+    .min(3, "O nome do E.P.I. deve ter pelo menos 3 caracteres"),
+  ca: z
+    .string({ required_error: "O C.A. é obrigatório" })
+    .nonempty("O C.A. é obrigatório"),
+});

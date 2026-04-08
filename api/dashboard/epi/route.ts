@@ -1,6 +1,6 @@
-import { TrainingsType, TrainingsTypeWithId } from "@/zodSchemas";
+import { EPIType, EPITypeWithId } from "@/zodSchemas";
 
-export async function GetAllTrainings(
+export async function GetAllEPIs(
   userId: string | { email: string },
   search?: string,
   page?: string,
@@ -17,9 +17,9 @@ export async function GetAllTrainings(
     nextPage: null | number;
     prevPage: null | number;
   };
-  trainings: TrainingsTypeWithId[];
+  epis: EPITypeWithId[];
 }> {
-  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/trainings/`;
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/epis/`;
 
   const queryParams = new URLSearchParams();
 
@@ -46,14 +46,14 @@ export async function GetAllTrainings(
   return data;
 }
 
-export async function GetTrainingById(
+export async function GetEPIById(
   userId: string | { email: string },
-  trainingId: string,
+  epiId: string,
 ): Promise<{
   success: boolean;
-  training: TrainingsTypeWithId | null;
+  epi: EPITypeWithId | null;
 }> {
-  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/trainings/${trainingId}`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/epis/${epiId}`;
 
   const res = await fetch(url, {
     method: "GET",
@@ -64,22 +64,22 @@ export async function GetTrainingById(
   });
 
   const data = await res.json();
-  const normalizedTraining: TrainingsTypeWithId | null =
-    data?.training ??
-    (Array.isArray(data?.trainings) ? data.trainings[0] : data?.trainings) ??
+  const normalizedEPI: EPITypeWithId | null =
+    data?.epi ??
+    (Array.isArray(data?.epis) ? data.epis[0] : data?.epis) ??
     null;
 
   return {
     ...data,
-    training: normalizedTraining,
+    epi: normalizedEPI,
   };
 }
 
-export async function CreateTraining(
+export async function CreateEPI(
   userId: string | { email: string },
-  values: TrainingsType,
+  values: EPIType,
 ): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/trainings`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/epis`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -89,20 +89,20 @@ export async function CreateTraining(
   });
 
   if (!res) {
-    throw new Error("Erro ao cadastrar o treinamento");
+    throw new Error("Erro ao cadastrar o E.P.I.");
   }
 
   const data = await res.json();
   return data;
 }
 
-export async function UpdateTraining(
+export async function UpdateEPI(
   userId: string | { email: string },
-  trainingId: string,
-  values: TrainingsType,
+  epiId: string,
+  values: EPIType,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/trainings/${trainingId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/epis/${epiId}`,
     {
       method: "PATCH",
       headers: {
@@ -114,19 +114,19 @@ export async function UpdateTraining(
   );
 
   if (!res) {
-    throw new Error("Erro ao atualizar o treinamento");
+    throw new Error("Erro ao atualizar o E.P.I.");
   }
 
   const data = await res.json();
   return data;
 }
 
-export async function DeleteTraining(
+export async function DeleteEPI(
   userId: string | { email: string },
-  trainingId: string,
+  epiId: string,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/trainings/${trainingId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/epis/${epiId}`,
     {
       method: "DELETE",
       headers: {

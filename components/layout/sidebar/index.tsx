@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
-import { IoSettingsOutline } from "react-icons/io5";
-
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Collapsible,
@@ -23,7 +21,9 @@ import {
 import { Logout } from "@/lib/utils";
 import { FaUserClock } from "react-icons/fa6";
 import { IoIosArrowForward } from "react-icons/io";
+import { IoSettingsOutline } from "react-icons/io5";
 import { LuFileText, LuLogOut } from "react-icons/lu";
+import { MdOutlineSettingsInputSvideo } from "react-icons/md";
 
 export default function SidebarComponent() {
   return (
@@ -41,14 +41,28 @@ export default function SidebarComponent() {
                 { item: "Documentos", url: "/dashboard/documentos" },
                 { item: "Departamentos", url: "/dashboard/departamentos" },
                 { item: "Cargos", url: "/dashboard/cargos" },
-                // { item: "Treinamentos", url: "/dashboard/treinamentos" },
+                { item: "Treinamentos", url: "/dashboard/treinamentos" },
+                { item: "E.P.I.", url: "/dashboard/epi" },
               ],
             },
-            // {
-            //   icon: MdOutlineSettingsInputSvideo,
-            //   title: "Equipamentos",
-            //   items: [],
-            // },
+            {
+              icon: MdOutlineSettingsInputSvideo,
+              title: "Gestão de Funcionário",
+              items: [
+                {
+                  item: "Documentos",
+                  url: "/dashboard/gestão-funcionarios/documentos",
+                },
+                {
+                  item: "Uniforme/EPI",
+                  url: "/dashboard/gestão-funcionarios/uniforme-epi",
+                },
+                {
+                  item: "Pagamento/Benefício",
+                  url: "/dashboard/gestão-funcionarios/pagamento-beneficio",
+                },
+              ],
+            },
             {
               icon: FaUserClock,
               title: "Config. de Horários",
