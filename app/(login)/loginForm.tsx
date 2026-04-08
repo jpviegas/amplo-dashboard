@@ -45,7 +45,6 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
       const { message, success, token, user } = await login(values);
-      console.log(user);
 
       if (!success) {
         toast.error(message);

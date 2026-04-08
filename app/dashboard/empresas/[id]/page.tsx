@@ -42,7 +42,6 @@ export default function CompanyEditPage() {
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const params = useParams<{ id: string }>();
-  console.log(params);
 
   const rawCompanyId = params?.id;
   const companyId = useMemo(() => {
@@ -434,6 +433,25 @@ export default function CompanyEditPage() {
                             <FormLabel>Endereço</FormLabel>
                             <FormControl>
                               <Input placeholder="Endereço" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        name="addressNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Número do endereço</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  placeholder="Número do endereço"
+                                  {...field}
+                                />
+                                <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>

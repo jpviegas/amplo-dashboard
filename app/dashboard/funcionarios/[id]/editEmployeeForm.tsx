@@ -52,7 +52,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -101,8 +101,45 @@ export default function EditEmployeeForm() {
     if (value instanceof Date) {
       return Number.isNaN(value.getTime()) ? undefined : value;
     }
-    const date = new Date(String(value));
+    const raw = String(value).trim();
+    if (!raw) return undefined;
+
+    const slashMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (slashMatch) {
+      const [, ddRaw, mmRaw, yyyyRaw] = slashMatch;
+      const day = Number(ddRaw);
+      const month = Number(mmRaw);
+      const year = Number(yyyyRaw);
+      const date = new Date(year, month - 1, day);
+      return Number.isNaN(date.getTime()) ? undefined : date;
+    }
+
+    const digits = onlyDigits(raw);
+    if (digits.length >= 8) {
+      const first8 = digits.slice(0, 8);
+      const yyyy = Number(first8.slice(0, 4));
+      const mm = Number(first8.slice(4, 6));
+      const dd = Number(first8.slice(6, 8));
+      if (yyyy >= 1900 && yyyy <= 2100) {
+        const date = new Date(yyyy, mm - 1, dd);
+        return Number.isNaN(date.getTime()) ? undefined : date;
+      }
+
+      const dd2 = Number(first8.slice(0, 2));
+      const mm2 = Number(first8.slice(2, 4));
+      const yyyy2 = Number(first8.slice(4, 8));
+      if (yyyy2 >= 1900 && yyyy2 <= 2100) {
+        const date = new Date(yyyy2, mm2 - 1, dd2);
+        return Number.isNaN(date.getTime()) ? undefined : date;
+      }
+    }
+
+    const date = new Date(raw);
     return Number.isNaN(date.getTime()) ? undefined : date;
+  };
+  const formatDateDigits = (value: unknown) => {
+    const date = toDate(value);
+    return date ? format(date, "ddMMyyyy") : "";
   };
   const parseCtpsParts = (value: unknown) => {
     const raw = String(value ?? "").trim();
@@ -145,6 +182,9 @@ export default function EditEmployeeForm() {
   const cepAbortRef = useRef<AbortController | null>(null);
   const { user } = useUser();
   const { id }: { id: string } = useParams();
+  const router = useRouter();
+  const [isReturning, setIsReturning] = useState(false);
+
   const employeeId = useMemo(() => {
     const raw = String(id ?? "");
     const match = raw.match(/[a-f0-9]{24}$/i);
@@ -277,25 +317,90 @@ export default function EditEmployeeForm() {
 
   useEffect(() => {
     if (employee) {
+      const embeddedCompany = (employee as unknown as { companyId?: unknown })
+        ?.companyId;
+      if (
+        embeddedCompany &&
+        typeof embeddedCompany === "object" &&
+        (embeddedCompany as { _id?: string } | null)?._id
+      ) {
+        setCompanies((prev) => {
+          const companyId = (embeddedCompany as { _id: string })._id;
+          if (prev.some((company) => company._id === companyId)) return prev;
+          return [embeddedCompany as CompanyTypeWithId, ...prev];
+        });
+      }
+
+      const embeddedDepartment = (
+        employee as unknown as { departmentId?: unknown }
+      )?.departmentId;
+      if (
+        embeddedDepartment &&
+        typeof embeddedDepartment === "object" &&
+        (embeddedDepartment as { _id?: string } | null)?._id
+      ) {
+        setDepartments((prev) => {
+          const departmentId = (embeddedDepartment as { _id: string })._id;
+          if (prev.some((department) => department._id === departmentId))
+            return prev;
+          return [embeddedDepartment as DepartmentTypeWithId, ...prev];
+        });
+      }
+
+      const embeddedPosition = (employee as unknown as { positionId?: unknown })
+        ?.positionId;
+      if (
+        embeddedPosition &&
+        typeof embeddedPosition === "object" &&
+        (embeddedPosition as { _id?: string } | null)?._id
+      ) {
+        setPositions((prev) => {
+          const positionId = (embeddedPosition as { _id: string })._id;
+          if (prev.some((position) => position._id === positionId)) return prev;
+          return [embeddedPosition as PositionTypeWithId, ...prev];
+        });
+      }
+
       const parsedEmployee = {
         ...employee,
+        companyId:
+          typeof (employee as unknown as { companyId?: unknown })?.companyId ===
+          "string"
+            ? (employee as unknown as { companyId?: string }).companyId
+            : ((employee as unknown as { companyId?: { _id?: string } })
+                ?.companyId?._id ?? ""),
         city:
           typeof (employee as unknown as { city?: unknown })?.city === "string"
             ? (employee as unknown as { city?: string }).city
             : ((employee as unknown as { city?: { city?: string } })?.city
                 ?.city ?? ""),
-        department:
-          typeof (employee as unknown as { department?: unknown })
-            ?.department === "string"
-            ? (employee as unknown as { department?: string }).department
-            : ((employee as unknown as { department?: { _id?: string } })
-                ?.department?._id ?? ""),
-        position:
-          typeof (employee as unknown as { position?: unknown })?.position ===
-          "string"
-            ? (employee as unknown as { position?: string }).position
-            : ((employee as unknown as { position?: { _id?: string } })
-                ?.position?._id ?? ""),
+        departmentId:
+          typeof (employee as unknown as { departmentId?: unknown })
+            ?.departmentId === "string"
+            ? (employee as unknown as { departmentId?: string }).departmentId
+            : ((employee as unknown as { departmentId?: { _id?: string } })
+                ?.departmentId?._id ?? ""),
+        positionId:
+          typeof (employee as unknown as { positionId?: unknown })
+            ?.positionId === "string"
+            ? (employee as unknown as { positionId?: string }).positionId
+            : ((employee as unknown as { positionId?: { _id?: string } })
+                ?.positionId?._id ?? ""),
+        admissionDate: formatDateDigits(
+          (employee as unknown as { admissionDate?: unknown })?.admissionDate,
+        ),
+        birthDate: (employee as unknown as { birthDate?: unknown })?.birthDate
+          ? formatDateDigits(
+              (employee as unknown as { birthDate?: unknown })?.birthDate,
+            )
+          : undefined,
+        cnhExpiration: (employee as unknown as { cnhExpiration?: unknown })
+          ?.cnhExpiration
+          ? formatDateDigits(
+              (employee as unknown as { cnhExpiration?: unknown })
+                ?.cnhExpiration,
+            )
+          : undefined,
         state: normalizeUf((employee as unknown as { state?: unknown })?.state),
         phone: onlyDigits(
           (employee as unknown as { phone?: string })?.phone ?? "",
@@ -303,7 +408,16 @@ export default function EditEmployeeForm() {
         children: Array.isArray(
           (employee as unknown as { children?: unknown })?.children,
         )
-          ? ((employee as unknown as { children?: unknown[] }).children ?? [])
+          ? (
+              (employee as unknown as { children?: unknown[] }).children ?? []
+            ).map((child) => ({
+              ...(child as Record<string, unknown>),
+              birthDate: (child as { birthDate?: unknown } | null)?.birthDate
+                ? formatDateDigits(
+                    (child as { birthDate?: unknown } | null)?.birthDate,
+                  )
+                : undefined,
+            }))
           : [],
       };
       form.reset(parsedEmployee as FormValues);
@@ -408,22 +522,43 @@ export default function EditEmployeeForm() {
     }
 
     try {
+      const payload: FormValues = {
+        ...values,
+        admissionDate: formatDateDigits(values.admissionDate),
+        birthDate: values.birthDate
+          ? formatDateDigits(values.birthDate)
+          : undefined,
+        cnhExpiration: values.cnhExpiration
+          ? formatDateDigits(values.cnhExpiration)
+          : undefined,
+        children: Array.isArray(values.children)
+          ? values.children.map((child) => ({
+              ...child,
+              birthDate: child.birthDate
+                ? formatDateDigits(child.birthDate)
+                : undefined,
+            }))
+          : values.children,
+      };
+
       const { message, success } = await UpdateEmployee(
         user._id,
-        values,
+        payload,
         employeeId,
       );
       if (!success) {
         toast.error(message);
       } else {
         toast.success(message);
+        setIsReturning(true);
+        setTimeout(() => {
+          router.push("/dashboard/funcionarios");
+        }, 1000);
       }
     } catch {
       toast.error("Erro ao atualizar o funcionário.");
     }
   }
-
-  console.log(form.getValues());
 
   return (
     <>
@@ -538,7 +673,11 @@ export default function EditEmployeeForm() {
                             fromYear={1900}
                             toYear={currentYear}
                             selected={selectedDate}
-                            onSelect={field.onChange}
+                            onSelect={(date) =>
+                              field.onChange(
+                                date ? format(date, "ddMMyyyy") : "",
+                              )
+                            }
                             initialFocus
                           />
                         </PopoverContent>
@@ -550,14 +689,11 @@ export default function EditEmployeeForm() {
               />
               <FormField
                 control={form.control}
-                name="company"
+                name="companyId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Selecione a empresa</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a empresa" />
@@ -686,7 +822,7 @@ export default function EditEmployeeForm() {
               <TabsContent value="general" className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-3">
                   <FormField
-                    name="department"
+                    name="departmentId"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
                         <FormLabel>Departamento</FormLabel>
@@ -746,7 +882,7 @@ export default function EditEmployeeForm() {
                   /> */}
 
                   <FormField
-                    name="position"
+                    name="positionId"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
                         <FormLabel>Cargo</FormLabel>
@@ -1017,7 +1153,11 @@ export default function EditEmployeeForm() {
                                       fromYear={1900}
                                       toYear={currentYear}
                                       selected={selectedDate}
-                                      onSelect={field.onChange}
+                                      onSelect={(date) =>
+                                        field.onChange(
+                                          date ? format(date, "ddMMyyyy") : "",
+                                        )
+                                      }
                                       initialFocus
                                     />
                                   </PopoverContent>
@@ -1100,7 +1240,11 @@ export default function EditEmployeeForm() {
                                 fromYear={1900}
                                 toYear={currentYear}
                                 selected={selectedDate}
-                                onSelect={field.onChange}
+                                onSelect={(date) =>
+                                  field.onChange(
+                                    date ? format(date, "ddMMyyyy") : "",
+                                  )
+                                }
                                 initialFocus
                               />
                             </PopoverContent>
@@ -1216,7 +1360,11 @@ export default function EditEmployeeForm() {
                                 fromYear={1900}
                                 toYear={currentYear + 20}
                                 selected={selectedDate}
-                                onSelect={field.onChange}
+                                onSelect={(date) =>
+                                  field.onChange(
+                                    date ? format(date, "ddMMyyyy") : "",
+                                  )
+                                }
                                 initialFocus
                               />
                             </PopoverContent>
@@ -1254,6 +1402,7 @@ export default function EditEmployeeForm() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     name="address"
                     render={({ field }) => (
@@ -1262,6 +1411,25 @@ export default function EditEmployeeForm() {
                         <FormControl>
                           <div className="relative">
                             <Input placeholder="Endereço" {...field} />
+                            <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    name="addressNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número do endereço</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="Número do endereço"
+                              {...field}
+                            />
                             <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
                           </div>
                         </FormControl>
@@ -1475,6 +1643,33 @@ export default function EditEmployeeForm() {
                   />
 
                   <FormField
+                    name="placeOfBirthUF"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>UF da naturalidade</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value ? field.value : undefined}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a UF" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {ufsBrasil.map((uf) => (
+                              <SelectItem key={uf} value={uf}>
+                                {uf}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
                     name="civilStatus"
                     render={({ field }) => (
                       <FormItem>
@@ -1507,11 +1702,23 @@ export default function EditEmployeeForm() {
               </TabsContent>
             </Tabs>
             <div className="flex gap-4">
-              <Button type="submit">{employee ? "Atualizar" : "Salvar"}</Button>
-              <Button asChild variant="outline" type="reset">
-                <Link href={employee ? "/dashboard/funcionarios" : "./"}>
-                  Cancelar
-                </Link>
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting || isReturning}
+              >
+                {isReturning
+                  ? "Voltando..."
+                  : form.formState.isSubmitting
+                    ? "Enviando..."
+                    : "Salvar"}
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                type="reset"
+                disabled={form.formState.isSubmitting || isReturning}
+              >
+                <Link href="./">Cancelar</Link>
               </Button>
             </div>
           </form>

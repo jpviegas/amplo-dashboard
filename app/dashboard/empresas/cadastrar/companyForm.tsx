@@ -84,6 +84,7 @@ export default function RegisterCompanyPage() {
       cnpj: "",
       cep: "",
       address: "",
+      addressNumber: "",
       district: "",
       city: "",
       uf: "",
@@ -336,6 +337,18 @@ export default function RegisterCompanyPage() {
                     <FormLabel>Endereço</FormLabel>
                     <FormControl>
                       <Input placeholder="Endereço" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="addressNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número do endereço</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Número do endereço" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

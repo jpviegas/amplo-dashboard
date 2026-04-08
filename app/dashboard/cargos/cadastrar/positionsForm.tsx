@@ -36,7 +36,6 @@ export default function NewPositionForm() {
       positionName: "",
     },
   });
-  console.log(form.getValues());
 
   async function onSubmit(values: FormValues) {
     try {

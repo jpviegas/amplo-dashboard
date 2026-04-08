@@ -51,10 +51,14 @@ export const registerCompanySchema = z.object({
   cep: z
     .string({ required_error: "O número do CEP é obrigatório" })
     .length(8, "Preencha apenas os 8 números do CEP"),
-  address: z.string().min(1, "O endereço é obrigatório"),
-  district: z.string().min(1, "O bairro é obrigatório"),
-  city: z.string().min(1, "A cidade é obrigatória"),
-  uf: z.string().min(1, "A UF é obrigatória"),
+  address: z.string().min(1, "O endereço é obrigatório").optional(),
+  addressNumber: z
+    .string()
+    .min(1, "O número do endereço é obrigatório")
+    .optional(),
+  district: z.string().min(1, "O bairro é obrigatório").optional(),
+  city: z.string().min(1, "A cidade é obrigatória").optional(),
+  uf: z.string().min(1, "A UF é obrigatória").optional(),
   // page: z.string().min(1, "O número da folha obrigatório"),
   // registration: z.string().min(1, "A inscrição estadual é obrigatória"),
   // responsibleCpf: z
@@ -93,10 +97,15 @@ export const registerEmployeeSchema = z.object({
       required_error: "A data de admissão é obrigatória",
     })
     .nonempty("A data de admissão é obrigatória"),
-  company: z.string().nonempty().min(1, "O código da empresa é obrigatório"),
-  workingHours: z.string().nonempty("As horas de trabalho são obrigatórias"),
-  status: z.enum(["active", "inactive"]),
-  department: z.string().optional(),
+  companyId: z
+    .string({ required_error: "O código da empresa é obrigatório" })
+    .nonempty("O código da empresa é obrigatório")
+    .min(1, "O código da empresa é obrigatório"),
+  workingHours: z
+    .string({ required_error: "As horas de trabalho são obrigatórias" })
+    .nonempty("As horas de trabalho são obrigatórias"),
+  status: z.enum(["active", "inactive"]).optional(),
+  departmentId: z.string().optional(),
   costCenter: z.string().optional(),
   position: z.string().optional(),
   sheetNumber: z.string().optional(),
@@ -122,6 +131,7 @@ export const registerEmployeeSchema = z.object({
     .optional(),
   cep: z.string().optional(),
   address: z.string().optional(),
+  addressNumber: z.string().optional(),
   neighborhood: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -132,6 +142,7 @@ export const registerEmployeeSchema = z.object({
   gender: z.string().optional(),
   nationality: z.string().optional(),
   placeOfBirth: z.string().optional(),
+  placeOfBirthUF: z.string().optional(),
   civilStatus: z.string().optional(),
   dependents: z.boolean().optional(),
   dependentsQuantity: z.number().optional(),

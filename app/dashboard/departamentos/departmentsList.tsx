@@ -57,7 +57,9 @@ const FormSchema = z.object({
 
 export function DepartmentsList() {
   const slugify = (value: string) => {
-    const raw = String(value ?? "").trim().toLowerCase();
+    const raw = String(value ?? "")
+      .trim()
+      .toLowerCase();
     const noDiacritics = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const slug = noDiacritics
       .replace(/[^a-z0-9]+/g, "-")
@@ -173,7 +175,6 @@ export function DepartmentsList() {
         form.getValues("departmentName"),
         newPage.toString(),
       );
-      console.log(departments);
 
       if (success) {
         setDepartments(departments);

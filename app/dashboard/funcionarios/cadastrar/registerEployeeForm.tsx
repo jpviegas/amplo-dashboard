@@ -100,8 +100,45 @@ export default function RegisterEmployeeForm({
     if (value instanceof Date) {
       return Number.isNaN(value.getTime()) ? undefined : value;
     }
-    const date = new Date(String(value));
+    const raw = String(value).trim();
+    if (!raw) return undefined;
+
+    const slashMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (slashMatch) {
+      const [, ddRaw, mmRaw, yyyyRaw] = slashMatch;
+      const day = Number(ddRaw);
+      const month = Number(mmRaw);
+      const year = Number(yyyyRaw);
+      const date = new Date(year, month - 1, day);
+      return Number.isNaN(date.getTime()) ? undefined : date;
+    }
+
+    const digits = onlyDigits(raw);
+    if (digits.length >= 8) {
+      const first8 = digits.slice(0, 8);
+      const yyyy = Number(first8.slice(0, 4));
+      const mm = Number(first8.slice(4, 6));
+      const dd = Number(first8.slice(6, 8));
+      if (yyyy >= 1900 && yyyy <= 2100) {
+        const date = new Date(yyyy, mm - 1, dd);
+        return Number.isNaN(date.getTime()) ? undefined : date;
+      }
+
+      const dd2 = Number(first8.slice(0, 2));
+      const mm2 = Number(first8.slice(2, 4));
+      const yyyy2 = Number(first8.slice(4, 8));
+      if (yyyy2 >= 1900 && yyyy2 <= 2100) {
+        const date = new Date(yyyy2, mm2 - 1, dd2);
+        return Number.isNaN(date.getTime()) ? undefined : date;
+      }
+    }
+
+    const date = new Date(raw);
     return Number.isNaN(date.getTime()) ? undefined : date;
+  };
+  const formatDateDigits = (value: unknown) => {
+    const date = toDate(value);
+    return date ? format(date, "ddMMyyyy") : "";
   };
   const parseCtpsParts = (value: unknown) => {
     const raw = String(value ?? "").trim();
@@ -141,6 +178,7 @@ export default function RegisterEmployeeForm({
   const [cities, setCities] = useState<CityType[]>([]);
   const [isCepLoading, setIsCepLoading] = useState(false);
   const router = useRouter();
+  const [isReturning, setIsReturning] = useState(false);
   const lastCepLookupRef = useRef<string | null>(
     initialData?.cep ? onlyDigits(initialData.cep) : null,
   );
@@ -251,26 +289,45 @@ export default function RegisterEmployeeForm({
       status: initialData?.status ?? "active",
       name: initialData?.name ?? "",
       email: initialData?.email ?? "",
-      pis: initialData?.pis ?? "",
+      // pis: initialData?.pis ?? "",
       cpf: initialData?.cpf ?? "",
-      registration: initialData?.registration ?? "",
-      sheetNumber: initialData?.sheetNumber ?? "",
-      ctps: initialData?.ctps ?? "",
-      rg: initialData?.rg ?? "",
-      socialName: initialData?.socialName ?? "",
-      cnh: initialData?.cnh ?? "",
-      cep: initialData?.cep ?? "",
-      address: initialData?.address ?? "",
-      neighborhood: initialData?.neighborhood ?? "",
-      city:
-        typeof initialData?.city === "string" ? initialData.city : undefined,
-      phone: onlyDigits(initialData?.phone ?? ""),
-      extension: initialData?.extension ?? "",
-      fatherName: initialData?.fatherName ?? "",
-      motherName: initialData?.motherName ?? "",
-      nationality: initialData?.nationality ?? "",
-      placeOfBirth: initialData?.placeOfBirth ?? "",
-      children: initialData?.children ?? [],
+      //   registration: initialData?.registration ?? "",
+      admissionDate: formatDateDigits(initialData?.admissionDate),
+      companyId: initialData?.companyId ?? "",
+      workingHours: initialData?.workingHours ?? "",
+      //   position: initialData?.position ?? "",
+      //   departmentId: initialData?.departmentId ?? "",
+      //   sheetNumber: initialData?.sheetNumber ?? "",
+      //   ctps: initialData?.ctps ?? "",
+      //   rg: initialData?.rg ?? "",
+      //   birthDate: initialData?.birthDate
+      //     ? formatDateDigits(initialData.birthDate)
+      //     : undefined,
+      //   socialName: initialData?.socialName ?? "",
+      //   cnh: initialData?.cnh ?? "",
+      //   cnhExpiration: initialData?.cnhExpiration
+      //     ? formatDateDigits(initialData.cnhExpiration)
+      //     : undefined,
+      //   cep: initialData?.cep ?? "",
+      //   address: initialData?.address ?? "",
+      //   addressNumber: initialData?.addressNumber ?? "",
+      //   neighborhood: initialData?.neighborhood ?? "",
+      //   city:
+      //     typeof initialData?.city === "string" ? initialData.city : undefined,
+      //   phone: onlyDigits(initialData?.phone ?? ""),
+      //   extension: initialData?.extension ?? "",
+      //   fatherName: initialData?.fatherName ?? "",
+      //   motherName: initialData?.motherName ?? "",
+      //   nationality: initialData?.nationality ?? "",
+      //   placeOfBirth: initialData?.placeOfBirth ?? "",
+      //   children: Array.isArray(initialData?.children)
+      //     ? initialData!.children.map((child) => ({
+      //         ...child,
+      //         birthDate: child?.birthDate
+      //           ? formatDateDigits(child.birthDate)
+      //           : undefined,
+      //       }))
+      //     : [],
     },
   });
 
@@ -374,10 +431,29 @@ export default function RegisterEmployeeForm({
     }
 
     try {
+      const payload: FormValues = {
+        ...values,
+        admissionDate: formatDateDigits(values.admissionDate),
+        birthDate: values.birthDate
+          ? formatDateDigits(values.birthDate)
+          : undefined,
+        cnhExpiration: values.cnhExpiration
+          ? formatDateDigits(values.cnhExpiration)
+          : undefined,
+        children: Array.isArray(values.children)
+          ? values.children.map((child) => ({
+              ...child,
+              birthDate: child.birthDate
+                ? formatDateDigits(child.birthDate)
+                : undefined,
+            }))
+          : values.children,
+      };
+
       if (initialData) {
         const { message, success } = await UpdateEmployee(
           user._id,
-          values,
+          payload,
           initialData._id,
         );
         if (!success) {
@@ -386,12 +462,13 @@ export default function RegisterEmployeeForm({
           toast.success(message);
         }
       } else {
-        const { message, success } = await CreateEmployee(user._id, values);
+        const { message, success } = await CreateEmployee(user._id, payload);
 
         if (!success) {
           toast.error(message);
         } else {
           toast.success(message);
+          setIsReturning(true);
           setTimeout(() => {
             router.push("/dashboard/funcionarios");
           }, 1000);
@@ -513,7 +590,9 @@ export default function RegisterEmployeeForm({
                         fromYear={1900}
                         toYear={currentYear}
                         selected={selectedDate}
-                        onSelect={field.onChange}
+                        onSelect={(date) =>
+                          field.onChange(date ? format(date, "ddMMyyyy") : "")
+                        }
                         initialFocus
                       />
                     </PopoverContent>
@@ -526,7 +605,7 @@ export default function RegisterEmployeeForm({
 
           <FormField
             control={form.control}
-            name="company"
+            name="companyId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Selecione a empresa</FormLabel>
@@ -948,7 +1027,11 @@ export default function RegisterEmployeeForm({
                                   fromYear={1900}
                                   toYear={currentYear}
                                   selected={selectedDate}
-                                  onSelect={field.onChange}
+                                  onSelect={(date) =>
+                                    field.onChange(
+                                      date ? format(date, "ddMMyyyy") : "",
+                                    )
+                                  }
                                   initialFocus
                                 />
                               </PopoverContent>
@@ -1028,7 +1111,11 @@ export default function RegisterEmployeeForm({
                             fromYear={1900}
                             toYear={currentYear}
                             selected={selectedDate}
-                            onSelect={field.onChange}
+                            onSelect={(date) =>
+                              field.onChange(
+                                date ? format(date, "ddMMyyyy") : "",
+                              )
+                            }
                             initialFocus
                           />
                         </PopoverContent>
@@ -1097,42 +1184,49 @@ export default function RegisterEmployeeForm({
 
               <FormField
                 name="cnhExpiration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data da vencimento da CNH</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione uma data</span>
-                            )}
-                            <CalendarIcon className="ml-auto size-4" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          captionLayout="dropdown"
-                          fromYear={1900}
-                          toYear={new Date().getFullYear() + 20}
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const selectedDate = toDate(field.value);
+                  return (
+                    <FormItem>
+                      <FormLabel>Data da vencimento da CNH</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !selectedDate && "text-muted-foreground",
+                              )}
+                            >
+                              {selectedDate ? (
+                                format(selectedDate, "dd/MM/yyyy")
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto size-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            captionLayout="dropdown"
+                            fromYear={1900}
+                            toYear={new Date().getFullYear() + 20}
+                            selected={selectedDate}
+                            onSelect={(date) =>
+                              field.onChange(
+                                date ? format(date, "ddMMyyyy") : "",
+                              )
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
@@ -1163,6 +1257,7 @@ export default function RegisterEmployeeForm({
                   </FormItem>
                 )}
               />
+
               <FormField
                 name="address"
                 render={({ field }) => (
@@ -1171,6 +1266,22 @@ export default function RegisterEmployeeForm({
                     <FormControl>
                       <div className="relative">
                         <Input placeholder="Endereço" {...field} />
+                        <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name="addressNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número do endereço</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input placeholder="Número do endereço" {...field} />
                         <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
                       </div>
                     </FormControl>
@@ -1411,11 +1522,23 @@ export default function RegisterEmployeeForm({
           </TabsContent>
         </Tabs>
         <div className="flex gap-4">
-          <Button type="submit">{initialData ? "Atualizar" : "Salvar"}</Button>
-          <Button asChild variant="outline" type="reset">
-            <Link href={initialData ? "/dashboard/funcionarios" : "./"}>
-              Cancelar
-            </Link>
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
+            {isReturning
+              ? "Voltando..."
+              : form.formState.isSubmitting
+                ? "Enviando..."
+                : "Salvar"}
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            type="reset"
+            disabled={form.formState.isSubmitting || isReturning}
+          >
+            <Link href="./">Cancelar</Link>
           </Button>
         </div>
       </form>

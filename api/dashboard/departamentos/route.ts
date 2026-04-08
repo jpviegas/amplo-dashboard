@@ -122,7 +122,6 @@ export async function CreateDepartment(
   userId: string | { email: string },
   values: DepartmentType,
 ): Promise<{ success: boolean; message: string }> {
-  console.log(values);
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/departments`,
     {

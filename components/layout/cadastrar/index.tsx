@@ -13,7 +13,7 @@ export function CadastrarLayout({
   children: ReactNode;
 }) {
   return (
-    <main className="container mx-auto h-full w-11/12">
+    <main className="container mx-auto h-full w-11/12 pt-12">
       <div className="mb-8 flex items-center justify-between pt-8">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" asChild>

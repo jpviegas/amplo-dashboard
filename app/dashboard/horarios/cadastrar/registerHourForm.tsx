@@ -64,7 +64,6 @@ export default function NewWorkingHourForm() {
   //     isMounted = false;
   //   };
   // }, [userId]);
-  console.log(form.getValues());
 
   async function onSubmit(values: FormValues) {
     try {

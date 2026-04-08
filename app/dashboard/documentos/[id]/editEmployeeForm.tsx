@@ -139,8 +139,6 @@ export default function EditEmployeeForm() {
     }
   }
 
-  console.log(form.getValues());
-
   return (
     <>
       {!employee ? (
@@ -208,46 +206,46 @@ export default function EditEmployeeForm() {
                   const selectedDate = toDate(field.value);
                   return (
                     <FormItem>
-                    <FormLabel>Data da admissão</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !selectedDate && "text-muted-foreground",
-                            )}
-                          >
-                            {selectedDate ? (
-                              format(selectedDate, "dd/MM/yyyy")
-                            ) : (
-                              <span>Selecione uma data</span>
-                            )}
-                            <CalendarIcon className="ml-auto size-4" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          captionLayout="dropdown"
-                          fromYear={1900}
-                          toYear={currentYear}
-                          selected={selectedDate}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
+                      <FormLabel>Data da admissão</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !selectedDate && "text-muted-foreground",
+                              )}
+                            >
+                              {selectedDate ? (
+                                format(selectedDate, "dd/MM/yyyy")
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto size-4" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            captionLayout="dropdown"
+                            fromYear={1900}
+                            toYear={currentYear}
+                            selected={selectedDate}
+                            onSelect={field.onChange}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
                   );
                 }}
               />
               <FormField
                 control={form.control}
-                name="company"
+                name="companyId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Selecione a empresa</FormLabel>
@@ -536,38 +534,41 @@ export default function EditEmployeeForm() {
                       const selectedDate = toDate(field.value);
                       return (
                         <FormItem>
-                        <FormLabel>Data da nascimento</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !selectedDate && "text-muted-foreground",
-                                )}
-                              >
-                                {selectedDate ? (
-                                  format(selectedDate, "dd/MM/yyyy")
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto size-4" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              captionLayout="dropdown"
-                              fromYear={1900}
-                              toYear={currentYear}
-                              selected={selectedDate}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                          <FormLabel>Data da nascimento</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !selectedDate && "text-muted-foreground",
+                                  )}
+                                >
+                                  {selectedDate ? (
+                                    format(selectedDate, "dd/MM/yyyy")
+                                  ) : (
+                                    <span>Selecione uma data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto size-4" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                captionLayout="dropdown"
+                                fromYear={1900}
+                                toYear={currentYear}
+                                selected={selectedDate}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
                         </FormItem>
                       );
                     }}
@@ -636,38 +637,41 @@ export default function EditEmployeeForm() {
                       const selectedDate = toDate(field.value);
                       return (
                         <FormItem>
-                        <FormLabel>Data da vencimento da CNH</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !selectedDate && "text-muted-foreground",
-                                )}
-                              >
-                                {selectedDate ? (
-                                  format(selectedDate, "dd/MM/yyyy")
-                                ) : (
-                                  <span>Selecione uma data</span>
-                                )}
-                                <CalendarIcon className="ml-auto size-4" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              captionLayout="dropdown"
-                              fromYear={1900}
-                              toYear={currentYear + 20}
-                              selected={selectedDate}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
+                          <FormLabel>Data da vencimento da CNH</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !selectedDate && "text-muted-foreground",
+                                  )}
+                                >
+                                  {selectedDate ? (
+                                    format(selectedDate, "dd/MM/yyyy")
+                                  ) : (
+                                    <span>Selecione uma data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto size-4" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                captionLayout="dropdown"
+                                fromYear={1900}
+                                toYear={currentYear + 20}
+                                selected={selectedDate}
+                                onSelect={field.onChange}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
                         </FormItem>
                       );
                     }}

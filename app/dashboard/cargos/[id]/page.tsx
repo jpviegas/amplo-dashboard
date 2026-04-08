@@ -38,7 +38,6 @@ export default function PositionEditPage() {
     const match = raw.match(/[a-f0-9]{24}$/i);
     return match?.[0] ?? rawPositionId;
   }, [rawPositionId]);
-  const [isLoading, setIsLoading] = useState(false);
   const [position, setPosition] = useState<PositionTypeWithId>();
   const router = useRouter();
   const [isReturning, setIsReturning] = useState(false);
@@ -58,8 +57,6 @@ export default function PositionEditPage() {
       if (!positionId) {
         return;
       }
-
-      setIsLoading(true);
       const { success, position } = await GetCompanyPositionById(
         userId,
         positionId,
@@ -80,8 +77,6 @@ export default function PositionEditPage() {
     } catch (error) {
       console.error("Erro ao carregar cargo:", error);
       toast.error("Não foi possível carregar o cargo.");
-    } finally {
-      setIsLoading(false);
     }
   }, [positionId, form, userId]);
 
@@ -100,7 +95,6 @@ export default function PositionEditPage() {
         return;
       }
 
-      setIsLoading(true);
       const { success, message } = await UpdatePosition(userId, positionId, {
         positionName: values.positionName,
       });
@@ -112,15 +106,13 @@ export default function PositionEditPage() {
 
       toast.success(message);
       await fetchPosition();
+      setIsReturning(true);
       setTimeout(() => {
         router.push("/dashboard/cargos");
       }, 1000);
-      setIsReturning(true);
     } catch (error) {
       console.error("Erro ao editar cargo:", error);
       toast.error("Erro ao editar o cargo.");
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -177,12 +169,11 @@ export default function PositionEditPage() {
                 <div className="flex gap-4">
                   <Button
                     type="submit"
-                    className="cursor-pointer"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
                     {isReturning
                       ? "Voltando..."
-                      : isLoading
+                      : form.formState.isSubmitting
                         ? "Enviando..."
                         : "Salvar"}
                   </Button>
@@ -190,9 +181,9 @@ export default function PositionEditPage() {
                     asChild
                     variant="outline"
                     type="reset"
-                    disabled={isLoading || isReturning}
+                    disabled={form.formState.isSubmitting || isReturning}
                   >
-                    <Link href="/dashboard/cargos">Cancelar</Link>
+                    <Link href="./">Cancelar</Link>
                   </Button>
                 </div>
               </form>

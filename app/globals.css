@@ -48,8 +48,8 @@
 }
 
 .dark {
-  --amplo-primary: hsl(223, 29%, 25%);
-  --amplo-secondary: hsl(196, 100%, 47%);
+  --amplo-primary: hsl(196, 100%, 47%);
+  --amplo-secondary: hsl(223, 29%, 25%);
   --background: hsl(240 10% 3.9%);
   --foreground: hsl(0 0% 98%);
   --card: hsl(240 10% 3.9%);

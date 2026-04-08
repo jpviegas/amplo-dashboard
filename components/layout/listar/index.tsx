@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, useMemo } from "react";
@@ -23,7 +23,14 @@ export default function ListarLayout({
   return (
     <main className="container mx-auto flex h-full w-11/12 flex-col justify-evenly gap-8">
       <header className="flex items-center justify-between border-b pb-8">
-        <h1 className="flex text-2xl font-semibold">{title}</h1>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" asChild>
+            <Link href=".">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="flex text-2xl font-semibold">{title}</h1>
+        </div>
         <div className="flex gap-2">
           <Button asChild className="gap-2">
             <Link href={link}>
