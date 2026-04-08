@@ -1,3 +1,4 @@
+import { CadastrarLayout } from "@/components/layout/cadastrar";
 import { Metadata } from "next";
 import NewCompanyForm from "./companyForm";
 
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default async function NewCompany() {
-  return <NewCompanyForm />;
+  return (
+    <CadastrarLayout title="Novo Empresa">
+      <NewCompanyForm />
+    </CadastrarLayout>
+  );
 }

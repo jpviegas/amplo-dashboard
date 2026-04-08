@@ -1,5 +1,19 @@
-export async function GetDocuments(email: string): Promise<{
+export async function GetDocuments(
+  email: string,
+  page?: string,
+): Promise<{
   success: boolean;
+  pagination: {
+    total: number;
+    page: number;
+    totalPages: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+  };
+  count: number;
   signers: Array<{
     token: string;
     status: string;
@@ -28,6 +42,9 @@ export async function GetDocuments(email: string): Promise<{
 }> {
   const queryParams = new URLSearchParams();
   queryParams.append("email", email);
+  if (page) {
+    queryParams.append("page", page);
+  }
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/documents?${queryParams.toString()}`,

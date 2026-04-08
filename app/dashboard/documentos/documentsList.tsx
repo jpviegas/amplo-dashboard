@@ -74,6 +74,19 @@ export function DocumentsList() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   // const { user } = useUser();
 
+  const resetPagination = useCallback(() => {
+    setPagination({
+      total: 0,
+      page: 1,
+      totalPages: 0,
+      limit: 10,
+      hasNextPage: false,
+      hasPrevPage: false,
+      nextPage: null,
+      prevPage: null,
+    });
+  }, []);
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -107,25 +120,8 @@ export function DocumentsList() {
     };
   }, []);
 
-  const buildPagination = useCallback((total: number, page: number) => {
-    const limit = 10;
-    const totalPages = Math.max(1, Math.ceil(total / limit));
-    const safePage = Math.min(Math.max(1, page), totalPages);
-
-    return {
-      total,
-      page: safePage,
-      totalPages,
-      limit,
-      hasNextPage: safePage < totalPages,
-      hasPrevPage: safePage > 1,
-      nextPage: safePage < totalPages ? safePage + 1 : null,
-      prevPage: safePage > 1 ? safePage - 1 : null,
-    };
-  }, []);
-
   const fetchDocuments = useCallback(
-    async ({ search }: z.infer<typeof FormSchema>) => {
+    async ({ search }: z.infer<typeof FormSchema>, page = "1") => {
       try {
         setIsLoading(true);
         const raw = (search ?? "").trim();
@@ -157,32 +153,36 @@ export function DocumentsList() {
               return "";
             })();
 
-        const { success, signers } = await GetDocuments(resolvedEmail || "");
+        const {
+          success,
+          signers,
+          pagination: paginationData,
+        } = await GetDocuments(resolvedEmail || "", page);
 
         if (success) {
           setDocuments(signers);
-          setPagination(buildPagination(signers.length, 1));
+          setPagination(paginationData);
           return;
         }
 
         setDocuments([]);
-        setPagination(buildPagination(0, 1));
+        resetPagination();
         toast.error("Não foi possível carregar os documentos.");
       } catch (error) {
         console.error("Erro ao buscar documentos:", error);
         toast.error("Não foi possível carregar os documentos.");
         setDocuments([]);
-        setPagination(buildPagination(0, 1));
+        resetPagination();
       } finally {
         setIsLoading(false);
       }
     },
-    [buildPagination, users],
+    [resetPagination, users],
   );
 
   const debouncedFetchDocuments = useMemo(() => {
     return debounce((values: z.infer<typeof FormSchema>) => {
-      fetchDocuments(values);
+      fetchDocuments(values, "1");
     }, 500);
   }, [fetchDocuments]);
 
@@ -201,7 +201,7 @@ export function DocumentsList() {
     // const currentValue = form.getValues("search");
     // if (!currentValue && user?.email) {
     //   form.setValue("search", user.email, { shouldDirty: false });
-    fetchDocuments({ search: "" });
+    fetchDocuments({ search: "" }, "1");
     // }
   }, [form, fetchDocuments]);
 
@@ -225,20 +225,16 @@ export function DocumentsList() {
   }, [users, searchQuery]);
 
   const PAGE_SIZE = 10;
-  const startIndex = (pagination.page - 1) * PAGE_SIZE;
-  const visibleDocuments = documents.slice(startIndex, startIndex + PAGE_SIZE);
-
-  const handlePageChange = (newPage: number) => {
-    setPagination(buildPagination(documents.length, newPage));
+  const handlePageChange = async (newPage: number) => {
+    await fetchDocuments(form.getValues(), newPage.toString());
   };
-  console.log(documents);
 
   return (
     <>
       <Form {...form}>
         <form
           className="flex items-center justify-between"
-          onSubmit={form.handleSubmit(fetchDocuments)}
+          onSubmit={form.handleSubmit((values) => fetchDocuments(values, "1"))}
         >
           <FormField
             control={form.control}
@@ -286,11 +282,11 @@ export function DocumentsList() {
                                     shouldTouch: true,
                                     shouldValidate: true,
                                   });
-                                  fetchDocuments({ search: u.email });
+                                  fetchDocuments({ search: u.email }, "1");
                                   setIsSearchOpen(false);
                                 }}
                               >
-                                <div className="font-medium">{u.name}</div>
+                                <div className="">{u.name}</div>
                                 <div className="text-muted-foreground text-xs">
                                   {u.email}
                                 </div>
@@ -352,7 +348,7 @@ export function DocumentsList() {
                   </TableRow>
                 )}
 
-                {visibleDocuments.map((document) => (
+                {documents.map((document) => (
                   <TableRow key={document.token}>
                     <TableCell className="w-[35%]">
                       <div className="truncate text-sm" title={document.name}>
@@ -397,7 +393,7 @@ export function DocumentsList() {
                   length: Math.max(
                     0,
                     PAGE_SIZE -
-                      visibleDocuments.length -
+                      documents.length -
                       (documents.length === 0 ? 1 : 0),
                   ),
                 }).map((_, index) => (
@@ -418,7 +414,7 @@ export function DocumentsList() {
 
       <TablePagination
         pagination={pagination}
-        itemsCount={pagination.total}
+        itemsCount={documents.length}
         onPageChange={handlePageChange}
       />
     </>

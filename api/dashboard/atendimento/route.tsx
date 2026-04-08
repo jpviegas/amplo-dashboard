@@ -2,6 +2,7 @@ import { ServiceType, ServiceTypeWithId } from "@/zodSchemas";
 
 export async function GetAllServices(
   userId: string | { email: string },
+  page?: string,
 ): Promise<{
   success: boolean;
   count: number;
@@ -17,7 +18,17 @@ export async function GetAllServices(
   };
   services: ServiceType[];
 }> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/services/`, {
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/services/`;
+
+  const queryParams = new URLSearchParams();
+  if (page) {
+    queryParams.append("page", page);
+  }
+  if (queryParams.toString()) {
+    url += `?${queryParams.toString()}`;
+  }
+
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       "content-type": "application/json",

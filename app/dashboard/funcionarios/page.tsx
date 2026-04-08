@@ -1,4 +1,4 @@
-import DashboardHeader from "@/components/layout/dashboard/header";
+import ListarLayout from "@/components/layout/listar";
 import { Metadata } from "next";
 import { EmployeesList } from "./employeesList";
 
@@ -9,9 +9,8 @@ export const metadata: Metadata = {
 
 export default async function EmployeesPage() {
   return (
-    <main className="container mx-auto flex h-full w-11/12 flex-col justify-evenly gap-8">
-      <DashboardHeader title="Funcionários" link="funcionarios/cadastrar" />
+    <ListarLayout title="Funcionários">
       <EmployeesList />
-    </main>
+    </ListarLayout>
   );
 }

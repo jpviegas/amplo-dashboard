@@ -1,6 +1,9 @@
 "use client";
 
-import { DeleteCity, GetAllCities } from "@/api/dashboard/cities/route";
+import {
+  DeleteTraining,
+  GetAllTrainings,
+} from "@/api/dashboard/treinamentos/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import {
   AlertDialog,
@@ -38,22 +41,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useUser } from "@/context/UserContext";
-import { CityTypeWithId } from "@/zodSchemas";
+import { TrainingsTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import debounce from "lodash/debounce";
 import { Pencil, Trash } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const FormSchema = z.object({
-  search: z.string(),
+  search: z.string().optional(),
 });
 
-export function CitiesList() {
+export function TrainingsList() {
   const slugify = (value: string) => {
     const raw = String(value ?? "")
       .trim()
@@ -65,14 +68,18 @@ export function CitiesList() {
       .replace(/^-|-$/g, "");
     return slug;
   };
-  const buildCityHref = (city: CityTypeWithId) => {
-    const base = city.city || "cidade";
-    const slug = slugify(base) || "cidade";
-    return `/dashboard/cidades/${slug}-${city._id}`;
+  const buildTrainingHref = (training: TrainingsTypeWithId) => {
+    const base = training.title || "treinamento";
+    const slug = slugify(base) || "treinamento";
+    return `/dashboard/treinamentos/${slug}-${training._id}`;
   };
 
-  const [cities, setCities] = useState<CityTypeWithId[]>([]);
-  const [deletingCityId, setDeletingCityId] = useState<string | null>(null);
+  const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
+  const [trainings, setTrainings] = useState<TrainingsTypeWithId[]>([]);
+  const [deletingTrainingId, setDeletingTrainingId] = useState<string | null>(
+    null,
+  );
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -89,12 +96,11 @@ export function CitiesList() {
     limit: 10,
     hasNextPage: false,
     hasPrevPage: false,
-    nextPage: 0,
+    nextPage: null,
     prevPage: null,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useUser();
-  const userId = user?._id || Cookies.get("user");
+
   const TABLE_ROWS = 10;
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -104,52 +110,61 @@ export function CitiesList() {
     },
   });
 
-  const fetchCities = async (values: z.infer<typeof FormSchema>) => {
-    try {
-      setIsLoading(true);
-      if (!userId) {
-        throw new Error("User ID is required");
-      }
+  const fetchTrainings = useCallback(
+    async (values: z.infer<typeof FormSchema>, page = "1") => {
+      try {
+        setIsLoading(true);
 
-      const {
-        success,
-        pagination: paginationData,
-        cities,
-      } = await GetAllCities(userId, values.search, pagination.page.toString());
+        if (!userId) {
+          setTrainings([]);
+          return;
+        }
 
-      if (success) {
-        setCities(cities);
+        const {
+          success,
+          pagination: paginationData,
+          trainings,
+        } = await GetAllTrainings(userId, values.search || "", page);
+
+        if (!success) {
+          toast.error("Não foi possível carregar os treinamentos.");
+          setTrainings([]);
+          return;
+        }
+
+        setTrainings(trainings);
         setPagination(paginationData);
+      } catch (error) {
+        console.error("Erro ao buscar treinamentos:", error);
+        toast.error("Não foi possível carregar os treinamentos.");
+        setTrainings([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Erro ao buscar cidades:", error);
-      toast.error("Não foi possível carregar as cidades.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const debouncedFetchCities = useCallback(
-    debounce((values: z.infer<typeof FormSchema>) => {
-      fetchCities(values);
-    }, 500),
+    },
     [userId],
   );
 
+  const debouncedFetchTrainings = useMemo(() => {
+    return debounce((values: z.infer<typeof FormSchema>) => {
+      fetchTrainings(values);
+    }, 500);
+  }, [fetchTrainings]);
+
   useEffect(() => {
     const subscription = form.watch((values) => {
-      debouncedFetchCities(values as z.infer<typeof FormSchema>);
+      debouncedFetchTrainings(values as z.infer<typeof FormSchema>);
     });
 
     return () => {
       subscription.unsubscribe();
-      debouncedFetchCities.cancel();
+      debouncedFetchTrainings.cancel();
     };
-  }, [form, debouncedFetchCities]);
+  }, [form, debouncedFetchTrainings]);
 
   useEffect(() => {
-    fetchCities(form.getValues());
-  }, [form]);
+    fetchTrainings(form.getValues());
+  }, [fetchTrainings, form]);
 
   const handlePageChange = async (newPage: number) => {
     try {
@@ -161,15 +176,15 @@ export function CitiesList() {
       const {
         success,
         pagination: paginationData,
-        cities,
-      } = await GetAllCities(
+        trainings,
+      } = await GetAllTrainings(
         userId,
         form.getValues("search"),
         newPage.toString(),
       );
 
       if (success) {
-        setCities(cities);
+        setTrainings(trainings);
         setPagination(paginationData);
       }
     } catch (error) {
@@ -180,15 +195,15 @@ export function CitiesList() {
     }
   };
 
-  const handleDeleteCity = async (cityId: string) => {
+  const handleDeleteTraining = async (trainingId: string) => {
     try {
       if (!userId) {
         toast.error("Usuário não identificado.");
         return;
       }
 
-      setDeletingCityId(cityId);
-      const { success, message } = await DeleteCity(userId, cityId);
+      setDeletingTrainingId(trainingId);
+      const { success, message } = await DeleteTraining(userId, trainingId);
 
       if (!success) {
         toast.warning(message);
@@ -197,16 +212,16 @@ export function CitiesList() {
 
       toast.success(message);
 
-      const isLastItemOnPage = cities.length === 1;
+      const isLastItemOnPage = trainings.length === 1;
       const nextPage = isLastItemOnPage
         ? Math.max(1, pagination.page - 1)
         : pagination.page;
       await handlePageChange(nextPage);
     } catch (error) {
-      console.error("Erro ao deletar cidade:", error);
-      toast.error("Não foi possível deletar a cidade.");
+      console.error("Erro ao deletar treinamento:", error);
+      toast.error("Não foi possível deletar o treinamento.");
     } finally {
-      setDeletingCityId(null);
+      setDeletingTrainingId(null);
     }
   };
 
@@ -215,7 +230,7 @@ export function CitiesList() {
       <Form {...form}>
         <form
           className="flex items-center justify-between"
-          onSubmit={form.handleSubmit(fetchCities)}
+          onSubmit={form.handleSubmit((values) => fetchTrainings(values))}
         >
           <FormField
             control={form.control}
@@ -224,7 +239,7 @@ export function CitiesList() {
               <FormItem className="flex items-center gap-4">
                 <FormLabel>Buscar:</FormLabel>
                 <FormControl>
-                  <Input placeholder="buscar cidade" {...field} />
+                  <Input placeholder="buscar por título" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -237,26 +252,22 @@ export function CitiesList() {
         <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50%]">Cidade</TableHead>
-              {/* <TableHead className="w-[20%]">Vale-Refeição</TableHead> */}
-              <TableHead className="w-[25%]">Vale-Transporte</TableHead>
-              <TableHead className="w-[25%]">Ação</TableHead>
+              <TableHead className="w-[35%]">Título</TableHead>
+              <TableHead className="w-[45%]">Subtítulo</TableHead>
+              <TableHead className="w-[20%]">Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading
               ? Array.from({ length: TABLE_ROWS }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell className="w-[50%]">
+                    <TableCell className="w-[35%]">
                       <Skeleton className="h-4 w-full max-w-[250px]" />
                     </TableCell>
-                    {/* <TableCell className="w-[20%]">
-                      <Skeleton className="h-4 w-full max-w-[100px]" />
-                    </TableCell> */}
-                    <TableCell className="w-[25%]">
-                      <Skeleton className="h-4 w-full max-w-[100px]" />
+                    <TableCell className="w-[45%]">
+                      <Skeleton className="h-4 w-full max-w-[350px]" />
                     </TableCell>
-                    <TableCell className="w-[25%]">
+                    <TableCell className="w-[20%]">
                       <div className="flex items-center justify-end gap-2">
                         <Skeleton className="size-8 rounded-md" />
                         <Skeleton className="size-8 rounded-md" />
@@ -264,27 +275,26 @@ export function CitiesList() {
                     </TableCell>
                   </TableRow>
                 ))
-              : cities.map((city) => (
-                  <TableRow key={city._id}>
-                    <TableCell className="w-[50%]">
-                      <div className="truncate text-sm" title={city.city ?? ""}>
-                        {city.city ?? "-"}
+              : trainings.map((training) => (
+                  <TableRow key={training._id}>
+                    <TableCell className="w-[35%]">
+                      <div
+                        className="truncate text-sm"
+                        title={training.title ?? ""}
+                      >
+                        {training.title ?? "-"}
                       </div>
                     </TableCell>
-                    {/* <TableCell className="w-[20%]">
-                      <div className="truncate text-sm">
-                        {typeof city.meal === "number" ? city.meal : "-"}
-                      </div>
-                    </TableCell> */}
-                    <TableCell className="w-[25%]">
-                      <div className="truncate text-sm">
-                        {typeof city.transport === "number"
-                          ? city.transport
-                          : "-"}
+                    <TableCell className="w-[45%]">
+                      <div
+                        className="truncate text-sm"
+                        title={training.subTitle ?? ""}
+                      >
+                        {training.subTitle ?? "-"}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[25%]">
-                      <div className="flex gap-2">
+                    <TableCell className="w-[20%]">
+                      <div className="flex justify-end gap-2">
                         <HoverCard openDelay={100} closeDelay={0}>
                           <HoverCardTrigger>
                             <Button
@@ -292,7 +302,7 @@ export function CitiesList() {
                               size="icon"
                               className="size-8"
                             >
-                              <Link href={buildCityHref(city)}>
+                              <Link href={buildTrainingHref(training)}>
                                 <Pencil className="size-4" />
                               </Link>
                             </Button>
@@ -311,7 +321,8 @@ export function CitiesList() {
                                   size="icon"
                                   className="size-8 cursor-pointer"
                                   disabled={
-                                    isLoading || deletingCityId === city._id
+                                    isLoading ||
+                                    deletingTrainingId === training._id
                                   }
                                 >
                                   <Trash className="size-4" />
@@ -325,19 +336,23 @@ export function CitiesList() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Deletar cidade?
+                                Deletar treinamento?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Essa ação não pode ser desfeita. A cidade
-                                {city.city ? ` "${city.city}"` : ""} será
-                                removido permanentemente.
+                                Essa ação não pode ser desfeita. O treinamento
+                                {training.title
+                                  ? ` "${training.title}"`
+                                  : ""}{" "}
+                                será removido permanentemente.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 variant="destructive"
-                                onClick={() => handleDeleteCity(city._id)}
+                                onClick={() =>
+                                  handleDeleteTraining(training._id)
+                                }
                               >
                                 Deletar
                               </AlertDialogAction>
@@ -350,27 +365,28 @@ export function CitiesList() {
                 ))}
             {!isLoading && (
               <>
-                {cities.length === 0 && (
+                {trainings.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={3}
                       className="text-muted-foreground h-16 text-center"
                     >
-                      Nenhuma cidade encontrada.
+                      Nenhum treinamento encontrado.
                     </TableCell>
                   </TableRow>
                 )}
                 {Array.from({
                   length: Math.max(
                     0,
-                    TABLE_ROWS - cities.length - (cities.length === 0 ? 1 : 0),
+                    TABLE_ROWS -
+                      trainings.length -
+                      (trainings.length === 0 ? 1 : 0),
                   ),
                 }).map((_, index) => (
                   <TableRow key={`empty-${index}`}>
-                    <TableCell className="w-[50%]">&nbsp;</TableCell>
-                    {/* <TableCell className="w-[25%]">&nbsp;</TableCell> */}
-                    <TableCell className="w-[25%]">&nbsp;</TableCell>
-                    <TableCell className="w-[25%]">
+                    <TableCell className="w-[35%]">&nbsp;</TableCell>
+                    <TableCell className="w-[45%]">&nbsp;</TableCell>
+                    <TableCell className="w-[20%]">
                       <div className="flex justify-end gap-2 opacity-0">
                         <Button
                           variant="ghost"

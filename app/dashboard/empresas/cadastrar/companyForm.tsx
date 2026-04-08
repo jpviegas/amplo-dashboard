@@ -2,7 +2,6 @@
 
 import { CreateCompany } from "@/api/dashboard/empresas/route";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -192,37 +191,30 @@ export default function RegisterCompanyPage() {
   }
 
   return (
-    <main className="container mx-auto h-full w-11/12 pt-8">
-      <div className="flex items-center justify-between">
-        <h1 className="mt-8 text-3xl font-bold">Nova Empresa</h1>
-      </div>
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr,300px]">
-        <Card>
-          <CardContent className="p-6">
-            <Form {...form}>
-              <form
-                className="space-y-8"
-                onSubmit={form.handleSubmit((values) => {
-                  if (!userId) {
-                    toast.error("Usuário não identificado");
-                    return;
-                  }
-                  onSubmit(userId, values);
-                })}
-              >
-                <Tabs defaultValue="general" className="space-y-4">
-                  <TabsList className="w-full justify-start border-b bg-transparent p-0">
-                    <TabsTrigger
-                      value="general"
-                      className={cn(
-                        "rounded-none border-b-2 border-transparent pb-2",
-                        activeTab === "general" && "border-primary",
-                      )}
-                      onClick={() => setActiveTab("general")}
-                    >
-                      Informações Gerais
-                    </TabsTrigger>
-                    {/* <TabsTrigger
+    <Form {...form}>
+      <form
+        className="space-y-8"
+        onSubmit={form.handleSubmit((values) => {
+          if (!userId) {
+            toast.error("Usuário não identificado");
+            return;
+          }
+          onSubmit(userId, values);
+        })}
+      >
+        <Tabs defaultValue="general" className="space-y-4">
+          <TabsList className="w-full justify-start border-b bg-transparent p-0">
+            <TabsTrigger
+              value="general"
+              className={cn(
+                "rounded-none border-b-2 border-transparent pb-2",
+                activeTab === "general" && "border-primary",
+              )}
+              onClick={() => setActiveTab("general")}
+            >
+              Informações Gerais
+            </TabsTrigger>
+            {/* <TabsTrigger
                       value="personal"
                       className={cn(
                         "rounded-none border-b-2 border-transparent pb-2",
@@ -232,7 +224,7 @@ export default function RegisterCompanyPage() {
                     >
                       Responsável Legal
                     </TabsTrigger> */}
-                    {/* <TabsTrigger
+            {/* <TabsTrigger
                       value="icon"
                       className={cn(
                         "rounded-none border-b-2 border-transparent pb-2",
@@ -242,35 +234,35 @@ export default function RegisterCompanyPage() {
                     >
                       Ícone
                     </TabsTrigger> */}
-                  </TabsList>
+          </TabsList>
 
-                  <TabsContent value="general" className="space-y-6">
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <FormField
-                        name="companyName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nome da empresa" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        name="nickname"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Fantasia</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Nome fantasia" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      {/* <FormField
+          <TabsContent value="general" className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <FormField
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome da empresa" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="nickname"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fantasia</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome fantasia" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {/* <FormField
                         name="cnpj"
                         render={({ field }) => (
                           <FormItem>
@@ -286,122 +278,122 @@ export default function RegisterCompanyPage() {
                           </FormItem>
                         )}
                       /> */}
-                      <FormField
-                        control={form.control}
-                        name="cnpj"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CNPJ</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="00.000.000/0000-00"
-                                inputMode="numeric"
-                                maxLength={18}
-                                value={formatCnpj(field.value)}
-                                onChange={(e) => {
-                                  field.onChange(
-                                    onlyDigits(e.target.value).slice(0, 14),
-                                  );
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+              <FormField
+                control={form.control}
+                name="cnpj"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CNPJ</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="00.000.000/0000-00"
+                        inputMode="numeric"
+                        maxLength={18}
+                        value={formatCnpj(field.value)}
+                        onChange={(e) => {
+                          field.onChange(
+                            onlyDigits(e.target.value).slice(0, 14),
+                          );
+                        }}
                       />
-                      <FormField
-                        name="cep"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CEP</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Input
-                                  placeholder="CEP"
-                                  maxLength={9}
-                                  value={formatCep(field.value ?? "")}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      onlyDigits(e.target.value).slice(0, 8),
-                                    )
-                                  }
-                                  onBlur={field.onBlur}
-                                  name={field.name}
-                                  ref={field.ref}
-                                  disabled={isCepLoading}
-                                />
-                                <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        name="address"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Endereço</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Endereço" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        name="district"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Bairro</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Bairro" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Cidade</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Cidade" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="cep"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CEP</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder="CEP"
+                          maxLength={9}
+                          value={formatCep(field.value ?? "")}
+                          onChange={(e) =>
+                            field.onChange(
+                              onlyDigits(e.target.value).slice(0, 8),
+                            )
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                          disabled={isCepLoading}
+                        />
+                        <MapPin className="absolute top-2.5 right-3 size-4 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Endereço</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Endereço" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bairro</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bairro" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cidade</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Cidade" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                      <FormField
-                        name="uf"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>UF</FormLabel>
-                            <FormControl>
-                              <Select
-                                onValueChange={field.onChange}
-                                value={field.value ? field.value : undefined}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione a UF" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ufsBrasil.map((uf) => (
-                                    <SelectItem key={uf} value={uf}>
-                                      {uf}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+              <FormField
+                name="uf"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>UF</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value ? field.value : undefined}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a UF" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ufsBrasil.map((uf) => (
+                            <SelectItem key={uf} value={uf}>
+                              {uf}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                      {/* <FormField
+              {/* <FormField
                         name="page"
                         render={({ field }) => (
                           <FormItem>
@@ -413,7 +405,7 @@ export default function RegisterCompanyPage() {
                         )}
                       /> */}
 
-                      {/* <FormField
+              {/* <FormField
                         name="registration"
                         render={({ field }) => (
                           <FormItem>
@@ -427,10 +419,10 @@ export default function RegisterCompanyPage() {
                           </FormItem>
                         )}
                       /> */}
-                    </div>
-                  </TabsContent>
+            </div>
+          </TabsContent>
 
-                  {/* <TabsContent value="personal" className="space-y-6">
+          {/* <TabsContent value="personal" className="space-y-6">
                     <FormField
                       name="responsibleCpf"
                       render={({ field }) => (
@@ -488,7 +480,7 @@ export default function RegisterCompanyPage() {
                     />
                   </TabsContent> */}
 
-                  {/* <TabsContent value="icon" className="space-y-6">
+          {/* <TabsContent value="icon" className="space-y-6">
                     <Card>
                       <CardContent className="flex flex-col items-center gap-4 p-6">
                         <div className="relative h-64 w-64">
@@ -508,18 +500,14 @@ export default function RegisterCompanyPage() {
                       </CardContent>
                     </Card>
                   </TabsContent> */}
-                </Tabs>
-                <div className="flex gap-4">
-                  <Button type="submit">Salvar</Button>
-                  <Button variant="outline" type="reset">
-                    <Link href={"./"}>Cancelar</Link>
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+        </Tabs>
+        <div className="flex gap-4">
+          <Button type="submit">Salvar</Button>
+          <Button variant="outline" type="reset">
+            <Link href={"./"}>Cancelar</Link>
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

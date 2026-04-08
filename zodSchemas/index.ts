@@ -217,3 +217,16 @@ export const citySchema = z.object({
     .nonnegative({ message: "O valor do vale transporte deve ser positivo" })
     .min(1, "O valor do vale transporte é obrigatório"),
 });
+
+export type TrainingsType = z.infer<typeof trainingSchema>;
+export type TrainingsTypeWithId = TrainingsType & { _id: string };
+export const trainingSchema = z.object({
+  title: z
+    .string()
+    .nonempty("O título da treinamento é obrigatório")
+    .min(3, "O título da treinamento deve ter pelo menos 3 caracteres"),
+  subTitle: z
+    .string({ required_error: "O subtítulo é obrigatório" })
+    .nonempty("O subtítulo é obrigatório"),
+  image: z.string().optional(),
+});

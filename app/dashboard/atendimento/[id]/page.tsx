@@ -26,8 +26,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -47,12 +47,18 @@ const StatusSchema = z.object({
 
 export default function ServicePage() {
   const params = useParams<{ id: string }>();
-  const serviceId = params?.id;
+  const rawServiceId = params?.id;
+  const serviceId = useMemo(() => {
+    const raw = String(rawServiceId ?? "");
+    const match = raw.match(/[a-f0-9]{24}$/i);
+    return match?.[0] ?? rawServiceId;
+  }, [rawServiceId]);
   const { user } = useUser();
   const userId = user?._id || Cookies.get("user");
   const [service, setService] = useState<ServiceDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof StatusSchema>>({
     resolver: zodResolver(StatusSchema),
@@ -97,6 +103,9 @@ export default function ServicePage() {
       }
       toast.success(message || "Atendimento atualizado.");
       await fetchService();
+      setTimeout(() => {
+        router.push("/dashboard/atendimento");
+      }, 1000);
     } catch (error) {
       console.error("Erro ao atualizar atendimento:", error);
       toast.error("Não foi possível atualizar o atendimento.");
@@ -106,7 +115,7 @@ export default function ServicePage() {
   };
 
   return (
-    <main className="container mx-auto h-full w-11/12 pt-8">
+    <main className="container mx-auto flex h-full w-11/12 flex-col justify-evenly gap-8">
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" asChild>
@@ -118,7 +127,7 @@ export default function ServicePage() {
         </div>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr,300px]">
+      <div className="mx-auto overflow-x-auto rounded-md border lg:w-[70%]">
         <Card>
           <CardContent className="p-6">
             <div className="space-y-6">

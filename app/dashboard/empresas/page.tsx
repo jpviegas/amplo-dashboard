@@ -1,4 +1,4 @@
-import DashboardHeader from "@/components/layout/dashboard/header";
+import ListarLayout from "@/components/layout/listar";
 import { Metadata } from "next";
 import { CompaniesList } from "./companiesList";
 
@@ -9,10 +9,8 @@ export const metadata: Metadata = {
 
 export default async function CompaniesPage() {
   return (
-    <main className="container mx-auto flex h-full w-11/12 flex-col justify-evenly gap-8 pt-8">
-      <DashboardHeader title="Empresas" link="empresas/cadastrar" />
-
+    <ListarLayout title="Empresas">
       <CompaniesList />
-    </main>
+    </ListarLayout>
   );
 }

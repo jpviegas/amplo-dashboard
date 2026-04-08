@@ -1,4 +1,4 @@
-import DashboardHeader from "@/components/layout/dashboard/header";
+import ListarLayout from "@/components/layout/listar";
 import { Metadata } from "next";
 import { PositionsList } from "./positionsList";
 
@@ -9,10 +9,8 @@ export const metadata: Metadata = {
 
 export default async function PositionsPage() {
   return (
-    <main className="container mx-auto flex h-full w-11/12 flex-col justify-evenly gap-8">
-      <DashboardHeader title="Cargos" link="cargos/cadastrar" />
-
+    <ListarLayout title="Cargos">
       <PositionsList />
-    </main>
+    </ListarLayout>
   );
 }

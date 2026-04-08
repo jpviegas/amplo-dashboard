@@ -41,6 +41,7 @@ export default function SidebarComponent() {
                 { item: "Documentos", url: "/dashboard/documentos" },
                 { item: "Departamentos", url: "/dashboard/departamentos" },
                 { item: "Cargos", url: "/dashboard/cargos" },
+                { item: "Treinamentos", url: "/dashboard/treinamentos" },
               ],
             },
             // {
