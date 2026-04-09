@@ -51,15 +51,15 @@ export default function SidebarComponent() {
               items: [
                 {
                   item: "Documentos",
-                  url: "/dashboard/gestão-funcionarios/documentos",
+                  url: "/dashboard/gestao/documentos",
                 },
                 {
                   item: "Uniforme/EPI",
-                  url: "/dashboard/gestão-funcionarios/uniforme-epi",
+                  url: "/dashboard/gestao/epi",
                 },
                 {
                   item: "Pagamento/Benefício",
-                  url: "/dashboard/gestão-funcionarios/pagamento-beneficio",
+                  url: "/dashboard/gestao/pagamento",
                 },
               ],
             },
