@@ -2,7 +2,7 @@
 
 import { GetAllEPIs } from "@/api/dashboard/epi/route";
 import { GetAllEmployees } from "@/api/dashboard/funcionarios/route";
-import { AssignEPIToEmployee } from "@/api/dashboard/gestao/route";
+import { CreateManagement } from "@/api/dashboard/gestao/route";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -164,7 +164,7 @@ export function NewManagementEPI() {
         return;
       }
 
-      const { success, message } = await AssignEPIToEmployee(userId, {
+      const { success, message } = await CreateManagement(userId, {
         employeeId: values.employeeId,
         epiId: values.epiId,
         quantity: values.quantity,

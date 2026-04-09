@@ -1,46 +1,11 @@
-export type AssignEPIToEmployeePayload = {
-  employeeId: string;
-  epiId: string;
-  quantity: number;
-  size?: string;
-  comment?: string;
-};
+import {
+  ManagementEPIType,
+  ManagementEPITypeWithId,
+  ManagementsTypeWithId,
+} from "@/zodSchemas";
 
-export type EmployeeEPIAssignmentType = {
-  _id: string;
-  employeeId: string;
-  epiId: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-const getAuthHeader = (userId: string | { email: string }) => {
-  return `Bearer ${typeof userId === "string" ? userId : userId.email}`;
-};
-
-export async function AssignEPIToEmployee(
+export async function GetAllManagements(
   userId: string | { email: string },
-  values: AssignEPIToEmployeePayload,
-): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/managements`,
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        Authorization: getAuthHeader(userId),
-      },
-      body: JSON.stringify(values),
-    },
-  );
-
-  const data = await res.json();
-  return data;
-}
-
-export async function GetEmployeeEPIAssignments(
-  userId: string | { email: string },
-  employeeId?: string,
   page?: string,
 ): Promise<{
   success: boolean;
@@ -55,20 +20,25 @@ export async function GetEmployeeEPIAssignments(
     nextPage: null | number;
     prevPage: null | number;
   };
-  assignments: EmployeeEPIAssignmentType[];
+  managements: ManagementsTypeWithId[];
 }> {
   let url = `${process.env.NEXT_PUBLIC_API_URL}/api/managements`;
 
   const queryParams = new URLSearchParams();
-  if (employeeId) queryParams.append("employeeId", employeeId);
-  if (page) queryParams.append("page", page);
-  if (queryParams.toString()) url += `?${queryParams.toString()}`;
+
+  if (page) {
+    queryParams.append("page", page);
+  }
+
+  if (queryParams.toString()) {
+    url += `?${queryParams.toString()}`;
+  }
 
   const res = await fetch(url, {
     method: "GET",
     headers: {
       "content-type": "application/json",
-      Authorization: getAuthHeader(userId),
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
     },
   });
 
@@ -76,20 +46,94 @@ export async function GetEmployeeEPIAssignments(
   return data;
 }
 
-export async function DeleteEmployeeEPIAssignment(
+export async function GetManagementById(
   userId: string | { email: string },
-  assignmentId: string,
+  managementId: string,
+): Promise<{
+  success: boolean;
+  management: ManagementEPITypeWithId;
+}> {
+  const url = `${process.env.NEXT_PUBLIC_API_URL}/api/managements/${managementId}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+    },
+  });
+
+  const data = await res.json();
+  return data;
+}
+
+export async function CreateManagement(
+  userId: string | { email: string },
+  values: ManagementEPIType,
 ): Promise<{ success: boolean; message: string }> {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/managements/${assignmentId}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/managements`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+      body: JSON.stringify(values),
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao cadastrar a gestão de EPI");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function UpdateManagement(
+  userId: string | { email: string },
+  managementId: string,
+  values: ManagementEPIType,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/managements/${managementId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+      body: JSON.stringify(values),
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao atualizar a gestão de EPI");
+  }
+
+  const data = await res.json();
+  return data;
+}
+
+export async function DeleteManagement(
+  userId: string | { email: string },
+  managementId: string,
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/managements/${managementId}`,
     {
       method: "DELETE",
       headers: {
         "content-type": "application/json",
-        Authorization: getAuthHeader(userId),
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
       },
     },
   );
+
+  if (!res) {
+    throw new Error("Erro ao deletar o management");
+  }
 
   const data = await res.json();
   return data;

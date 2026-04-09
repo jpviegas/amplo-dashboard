@@ -254,6 +254,22 @@ export const epiSchema = z.object({
     .nonempty("O C.A. é obrigatório"),
 });
 
+export type ManagementsType = z.infer<typeof managementsSchema>;
+export type ManagementsTypeWithId = ManagementsType & { _id: string };
+export const managementsSchema = z.object({
+  employeeId: z.object({
+    name: z.string(),
+    email: z.string(),
+  }),
+  epiId: z.object({
+    name: z.string(),
+    email: z.string(),
+  }),
+  quantity: z.number().optional(),
+  size: z.string().optional(),
+  comment: z.string().optional(),
+});
+
 export type ManagementEPIType = z.infer<typeof managementEpiSchema>;
 export type ManagementEPITypeWithId = ManagementEPIType & { _id: string };
 export const managementEpiSchema = z.object({

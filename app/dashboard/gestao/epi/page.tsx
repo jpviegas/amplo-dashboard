@@ -1,6 +1,6 @@
 import ListarLayout from "@/components/layout/listar";
 import { Metadata } from "next";
-import { EPIList } from "./epiList";
+import { ManagementEPIList } from "./epiList";
 
 export const metadata: Metadata = {
   title: "E.P.I. - Amplo Serviços",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function EPIPage() {
   return (
     <ListarLayout title="Gestão: Uniforme/EPI">
-      <EPIList />
+      <ManagementEPIList />
     </ListarLayout>
   );
 }
