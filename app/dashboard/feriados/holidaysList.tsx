@@ -1,6 +1,6 @@
 "use client";
 
-import { DeleteEPI, GetAllEPIs } from "@/api/dashboard/epi/route";
+import { DeleteHoliday, GetAllHolidays } from "@/api/dashboard/feriados/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import {
   AlertDialog,
@@ -22,11 +22,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -38,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useUser } from "@/context/UserContext";
-import { EPITypeWithId } from "@/zodSchemas";
+import { HolidayTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import debounce from "lodash/debounce";
@@ -53,7 +48,7 @@ const FormSchema = z.object({
   search: z.string().optional(),
 });
 
-export function EPIList() {
+export function HolidaysList() {
   const slugify = (value: string) => {
     const raw = String(value ?? "")
       .trim()
@@ -65,16 +60,27 @@ export function EPIList() {
       .replace(/^-|-$/g, "");
     return slug;
   };
-  const buildEPIHref = (epi: EPITypeWithId) => {
-    const base = epi.name || "epi";
-    const slug = slugify(base) || "epi";
-    return `/dashboard/epi/${slug}-${epi._id}`;
+  const formatHolidayDate = (value?: string | null) => {
+    const raw = String(value ?? "");
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length === 8) {
+      const dd = digits.slice(0, 2);
+      const mm = digits.slice(2, 4);
+      const yyyy = digits.slice(4, 8);
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    return raw || "-";
+  };
+  const buildHolidayHref = (holiday: HolidayTypeWithId) => {
+    const base = holiday.comment || holiday.date || "feriado";
+    const slug = slugify(base) || "feriado";
+    return `/dashboard/feriados/${slug}-${holiday._id}`;
   };
 
-  const { user } = useUser();
-  const userId = user?._id || Cookies.get("user");
-  const [epis, setEPIs] = useState<EPITypeWithId[]>([]);
-  const [deletingEPIId, setDeletingEPIId] = useState<string | null>(null);
+  const [holidays, setHolidays] = useState<HolidayTypeWithId[]>([]);
+  const [deletingHolidayId, setDeletingHolidayId] = useState<string | null>(
+    null,
+  );
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -95,7 +101,8 @@ export function EPIList() {
     prevPage: null,
   });
   const [isLoading, setIsLoading] = useState(false);
-
+  const { user } = useUser();
+  const userId = user?._id || Cookies.get("user");
   const TABLE_ROWS = 10;
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -105,34 +112,33 @@ export function EPIList() {
     },
   });
 
-  const fetchEPIs = useCallback(
+  const fetchHolidays = useCallback(
     async (values: z.infer<typeof FormSchema>, page = "1") => {
       try {
         setIsLoading(true);
-
         if (!userId) {
-          setEPIs([]);
+          setHolidays([]);
           return;
         }
 
         const {
           success,
           pagination: paginationData,
-          epis,
-        } = await GetAllEPIs(userId, values.search || "", page);
+          holidays,
+        } = await GetAllHolidays(userId, values.search || "", page);
 
-        if (!success) {
-          toast.error("Não foi possível carregar os E.P.I.");
-          setEPIs([]);
+        if (success) {
+          setHolidays(holidays);
+          setPagination(paginationData);
           return;
         }
 
-        setEPIs(epis);
-        setPagination(paginationData);
+        toast.error("Não foi possível carregar os feriados.");
+        setHolidays([]);
       } catch (error) {
-        console.error("Erro ao buscar E.P.I.:", error);
-        toast.error("Não foi possível carregar os E.P.I.");
-        setEPIs([]);
+        console.error("Erro ao buscar feriados:", error);
+        toast.error("Não foi possível carregar os feriados.");
+        setHolidays([]);
       } finally {
         setIsLoading(false);
       }
@@ -140,46 +146,47 @@ export function EPIList() {
     [userId],
   );
 
-  const debouncedFetchEPIs = useMemo(() => {
+  const debouncedFetchHolidays = useMemo(() => {
     return debounce((values: z.infer<typeof FormSchema>) => {
-      fetchEPIs(values);
+      fetchHolidays(values, "1");
     }, 500);
-  }, [fetchEPIs]);
+  }, [fetchHolidays]);
 
   useEffect(() => {
     const subscription = form.watch((values) => {
-      debouncedFetchEPIs(values as z.infer<typeof FormSchema>);
+      debouncedFetchHolidays(values as z.infer<typeof FormSchema>);
     });
 
     return () => {
       subscription.unsubscribe();
-      debouncedFetchEPIs.cancel();
+      debouncedFetchHolidays.cancel();
     };
-  }, [form, debouncedFetchEPIs]);
+  }, [form, debouncedFetchHolidays]);
 
   useEffect(() => {
-    fetchEPIs(form.getValues());
-  }, [fetchEPIs, form]);
+    fetchHolidays(form.getValues(), "1");
+  }, [form, fetchHolidays]);
 
   const handlePageChange = async (newPage: number) => {
     try {
       setIsLoading(true);
       if (!userId) {
-        throw new Error("User ID is required");
+        toast.error("Usuário não identificado.");
+        return;
       }
 
       const {
         success,
         pagination: paginationData,
-        epis,
-      } = await GetAllEPIs(
+        holidays,
+      } = await GetAllHolidays(
         userId,
-        form.getValues("search"),
+        form.getValues("search") || "",
         newPage.toString(),
       );
 
       if (success) {
-        setEPIs(epis);
+        setHolidays(holidays);
         setPagination(paginationData);
       }
     } catch (error) {
@@ -190,15 +197,15 @@ export function EPIList() {
     }
   };
 
-  const handleDeleteEPI = async (epiId: string) => {
+  const handleDeleteHoliday = async (holidayId: string) => {
     try {
       if (!userId) {
         toast.error("Usuário não identificado.");
         return;
       }
 
-      setDeletingEPIId(epiId);
-      const { success, message } = await DeleteEPI(userId, epiId);
+      setDeletingHolidayId(holidayId);
+      const { success, message } = await DeleteHoliday(userId, holidayId);
 
       if (!success) {
         toast.warning(message);
@@ -207,16 +214,16 @@ export function EPIList() {
 
       toast.success(message);
 
-      const isLastItemOnPage = epis.length === 1;
+      const isLastItemOnPage = holidays.length === 1;
       const nextPage = isLastItemOnPage
         ? Math.max(1, pagination.page - 1)
         : pagination.page;
       await handlePageChange(nextPage);
     } catch (error) {
-      console.error("Erro ao deletar E.P.I.:", error);
-      toast.error("Não foi possível deletar o E.P.I.");
+      console.error("Erro ao deletar feriado:", error);
+      toast.error("Não foi possível deletar o feriado.");
     } finally {
-      setDeletingEPIId(null);
+      setDeletingHolidayId(null);
     }
   };
 
@@ -225,7 +232,7 @@ export function EPIList() {
       <Form {...form}>
         <form
           className="flex items-center justify-between"
-          onSubmit={form.handleSubmit((values) => fetchEPIs(values))}
+          onSubmit={form.handleSubmit((values) => fetchHolidays(values, "1"))}
         >
           <FormField
             control={form.control}
@@ -234,7 +241,7 @@ export function EPIList() {
               <FormItem className="flex items-center gap-4">
                 <FormLabel>Buscar:</FormLabel>
                 <FormControl>
-                  <Input placeholder="buscar por nome" {...field} />
+                  <Input placeholder="buscar feriado" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -247,96 +254,81 @@ export function EPIList() {
         <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50%]">Nome</TableHead>
-              <TableHead className="w-[30%]">C.A.</TableHead>
-              <TableHead className="w-[20%]">Ação</TableHead>
+              <TableHead className="w-[30%]">Data</TableHead>
+              <TableHead className="w-[55%]">Comentário</TableHead>
+              <TableHead className="w-[15%]">Ação</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading
               ? Array.from({ length: TABLE_ROWS }).map((_, index) => (
                   <TableRow key={index}>
-                    <TableCell className="w-[50%]">
+                    <TableCell className="w-[30%]">
+                      <Skeleton className="h-4 w-full max-w-[140px]" />
+                    </TableCell>
+                    <TableCell className="w-[55%]">
                       <Skeleton className="h-4 w-full max-w-[250px]" />
                     </TableCell>
-                    <TableCell className="w-[30%]">
-                      <Skeleton className="h-4 w-full max-w-[200px]" />
-                    </TableCell>
-                    <TableCell className="w-[20%]">
+                    <TableCell className="w-[15%]">
                       <div className="flex items-center justify-end gap-2">
-                        <Skeleton className="size-8 rounded-md" />
                         <Skeleton className="size-8 rounded-md" />
                       </div>
                     </TableCell>
                   </TableRow>
                 ))
-              : epis.map((epi) => (
-                  <TableRow key={epi._id}>
-                    <TableCell className="w-[50%]">
-                      <div className="truncate text-sm" title={epi.name ?? ""}>
-                        {epi.name ?? "-"}
-                      </div>
-                    </TableCell>
+              : holidays.map((holiday) => (
+                  <TableRow key={holiday._id}>
                     <TableCell className="w-[30%]">
-                      <div className="truncate text-sm" title={epi.ca ?? ""}>
-                        {epi.ca ?? "-"}
+                      <div
+                        className="truncate text-sm"
+                        title={formatHolidayDate(holiday.date)}
+                      >
+                        {formatHolidayDate(holiday.date)}
                       </div>
                     </TableCell>
-                    <TableCell className="w-[20%]">
+                    <TableCell className="w-[55%]">
+                      <div
+                        className="truncate text-sm"
+                        title={holiday.comment ?? ""}
+                      >
+                        {holiday.comment ?? "-"}
+                      </div>
+                    </TableCell>
+                    <TableCell className="w-[15%]">
                       <div className="flex justify-start gap-2">
-                        <HoverCard openDelay={100} closeDelay={0}>
-                          <HoverCardTrigger>
+                        <Button variant="ghost" size="icon" className="size-8">
+                          <Link href={buildHolidayHref(holiday)}>
+                            <Pencil className="size-4" />
+                          </Link>
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="size-8"
+                              disabled={
+                                isLoading || deletingHolidayId === holiday._id
+                              }
                             >
-                              <Link href={buildEPIHref(epi)}>
-                                <Pencil className="size-4" />
-                              </Link>
+                              <Trash className="size-4" />
                             </Button>
-                          </HoverCardTrigger>
-                          <HoverCardContent className="pointer-events-none">
-                            Editar
-                          </HoverCardContent>
-                        </HoverCard>
-
-                        <AlertDialog>
-                          <HoverCard openDelay={100} closeDelay={0}>
-                            <HoverCardTrigger asChild>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 cursor-pointer"
-                                  disabled={
-                                    isLoading || deletingEPIId === epi._id
-                                  }
-                                >
-                                  <Trash className="size-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                            </HoverCardTrigger>
-                            <HoverCardContent className="pointer-events-none">
-                              Deletar
-                            </HoverCardContent>
-                          </HoverCard>
+                          </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Deletar E.P.I.?
+                                Deletar feriado?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                Essa ação não pode ser desfeita. O E.P.I.
-                                {epi.name ? ` "${epi.name}"` : ""} será removido
-                                permanentemente.
+                                Essa ação não pode ser desfeita. O feriado será
+                                removido permanentemente.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
                               <AlertDialogAction
                                 variant="destructive"
-                                onClick={() => handleDeleteEPI(epi._id)}
+                                onClick={() => handleDeleteHoliday(holiday._id)}
                               >
                                 Deletar
                               </AlertDialogAction>
@@ -349,45 +341,28 @@ export function EPIList() {
                 ))}
             {!isLoading && (
               <>
-                {epis.length === 0 && (
+                {holidays.length === 0 && (
                   <TableRow>
                     <TableCell
                       colSpan={3}
                       className="text-muted-foreground h-16 text-center"
                     >
-                      Nenhum E.P.I. encontrado.
+                      Nenhum feriado encontrado.
                     </TableCell>
                   </TableRow>
                 )}
                 {Array.from({
                   length: Math.max(
                     0,
-                    TABLE_ROWS - epis.length - (epis.length === 0 ? 1 : 0),
+                    TABLE_ROWS -
+                      holidays.length -
+                      (holidays.length === 0 ? 1 : 0),
                   ),
                 }).map((_, index) => (
                   <TableRow key={`empty-${index}`}>
-                    <TableCell className="w-[50%]">&nbsp;</TableCell>
                     <TableCell className="w-[30%]">&nbsp;</TableCell>
-                    <TableCell className="w-[20%]">
-                      <div className="flex justify-end gap-2 opacity-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          disabled
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8"
-                          disabled
-                        >
-                          <Trash className="size-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    <TableCell className="w-[55%]">&nbsp;</TableCell>
+                    <TableCell className="w-[15%]">&nbsp;</TableCell>
                   </TableRow>
                 ))}
               </>

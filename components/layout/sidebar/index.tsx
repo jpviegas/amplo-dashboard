@@ -43,6 +43,7 @@ export default function SidebarComponent() {
                 { item: "Cargos", url: "/dashboard/cargos" },
                 { item: "Treinamentos", url: "/dashboard/treinamentos" },
                 { item: "E.P.I.", url: "/dashboard/epi" },
+                { item: "Feriados", url: "/dashboard/feriados" },
               ],
             },
             {

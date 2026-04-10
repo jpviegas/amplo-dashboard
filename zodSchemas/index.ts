@@ -175,15 +175,84 @@ export const registerPositionSchema = z.object({
 export type WorkingHourType = z.infer<typeof registerWorkingHourSchema>;
 export type WorkingHourTypeWithId = WorkingHourType & { _id: string };
 export const registerWorkingHourSchema = z.object({
-  initialHour: z
-    .string()
-    .nonempty("A hora inicial é obrigatória")
-    .min(1, "A hora inicial é obrigatória"),
-  finalHour: z
-    .string()
-    .nonempty("A hora final é obrigatória")
-    .min(1, "A hora final é obrigatória"),
-  company: z.string().min(1, "O ID da empresa é obrigatório").optional(),
+  name: z
+    .string({ required_error: "O nome do horário é obrigatório" })
+    .nonempty("O nome do horário é obrigatório")
+    .min(3, "O nome do horário deve ter pelo menos 3 caracteres"),
+  days: z
+    .array(
+      z.object({
+        dayOfWeek: z
+          .number({ required_error: "O dia da semana é obrigatório" })
+          .int("O dia da semana deve ser um número inteiro")
+          .min(0, "O dia da semana deve estar entre 0 e 6")
+          .max(6, "O dia da semana deve estar entre 0 e 6"),
+        ranges: z.array(
+          z
+            .object({
+              start: z.union([
+                z.literal(""),
+                z
+                  .string()
+                  .regex(
+                    /^([01]\d|2[0-3]):[0-5]\d$/,
+                    "Hora inicial inválida (HH:MM)",
+                  ),
+              ]),
+              end: z.union([
+                z.literal(""),
+                z
+                  .string()
+                  .regex(
+                    /^([01]\d|2[0-3]):[0-5]\d$/,
+                    "Hora final inválida (HH:MM)",
+                  ),
+              ]),
+            })
+            .superRefine((value, ctx) => {
+              const startFilled = Boolean(value.start);
+              const endFilled = Boolean(value.end);
+
+              if (startFilled !== endFilled) {
+                ctx.addIssue({
+                  code: "custom",
+                  message: "Preencha início e fim do intervalo",
+                  path: [],
+                });
+                return;
+              }
+
+              if (!startFilled || !endFilled) return;
+
+              const [sh, sm] = String(value.start).split(":").map(Number);
+              const [eh, em] = String(value.end).split(":").map(Number);
+              const startMinutes = sh * 60 + sm;
+              const endMinutes = eh * 60 + em;
+
+              if (
+                !Number.isFinite(startMinutes) ||
+                !Number.isFinite(endMinutes)
+              ) {
+                ctx.addIssue({
+                  code: "custom",
+                  message: "Horário inválido",
+                  path: [],
+                });
+                return;
+              }
+
+              if (endMinutes <= startMinutes) {
+                ctx.addIssue({
+                  code: "custom",
+                  message: "A hora final deve ser maior que a inicial",
+                  path: [],
+                });
+              }
+            }),
+        ),
+      }),
+    )
+    .length(7, "O horário deve conter os 7 dias da semana"),
 });
 
 export type DocumentsType = z.infer<typeof registerDocumentSchema>;
@@ -249,9 +318,7 @@ export const epiSchema = z.object({
     .string()
     .nonempty("O nome do E.P.I. é obrigatório")
     .min(3, "O nome do E.P.I. deve ter pelo menos 3 caracteres"),
-  ca: z
-    .string({ required_error: "O C.A. é obrigatório" })
-    .nonempty("O C.A. é obrigatório"),
+  ca: z.string().optional(),
 });
 
 export type ManagementsType = z.infer<typeof managementsSchema>;
@@ -282,5 +349,15 @@ export const managementEpiSchema = z.object({
     .nonempty("O C.A. é obrigatório"),
   quantity: z.number().optional(),
   size: z.string().optional(),
+  comment: z.string().optional(),
+});
+
+export type HolidayType = z.infer<typeof holidaySchema>;
+export type HolidayTypeWithId = HolidayType & { _id: string };
+export const holidaySchema = z.object({
+  date: z
+    .string({ required_error: "A data do feriado é obrigatório" })
+    .nonempty("A data do feriado é obrigatório")
+    .min(3, "O feriado é obrigatório"),
   comment: z.string().optional(),
 });

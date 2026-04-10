@@ -94,6 +94,33 @@ export async function GetCompanyHours(
   return data;
 }
 
+export async function GetHourById(
+  userId: string | { email: string },
+  hourId: string,
+): Promise<{
+  success: boolean;
+  hour: WorkingHourTypeWithId | null;
+}> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/hours/${hourId}`, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+    },
+  });
+
+  const data = await res.json();
+  const normalizedHour: WorkingHourTypeWithId | null =
+    data?.hour ??
+    (Array.isArray(data?.hours) ? data.hours[0] : data?.hours) ??
+    null;
+
+  return {
+    ...data,
+    hour: normalizedHour,
+  };
+}
+
 export async function CreateHour(
   userId: string | { email: string },
   values: WorkingHourType,

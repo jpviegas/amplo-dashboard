@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  DeleteHour,
-  GetAllHours,
-  UpdateHour,
-} from "@/api/dashboard/horarios/route";
+import { DeleteHour, GetAllHours } from "@/api/dashboard/horarios/route";
 import { TablePagination } from "@/components/layout/dashboard/TablePagination";
 import {
   AlertDialog,
@@ -42,15 +38,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useUser } from "@/context/UserContext";
-import {
-  registerWorkingHourSchema,
-  WorkingHourType,
-  WorkingHourTypeWithId,
-} from "@/zodSchemas";
+import { WorkingHourTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import debounce from "lodash/debounce";
 import { Pencil, Trash } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -61,9 +54,24 @@ const FormSchema = z.object({
 });
 
 export function HoursList() {
+  const slugify = (value: string) => {
+    const raw = String(value ?? "")
+      .trim()
+      .toLowerCase();
+    const noDiacritics = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const slug = noDiacritics
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    return slug;
+  };
+  const buildHourHref = (hour: WorkingHourTypeWithId) => {
+    const base = hour.name || "horario";
+    const slug = slugify(base) || "horario";
+    return `/dashboard/horarios/${slug}-${hour._id}`;
+  };
   const [hours, setHours] = useState<WorkingHourTypeWithId[]>([]);
   const [deletingHourId, setDeletingHourId] = useState<string | null>(null);
-  const [editingHourId, setEditingHourId] = useState<string | null>(null);
   const [pagination, setPagination] = useState<{
     total: number;
     page: number;
@@ -92,14 +100,6 @@ export function HoursList() {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       search: "",
-    },
-  });
-
-  const editForm = useForm<WorkingHourType>({
-    resolver: zodResolver(registerWorkingHourSchema),
-    defaultValues: {
-      initialHour: "",
-      finalHour: "",
     },
   });
 
@@ -212,45 +212,6 @@ export function HoursList() {
     }
   };
 
-  const handleOpenEdit = (hour: WorkingHourTypeWithId) => {
-    setEditingHourId(hour._id);
-    editForm.reset({
-      initialHour: hour.initialHour,
-      finalHour: hour.finalHour,
-    });
-  };
-
-  const handleUpdateHour = async (values: WorkingHourType) => {
-    try {
-      if (!userId) {
-        toast.error("Usuário não identificado.");
-        return;
-      }
-      if (!editingHourId) {
-        toast.error("Horário não identificado.");
-        return;
-      }
-
-      const { success, message } = await UpdateHour(
-        userId,
-        editingHourId,
-        values,
-      );
-
-      if (!success) {
-        toast.warning(message);
-        return;
-      }
-
-      toast.success(message);
-      setEditingHourId(null);
-      await handlePageChange(pagination.page);
-    } catch (error) {
-      console.error("Erro ao atualizar horário:", error);
-      toast.error("Não foi possível atualizar o horário.");
-    }
-  };
-
   return (
     <>
       <Form {...form}>
@@ -300,95 +261,26 @@ export function HoursList() {
               : hours.map((hour) => (
                   <TableRow key={hour._id}>
                     <TableCell className="w-[70%]">
-                      <div className="truncate text-sm">
-                        {hour.initialHour} / {hour.finalHour}
-                      </div>
+                      <div className="truncate text-sm">{hour.name}</div>
                     </TableCell>
                     <TableCell className="w-[30%]">
                       <div className="flex gap-2">
-                        <AlertDialog
-                          open={editingHourId === hour._id}
-                          onOpenChange={(open) => {
-                            if (!open) setEditingHourId(null);
-                          }}
-                        >
-                          <HoverCard openDelay={100} closeDelay={200}>
-                            <HoverCardTrigger asChild>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8 cursor-pointer"
-                                  onClick={() => handleOpenEdit(hour)}
-                                  disabled={isLoading}
-                                >
-                                  <Pencil className="size-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                            </HoverCardTrigger>
-                            <HoverCardContent>Editar</HoverCardContent>
-                          </HoverCard>
-
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Editar horário
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Atualize as horas inicial e final.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-
-                            <Form {...editForm}>
-                              <form
-                                id={`edit-hour-${hour._id}`}
-                                className="space-y-4"
-                                onSubmit={editForm.handleSubmit(
-                                  handleUpdateHour,
-                                )}
-                              >
-                                <div className="grid gap-4 md:grid-cols-2">
-                                  <FormField
-                                    control={editForm.control}
-                                    name="initialHour"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Hora Inicial</FormLabel>
-                                        <FormControl>
-                                          <Input type="time" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <FormField
-                                    control={editForm.control}
-                                    name="finalHour"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Hora Final</FormLabel>
-                                        <FormControl>
-                                          <Input type="time" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                </div>
-                              </form>
-                            </Form>
-
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                type="submit"
-                                form={`edit-hour-${hour._id}`}
-                              >
-                                Salvar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <HoverCard openDelay={100} closeDelay={200}>
+                          <HoverCardTrigger asChild>
+                            <Button
+                              asChild
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 cursor-pointer"
+                              disabled={isLoading}
+                            >
+                              <Link href={buildHourHref(hour)}>
+                                <Pencil className="size-4" />
+                              </Link>
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent>Editar</HoverCardContent>
+                        </HoverCard>
 
                         <AlertDialog>
                           <HoverCard openDelay={100} closeDelay={200}>

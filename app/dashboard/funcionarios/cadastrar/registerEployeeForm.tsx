@@ -653,7 +653,7 @@ export default function RegisterEmployeeForm({
                   <SelectContent>
                     {hours.map((hour) => (
                       <SelectItem key={hour._id} value={hour._id}>
-                        {hour.initialHour} / {hour.finalHour}
+                        {hour.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
