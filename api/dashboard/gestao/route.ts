@@ -138,3 +138,68 @@ export async function DeleteManagement(
   const data = await res.json();
   return data;
 }
+
+export async function GetPointsById(
+  userId: string | { email: string },
+  employeeId: string,
+  year?: string,
+  month?: string,
+): Promise<{
+  success: boolean;
+  points: unknown[];
+}> {
+  let url = `${process.env.NEXT_PUBLIC_API_URL}/api/managements/points/user/${employeeId}`;
+
+  const queryParams = new URLSearchParams();
+  if (year) queryParams.append("year", year);
+  if (month) queryParams.append("month", month);
+  if (queryParams.toString()) {
+    url += `?${queryParams.toString()}`;
+  }
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+    },
+  });
+
+  const data = await res.json();
+  const normalizedPoints: unknown[] =
+    data?.points ??
+    data?.managements ??
+    (Array.isArray(data?.management) ? data.management : data?.management) ??
+    [];
+
+  return { ...data, points: normalizedPoints };
+}
+
+export async function UpdatePoint(
+  userId: string | { email: string },
+  values: {
+    userId: string;
+    location: { latitude: number; longitude: number };
+    type: "rh";
+    timestamp: string;
+  },
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/timesheet/register`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        Authorization: `Bearer ${typeof userId === "string" ? userId : userId.email}`,
+      },
+      body: JSON.stringify(values),
+    },
+  );
+
+  if (!res) {
+    throw new Error("Erro ao atualizar o ponto do funcionário");
+  }
+
+  const data = await res.json();
+  return data;
+}

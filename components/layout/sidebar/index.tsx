@@ -51,6 +51,10 @@ export default function SidebarComponent() {
               title: "Gestão de Funcionário",
               items: [
                 {
+                  item: "Atribuir ponto",
+                  url: "/dashboard/gestao/ponto",
+                },
+                {
                   item: "Documentos",
                   url: "/dashboard/gestao/documentos",
                 },

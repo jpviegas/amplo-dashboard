@@ -361,3 +361,16 @@ export const holidaySchema = z.object({
     .min(3, "O feriado é obrigatório"),
   comment: z.string().optional(),
 });
+
+export type NoticesType = z.infer<typeof noticesSchema>;
+export type NoticesTypeWithId = NoticesType & { _id: string };
+export const noticesSchema = z.object({
+  title: z
+    .string({ required_error: "O título do notícia é obrigatório" })
+    .nonempty("O título do notícia é obrigatório")
+    .min(3, "O notícia é obrigatório"),
+  subTitle: z.string().optional(),
+  notice: z
+    .string({ required_error: "O conteúdo do notícia é obrigatório" })
+    .min(1, "A notícia é obrigatória"),
+});
