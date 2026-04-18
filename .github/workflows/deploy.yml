@@ -30,7 +30,7 @@ jobs:
             export PATH="$PATH:$(npm bin -g 2>/dev/null || true)"
 
             APP_DIR=/root/apps/amplo-dashboard
-            REPO_URL=git@github.com:jpviegas/amplo-dashboard.git
+            REPO_URL=git@github-dashboard:jpviegas/amplo-dashboard.git
 
             mkdir -p "$APP_DIR"
             cd "$APP_DIR"
