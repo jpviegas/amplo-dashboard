@@ -30,18 +30,18 @@ jobs:
             export PATH="$PATH:$(npm bin -g 2>/dev/null || true)"
 
             APP_DIR=/root/apps/amplo-dashboard
-            REPO_URL=https://github.com/jpviegas/amplo-dashboard.git
+            REPO_URL=git@github.com:jpviegas/amplo-dashboard.git
 
-            mkdir -p /root/apps
-            if [ ! -d "$APP_DIR/.git" ]; then
-              git clone "$REPO_URL" "$APP_DIR"
-            fi
-
+            mkdir -p "$APP_DIR"
             cd "$APP_DIR"
-            git fetch origin main
+            if [ ! -d .git ]; then
+              git init -q -b main
+              git remote add origin "$REPO_URL" 2>/dev/null || git remote set-url origin "$REPO_URL"
+            fi
+            git fetch origin main --depth=1
             git reset --hard origin/main
 
-            npm ci
+            npm install --no-audit --no-fund
             npm run build
 
             if pm2 describe amplo-dashboard > /dev/null 2>&1; then
