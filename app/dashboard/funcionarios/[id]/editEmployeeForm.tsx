@@ -1652,6 +1652,33 @@ export default function EditEmployeeForm() {
                   />
 
                   <FormField
+                    name="nationalityUF"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>UF</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a UF" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {ufsBrasil.map((uf) => (
+                              <SelectItem key={uf} value={uf}>
+                                {uf}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
                     name="placeOfBirthUF"
                     render={({ field }) => (
                       <FormItem>
