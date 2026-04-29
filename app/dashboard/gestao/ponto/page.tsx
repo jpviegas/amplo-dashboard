@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function PontoPage() {
   return (
-    <ListarLayout title="Gestão: Ponto">
+    <ListarLayout title="Gestão: Ponto" backLink="/dashboard/" register={false}>
       <PointEditForm />
     </ListarLayout>
   );

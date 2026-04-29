@@ -8,9 +8,13 @@ import { ReactNode, useMemo } from "react";
 
 export default function ListarLayout({
   title,
+  backLink,
+  register,
   children,
 }: {
   title: string;
+  backLink?: string;
+  register?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -25,20 +29,22 @@ export default function ListarLayout({
       <header className="flex items-center justify-between border-b pb-8">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" asChild>
-            <Link href=".">
+            <Link href={backLink ? backLink : "."}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <h1 className="flex text-2xl font-semibold">{title}</h1>
         </div>
-        <div className="flex gap-2">
-          <Button asChild className="gap-2">
-            <Link href={link}>
-              <Plus className="size-4" />
-              <span>Adicionar</span>
-            </Link>
-          </Button>
-        </div>
+        {register ?? (
+          <div className="flex gap-2">
+            <Button asChild className="gap-2">
+              <Link href={link}>
+                <Plus className="size-4" />
+                <span>Adicionar</span>
+              </Link>
+            </Button>
+          </div>
+        )}
       </header>
 
       {children}

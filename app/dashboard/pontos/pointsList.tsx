@@ -29,11 +29,33 @@ function formatPointDate(timestamp?: string | null) {
   const raw = (timestamp ?? "").trim();
   if (!raw) return "-";
 
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) {
-    return "-";
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) {
+    const [, yRaw, mRaw, dRaw] = ymd;
+    const y = Number(yRaw);
+    const m = Number(mRaw);
+    const d = Number(dRaw);
+    const date = new Date(y, m - 1, d);
+    return Number.isNaN(date.getTime()) ? "-" : format(date, "dd/MM/yy");
   }
-  return format(date, "dd/MM/yy");
+
+  const full = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/,
+  );
+  if (full) {
+    const [, yRaw, mRaw, dRaw, hhRaw, mmRaw, ssRaw] = full;
+    const y = Number(yRaw);
+    const m = Number(mRaw);
+    const d = Number(dRaw);
+    const hh = Number(hhRaw ?? "0");
+    const mm = Number(mmRaw ?? "0");
+    const ss = Number(ssRaw ?? "0");
+    const date = new Date(y, m - 1, d, hh, mm, ss);
+    return Number.isNaN(date.getTime()) ? "-" : format(date, "dd/MM/yy");
+  }
+
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? "-" : format(date, "dd/MM/yy");
 }
 
 function formatPointTime(timestamp?: string | null) {
@@ -46,9 +68,22 @@ function formatPointTime(timestamp?: string | null) {
     return `${h.padStart(2, "0")}:${m}`;
   }
 
-  const isoMatch = raw.match(/T(\d{2}:\d{2})/);
-  if (isoMatch?.[1]) {
-    return isoMatch[1];
+  const full = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/,
+  );
+  if (full) {
+    const [, yRaw, mRaw, dRaw, hhRaw, mmRaw, ssRaw] = full;
+    if (hhRaw && mmRaw) {
+      return `${hhRaw}:${mmRaw}`;
+    }
+    const y = Number(yRaw);
+    const m = Number(mRaw);
+    const d = Number(dRaw);
+    const hh = Number(hhRaw ?? "0");
+    const mm = Number(mmRaw ?? "0");
+    const ss = Number(ssRaw ?? "0");
+    const date = new Date(y, m - 1, d, hh, mm, ss);
+    return Number.isNaN(date.getTime()) ? "-" : format(date, "HH:mm");
   }
 
   const looseMatch = raw.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);

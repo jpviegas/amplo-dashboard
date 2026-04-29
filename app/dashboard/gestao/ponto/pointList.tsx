@@ -17,6 +17,8 @@ import { EmployeeTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import debounce from "lodash/debounce";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -24,7 +26,7 @@ import { z } from "zod";
 
 const EditPointSchema = z.object({
   employeeId: z.string().min(1, "Selecione um funcionário"),
-  location: z.string().min(1, "Informe o local"),
+  location: z.string().optional(),
   dateTimeLocal: z
     .string()
     .min(1, "Selecione o horário")
@@ -41,11 +43,13 @@ export function PointEditForm() {
   const [employeeQuery, setEmployeeQuery] = useState("");
   const [isEmployeeOpen, setIsEmployeeOpen] = useState(false);
   const [isEmployeeLoading, setIsEmployeeLoading] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
+  const router = useRouter();
   const [employees, setEmployees] = useState<
     (EmployeeTypeWithId & { companyName?: string })[]
   >([]);
 
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
 
   type FormValues = z.infer<typeof EditPointSchema>;
 
@@ -76,6 +80,10 @@ export function PointEditForm() {
 
         if (!success) {
           setEmployees([]);
+          setIsReturning(true);
+          setTimeout(() => {
+            router.push("/dashboard/funcionarios");
+          }, 1000);
           return;
         }
         setEmployees(users ?? []);
@@ -119,15 +127,13 @@ export function PointEditForm() {
   };
 
   async function onSubmit(values: FormValues) {
-    console.log(values);
-
     try {
       if (!userId) {
         toast.error("Usuário não identificado.");
         return;
       }
 
-      setIsLoading(true);
+      // setIsLoading(true);
       const timestamp = toApiDateTime(values.dateTimeLocal);
       if (!timestamp) {
         toast.error("Horário inválido.");
@@ -153,7 +159,7 @@ export function PointEditForm() {
       console.error("Erro ao registrar ponto:", error);
       toast.error("Não foi possível registrar o ponto.");
     } finally {
-      setIsLoading(false);
+      // setIsLoading(false);
     }
   }
 
@@ -277,8 +283,23 @@ export function PointEditForm() {
             </div>
 
             <div className="flex gap-4">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Enviando..." : "Salvar"}
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting || isReturning}
+              >
+                {isReturning
+                  ? "Voltando..."
+                  : form.formState.isSubmitting
+                    ? "Enviando..."
+                    : "Salvar"}
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                type="reset"
+                disabled={form.formState.isSubmitting || isReturning}
+              >
+                <Link href="/dashboard/">Cancelar</Link>
               </Button>
             </div>
           </form>

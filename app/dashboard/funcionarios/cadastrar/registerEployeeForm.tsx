@@ -1485,11 +1485,30 @@ export default function RegisterEmployeeForm({
               />
 
               <FormField
-                name="nationalityUF"
+                name="placeOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>UF</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Naturalidade</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input placeholder="Naturalidade" {...field} />
+                        <Search className="absolute top-2.5 right-3 size-4 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name="placeOfBirthUF"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>UF da naturalidade</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ? field.value : undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a UF" />
@@ -1503,22 +1522,6 @@ export default function RegisterEmployeeForm({
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="placeOfBirth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Naturalidade</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input placeholder="Naturalidade" {...field} />
-                        <Search className="absolute top-2.5 right-3 size-4 text-gray-400" />
-                      </div>
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

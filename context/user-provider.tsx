@@ -18,7 +18,6 @@ useEffect(() => {
     setUserInfo(data);
     return data;
   }
-  console.log(userInfo);
 }, []);
 
 export default function UserProvider({
