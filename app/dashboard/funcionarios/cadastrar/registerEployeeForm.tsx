@@ -1370,7 +1370,7 @@ export default function RegisterEmployeeForm({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Telefone</FormLabel>
+                    <FormLabel>Celular</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input

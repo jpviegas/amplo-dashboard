@@ -734,7 +734,7 @@ export default function EditEmployeeForm() {
                       <SelectContent>
                         {hours.map((hour) => (
                           <SelectItem key={hour._id} value={hour._id}>
-                                {hour.name}
+                            {hour.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1521,7 +1521,7 @@ export default function EditEmployeeForm() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Telefone</FormLabel>
+                        <FormLabel>Celular</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input

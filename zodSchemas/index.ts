@@ -50,15 +50,16 @@ export const registerCompanySchema = z.object({
     .nonempty(),
   cep: z
     .string({ required_error: "O número do CEP é obrigatório" })
-    .length(8, "Preencha apenas os 8 números do CEP"),
-  address: z.string().min(1, "O endereço é obrigatório").optional(),
+    .length(8, "Preencha apenas os 8 números do CEP")
+    .nonempty(),
+  address: z.string().min(1, "O endereço é obrigatório").nonempty(),
   addressNumber: z
     .string()
     .min(1, "O número do endereço é obrigatório")
-    .optional(),
-  district: z.string().min(1, "O bairro é obrigatório").optional(),
-  city: z.string().min(1, "A cidade é obrigatória").optional(),
-  uf: z.string().min(1, "A UF é obrigatória").optional(),
+    .nonempty(),
+  district: z.string().min(1, "O bairro é obrigatório").nonempty(),
+  city: z.string().min(1, "A cidade é obrigatória").nonempty(),
+  uf: z.string().min(1, "A UF é obrigatória").nonempty(),
   // page: z.string().min(1, "O número da folha obrigatório"),
   // registration: z.string().min(1, "A inscrição estadual é obrigatória"),
   // responsibleCpf: z
