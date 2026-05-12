@@ -3,12 +3,15 @@
 import { GetAllPositions } from "@/api/dashboard/cargos/route";
 import { GetAllCities } from "@/api/dashboard/cities/route";
 import { GetAllDepartments } from "@/api/dashboard/departamentos/route";
-import { GetAllCompanies } from "@/api/dashboard/empresas/route";
+import {
+  GetAllCompanies,
+  GetCompanyById,
+} from "@/api/dashboard/empresas/route";
 import {
   GetCompanyEmployeeById,
   UpdateEmployee,
 } from "@/api/dashboard/funcionarios/route";
-import { GetAllHours } from "@/api/dashboard/horarios/route";
+import { GetAllHours, GetHourById } from "@/api/dashboard/horarios/route";
 import Loading from "@/app/loading";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -184,6 +187,10 @@ export default function EditEmployeeForm() {
   const [isCepLoading, setIsCepLoading] = useState(false);
   const lastCepLookupRef = useRef<string | null>(null);
   const cepAbortRef = useRef<AbortController | null>(null);
+  const ensuredCompanyIdsRef = useRef<Set<string>>(new Set());
+  const ensuredHourIdsRef = useRef<Set<string>>(new Set());
+  const selectedCompanyIdRef = useRef<string>("");
+  const selectedWorkingHoursIdRef = useRef<string>("");
   const { user } = useUser();
   const { id }: { id: string } = useParams();
   const router = useRouter();
@@ -308,7 +315,7 @@ export default function EditEmployeeForm() {
     fetchDepartments();
     fetchPositions();
     fetchEmployee();
-  }, [user?._id]);
+  }, [user?._id, employeeId]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerEmployeeSchema),
@@ -321,6 +328,23 @@ export default function EditEmployeeForm() {
 
   useEffect(() => {
     if (employee) {
+      const companyIdValue =
+        typeof (employee as unknown as { companyId?: unknown })?.companyId ===
+        "string"
+          ? (employee as unknown as { companyId?: string }).companyId
+          : ((employee as unknown as { companyId?: { _id?: string } })
+              ?.companyId?._id ?? "");
+
+      const workingHoursValue =
+        typeof (employee as unknown as { workingHours?: unknown })
+          ?.workingHours === "string"
+          ? (employee as unknown as { workingHours?: string }).workingHours
+          : ((employee as unknown as { workingHours?: { _id?: string } })
+              ?.workingHours?._id ?? "");
+
+      selectedCompanyIdRef.current = companyIdValue;
+      selectedWorkingHoursIdRef.current = workingHoursValue;
+
       const embeddedCompany = (employee as unknown as { companyId?: unknown })
         ?.companyId;
       if (
@@ -332,6 +356,21 @@ export default function EditEmployeeForm() {
           const companyId = (embeddedCompany as { _id: string })._id;
           if (prev.some((company) => company._id === companyId)) return prev;
           return [embeddedCompany as CompanyTypeWithId, ...prev];
+        });
+      }
+
+      const embeddedWorkingHours = (
+        employee as unknown as { workingHours?: unknown }
+      )?.workingHours;
+      if (
+        embeddedWorkingHours &&
+        typeof embeddedWorkingHours === "object" &&
+        (embeddedWorkingHours as { _id?: string } | null)?._id
+      ) {
+        setHours((prev) => {
+          const hourId = (embeddedWorkingHours as { _id: string })._id;
+          if (prev.some((hour) => hour._id === hourId)) return prev;
+          return [embeddedWorkingHours as WorkingHourTypeWithId, ...prev];
         });
       }
 
@@ -367,12 +406,8 @@ export default function EditEmployeeForm() {
 
       const parsedEmployee = {
         ...employee,
-        companyId:
-          typeof (employee as unknown as { companyId?: unknown })?.companyId ===
-          "string"
-            ? (employee as unknown as { companyId?: string }).companyId
-            : ((employee as unknown as { companyId?: { _id?: string } })
-                ?.companyId?._id ?? ""),
+        companyId: companyIdValue,
+        workingHours: workingHoursValue,
         city:
           typeof (employee as unknown as { city?: unknown })?.city === "string"
             ? (employee as unknown as { city?: string }).city
@@ -430,6 +465,62 @@ export default function EditEmployeeForm() {
       );
     }
   }, [employee, id]);
+
+  useEffect(() => {
+    const ensureSelectedValues = async () => {
+      if (!user?._id) return;
+      if (!employee) return;
+
+      const companyIdValue = selectedCompanyIdRef.current;
+      const workingHoursValue = selectedWorkingHoursIdRef.current;
+
+      if (
+        companyIdValue &&
+        !companies.some((c) => c._id === companyIdValue) &&
+        !ensuredCompanyIdsRef.current.has(companyIdValue)
+      ) {
+        ensuredCompanyIdsRef.current.add(companyIdValue);
+        try {
+          const { success, company } = await GetCompanyById(
+            user._id,
+            companyIdValue,
+          );
+          if (success && company?._id) {
+            setCompanies((prev) => {
+              if (prev.some((c) => c._id === company._id)) return prev;
+              return [company, ...prev];
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar empresa do funcionário:", error);
+        }
+      }
+
+      if (
+        workingHoursValue &&
+        !hours.some((h) => h._id === workingHoursValue) &&
+        !ensuredHourIdsRef.current.has(workingHoursValue)
+      ) {
+        ensuredHourIdsRef.current.add(workingHoursValue);
+        try {
+          const { success, hour } = await GetHourById(
+            user._id,
+            workingHoursValue,
+          );
+          if (success && hour?._id) {
+            setHours((prev) => {
+              if (prev.some((h) => h._id === hour._id)) return prev;
+              return [hour, ...prev];
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar horário do funcionário:", error);
+        }
+      }
+    };
+
+    ensureSelectedValues();
+  }, [user?._id, employee, companies, hours]);
 
   const cityOptions = useMemo(() => {
     const uniqueById = new Map<string, CityTypeWithId>();
@@ -1612,6 +1703,9 @@ export default function EditEmployeeForm() {
                             <SelectItem value="masculino">Masculino</SelectItem>
                             <SelectItem value="feminino">Feminino</SelectItem>
                             <SelectItem value="outro">Outro</SelectItem>
+                            <SelectItem value="nao-informar">
+                              Não informar
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

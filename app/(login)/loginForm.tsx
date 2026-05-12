@@ -49,6 +49,14 @@ export function LoginForm() {
       if (!success) {
         toast.error(message);
       } else {
+        const role = String((user as { role?: unknown })?.role ?? "").toLowerCase();
+        if (role !== "admin") {
+          toast.error("Acesso permitido apenas para administradores.");
+          Cookies.remove("token", { path: "/" });
+          Cookies.remove("user", { path: "/" });
+          setUser(null);
+          return;
+        }
         setUser(user);
         Cookies.set("token", token, { expires: 1, path: "/" });
         Cookies.set("user", user._id, { expires: 1, path: "/" });

@@ -26,11 +26,19 @@ type PointItem = {
 };
 
 function formatPointDate(dateString: string) {
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) {
-    return "-";
+  const raw = String(dateString ?? "").trim();
+  if (!raw) return "-";
+
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) {
+    const [, yRaw, mRaw, dRaw] = ymd;
+    const date = new Date(Number(yRaw), Number(mRaw) - 1, Number(dRaw));
+    return Number.isNaN(date.getTime()) ? "-" : format(date, "dd/MM/yyyy");
   }
-  return format(date, "dd/MM/yy");
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "-";
+  return format(date, "dd/MM/yyyy");
 }
 
 function formatPointTime(timestamp: string) {

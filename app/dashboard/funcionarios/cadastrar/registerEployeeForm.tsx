@@ -1461,6 +1461,9 @@ export default function RegisterEmployeeForm({
                         <SelectItem value="masculino">Masculino</SelectItem>
                         <SelectItem value="feminino">Feminino</SelectItem>
                         <SelectItem value="outro">Outro</SelectItem>
+                        <SelectItem value="nao-informar">
+                          Não informar
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

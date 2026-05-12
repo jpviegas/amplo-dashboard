@@ -64,7 +64,7 @@ export async function GetDocuments(
 
 export async function CreateDocuments(
   userId: string | { email: string },
-  signers: string[],
+  options: { signers?: string[]; departmentId?: string },
   file: Blob,
 ): Promise<{
   success: boolean;
@@ -89,8 +89,12 @@ export async function CreateDocuments(
   const userIdValue = typeof userId === "string" ? userId : userId.email;
   const formData = new FormData();
   formData.append("userId", userIdValue);
+  const signers = Array.isArray(options?.signers) ? options.signers : [];
   for (const signerEmail of signers) {
     formData.append("signers", signerEmail);
+  }
+  if (options?.departmentId) {
+    formData.append("departmentId", options.departmentId);
   }
   const fileName =
     "name" in file && typeof file.name === "string" ? file.name : "document";

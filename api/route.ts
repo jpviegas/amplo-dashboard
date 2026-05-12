@@ -1,6 +1,11 @@
 import { LoginType } from "@/zodSchemas";
 
-export type UserType = { _id: string; name: string; email: string };
+export type UserType = {
+  _id: string;
+  name: string;
+  email: string;
+  role?: string;
+};
 
 export type GetAllUsersType = {
   success: boolean;
@@ -52,6 +57,7 @@ export async function login(values: LoginType): Promise<{
     _id: string;
     email: string;
     name: string;
+    role?: string;
   };
 }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {

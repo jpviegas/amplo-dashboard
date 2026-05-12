@@ -1,5 +1,6 @@
 "use client";
 
+import { GetAllDepartments } from "@/api/dashboard/departamentos/route";
 import { CreateDocuments } from "@/api/dashboard/documentos/route";
 import { GetAllUsers, GetAllUsersType } from "@/api/route";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUser } from "@/context/UserContext";
+import { DepartmentTypeWithId } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookies from "js-cookie";
 import Link from "next/link";
@@ -28,19 +30,32 @@ import { FieldErrors, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const uploadDocumentSchema = z.object({
-  userId: z.string().min(1, "Usuário não autenticado."),
-  signers: z.string().min(1, "Informe pelo menos um email."),
-  type: z.string().min(1, "Informe o tipo do documento."),
-  file: z
-    .custom<File>((value) => value instanceof File, "Selecione um arquivo.")
-    .refine(
-      (file) =>
-        file.type === "application/pdf" ||
-        file.name.toLowerCase().endsWith(".pdf"),
-      "O arquivo deve ser PDF.",
-    ),
-});
+const uploadDocumentSchema = z
+  .object({
+    userId: z.string().min(1, "Usuário não autenticado."),
+    signers: z.string().optional(),
+    type: z.string().min(1, "Informe o tipo do documento."),
+    departmentId: z.string().optional(),
+    file: z
+      .custom<File>((value) => value instanceof File, "Selecione um arquivo.")
+      .refine(
+        (file) =>
+          file.type === "application/pdf" ||
+          file.name.toLowerCase().endsWith(".pdf"),
+        "O arquivo deve ser PDF.",
+      ),
+  })
+  .superRefine((value, ctx) => {
+    const hasDepartment = Boolean(String(value.departmentId ?? "").trim());
+    const hasSigners = Boolean(String(value.signers ?? "").trim());
+    if (!hasDepartment && !hasSigners) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Informe pelo menos um email ou selecione um departamento.",
+        path: ["signers"],
+      });
+    }
+  });
 
 type UploadDocumentValues = z.infer<typeof uploadDocumentSchema>;
 
@@ -93,6 +108,8 @@ export default function RegisterDocumentForm() {
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [isSignerSearchOpen, setIsSignerSearchOpen] = useState(false);
   const [isReturning, setIsReturning] = useState(false);
+  const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
+  const [isDepartmentsLoading, setIsDepartmentsLoading] = useState(false);
 
   const form = useForm<UploadDocumentValues>({
     resolver: zodResolver(uploadDocumentSchema),
@@ -103,6 +120,7 @@ export default function RegisterDocumentForm() {
       userId,
       signers: "",
       type: "",
+      departmentId: "",
       file: undefined as unknown as File,
     },
   });
@@ -140,7 +158,45 @@ export default function RegisterDocumentForm() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchDepartments() {
+      try {
+        setIsDepartmentsLoading(true);
+        if (!userId) {
+          if (isMounted) setDepartments([]);
+          return;
+        }
+        const { success, departments } = await GetAllDepartments(
+          userId,
+          "",
+          "1",
+        );
+        if (!success) {
+          if (isMounted) setDepartments([]);
+          toast.error("Não foi possível carregar os departamentos.");
+          return;
+        }
+        if (isMounted) setDepartments(departments ?? []);
+      } catch (error) {
+        console.error("Erro ao buscar departamentos:", error);
+        if (isMounted) setDepartments([]);
+        toast.error("Não foi possível carregar os departamentos.");
+      } finally {
+        if (isMounted) setIsDepartmentsLoading(false);
+      }
+    }
+
+    fetchDepartments();
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
+
   const signersValue = form.watch("signers") || "";
+  const departmentIdValue = form.watch("departmentId") || "";
+  const isDepartmentSelected = Boolean(departmentIdValue);
 
   const signerQuery = useMemo(() => {
     return getCurrentSignerQuery(signersValue);
@@ -173,26 +229,26 @@ export default function RegisterDocumentForm() {
 
   async function onSubmit(values: UploadDocumentValues) {
     try {
-      const signerEmails = parseSignerEmails(values.signers);
-      const invalidEmails = validateSignerEmails(signerEmails);
+      const departmentId = String(values.departmentId ?? "").trim();
 
-      if (signerEmails.length === 0) {
-        form.setError("signers", { message: "Informe pelo menos um email." });
-        toast.error("Informe pelo menos um email.");
-        return;
-      }
+      const signerEmails = departmentId
+        ? []
+        : parseSignerEmails(String(values.signers ?? ""));
 
-      if (invalidEmails.length > 0) {
-        form.setError("signers", {
-          message: `Emails inválidos: ${invalidEmails.join(", ")}`,
-        });
-        toast.error(`Emails inválidos: ${invalidEmails.join(", ")}`);
-        return;
+      if (!departmentId) {
+        const invalidEmails = validateSignerEmails(signerEmails);
+        if (invalidEmails.length > 0) {
+          form.setError("signers", {
+            message: `Emails inválidos: ${invalidEmails.join(", ")}`,
+          });
+          toast.error(`Emails inválidos: ${invalidEmails.join(", ")}`);
+          return;
+        }
       }
 
       const { success, message } = await CreateDocuments(
         values.userId,
-        signerEmails,
+        { signers: signerEmails, departmentId: departmentId || undefined },
         values.file,
       );
 
@@ -209,6 +265,7 @@ export default function RegisterDocumentForm() {
       form.reset({
         userId: values.userId,
         signers: "",
+        departmentId: values.departmentId,
         file: undefined as unknown as File,
       });
     } catch (error) {
@@ -230,7 +287,10 @@ export default function RegisterDocumentForm() {
           name="signers"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assinantes (emails separados por vírgula)</FormLabel>
+              <FormLabel>
+                <span className="uppercase">Funcionário</span> (emails separados
+                por vírgula)
+              </FormLabel>
               <div className="relative">
                 <FormControl>
                   <Input
@@ -241,6 +301,7 @@ export default function RegisterDocumentForm() {
                       setIsSignerSearchOpen(true);
                     }}
                     onFocus={() => setIsSignerSearchOpen(true)}
+                    disabled={isDepartmentSelected}
                     onBlur={() => {
                       window.setTimeout(() => {
                         setIsSignerSearchOpen(false);
@@ -268,7 +329,7 @@ export default function RegisterDocumentForm() {
                             onMouseDown={(e) => {
                               e.preventDefault();
                               const nextValue = mergeSignerEmail(
-                                form.getValues("signers"),
+                                form.getValues("signers") || "",
                                 u.email,
                               );
                               form.setValue("signers", nextValue, {
@@ -324,6 +385,51 @@ export default function RegisterDocumentForm() {
                     Saúde Ocupacional
                   </SelectItem>
                   <SelectItem value="termos">Termos</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="departmentId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Departamento</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  const next = String(value ?? "").trim();
+                  if (next) {
+                    form.setValue("signers", "", {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    });
+                    setIsSignerSearchOpen(false);
+                  }
+                }}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        isDepartmentsLoading
+                          ? "Carregando..."
+                          : "Selecione o departamento"
+                      }
+                    />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {departments.map((department) => (
+                    <SelectItem key={department._id} value={department._id}>
+                      {department.departmentName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />

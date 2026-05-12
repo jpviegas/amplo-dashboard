@@ -140,7 +140,7 @@ export const registerEmployeeSchema = z.object({
   extension: z.string().optional(),
   fatherName: z.string().optional(),
   motherName: z.string().optional(),
-  gender: z.string().optional(),
+  gender: z.enum(["masculino", "feminino", "outro", "nao-informar"]).optional(),
   nationality: z.string().optional(),
   placeOfBirth: z.string().optional(),
   placeOfBirthUF: z.string().optional(),
