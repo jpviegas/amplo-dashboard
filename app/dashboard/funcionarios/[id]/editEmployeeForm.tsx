@@ -342,8 +342,8 @@ export default function EditEmployeeForm() {
           : ((employee as unknown as { workingHours?: { _id?: string } })
               ?.workingHours?._id ?? "");
 
-      selectedCompanyIdRef.current = companyIdValue;
-      selectedWorkingHoursIdRef.current = workingHoursValue;
+      selectedCompanyIdRef.current = companyIdValue ?? "";
+      selectedWorkingHoursIdRef.current = workingHoursValue ?? "";
 
       const embeddedCompany = (employee as unknown as { companyId?: unknown })
         ?.companyId;
