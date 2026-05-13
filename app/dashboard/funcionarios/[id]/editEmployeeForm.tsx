@@ -190,6 +190,7 @@ export default function EditEmployeeForm() {
   const [departments, setDepartments] = useState<DepartmentTypeWithId[]>([]);
   const [positions, setPositions] = useState<PositionTypeWithId[]>([]);
   const [employee, setEmployee] = useState<EmployeeTypeWithId>();
+  const [isFormReady, setIsFormReady] = useState(false);
   const [isCepLoading, setIsCepLoading] = useState(false);
   const lastCepLookupRef = useRef<string | null>(null);
   const cepAbortRef = useRef<AbortController | null>(null);
@@ -319,6 +320,8 @@ export default function EditEmployeeForm() {
   };
 
   useEffect(() => {
+    setIsFormReady(false);
+    setEmployee(undefined);
     fetchCompanies();
     fetchHours();
     fetchCities();
@@ -329,6 +332,19 @@ export default function EditEmployeeForm() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(registerEmployeeSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      cpf: "",
+      admissionDate: "",
+      companyId: "",
+      workingHours: "",
+      departmentId: "",
+      position: "",
+      status: "active",
+      city: "",
+      state: "",
+    },
   });
 
   const childrenFieldArray = useFieldArray({
@@ -439,8 +455,8 @@ export default function EditEmployeeForm() {
             ? (employee as unknown as { city?: string }).city
             : ((employee as unknown as { city?: { _id?: string } })?.city
                 ?._id ?? ""),
-        departmentId: departmentIdValue,
-        position: positionIdValue,
+        departmentId: departmentIdValue || undefined,
+        position: positionIdValue || undefined,
         admissionDate: formatDateDigits(
           (employee as unknown as { admissionDate?: unknown })?.admissionDate,
         ),
@@ -479,6 +495,7 @@ export default function EditEmployeeForm() {
       lastCepLookupRef.current = onlyDigits(
         (parsedEmployee as { cep?: string | null } | null)?.cep ?? "",
       );
+      setIsFormReady(true);
     }
   }, [employee, id]);
 
@@ -724,7 +741,7 @@ export default function EditEmployeeForm() {
 
   return (
     <>
-      {!employee ? (
+      {!employee || !isFormReady ? (
         <Loading />
       ) : (
         <Form {...form}>
@@ -843,7 +860,10 @@ export default function EditEmployeeForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Selecione a empresa</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a empresa" />
@@ -866,7 +886,10 @@ export default function EditEmployeeForm() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel>Horário de Trabalho</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
@@ -978,7 +1001,7 @@ export default function EditEmployeeForm() {
                         <FormLabel>Departamento</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value ?? ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -1011,7 +1034,7 @@ export default function EditEmployeeForm() {
                         <FormLabel>Centro de Custo</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value ?? ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -1038,7 +1061,7 @@ export default function EditEmployeeForm() {
                         <FormLabel>Cargo</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value ? field.value : undefined}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
