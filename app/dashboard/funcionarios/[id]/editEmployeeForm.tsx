@@ -1,8 +1,14 @@
 "use client";
 
-import { GetAllPositions } from "@/api/dashboard/cargos/route";
+import {
+  GetAllPositions,
+  GetCompanyPositionById,
+} from "@/api/dashboard/cargos/route";
 import { GetAllCities } from "@/api/dashboard/cities/route";
-import { GetAllDepartments } from "@/api/dashboard/departamentos/route";
+import {
+  GetAllDepartments,
+  GetCompanyDepartmentById,
+} from "@/api/dashboard/departamentos/route";
 import {
   GetAllCompanies,
   GetCompanyById,
@@ -148,34 +154,34 @@ export default function EditEmployeeForm() {
     const date = toDate(value);
     return date ? format(date, "ddMMyyyy") : "";
   };
-  const parseCtpsParts = (value: unknown) => {
-    const raw = String(value ?? "").trim();
-    const digits = raw.match(/\d+/g) ?? [];
+  // const parseCtpsParts = (value: unknown) => {
+  //   const raw = String(value ?? "").trim();
+  //   const digits = raw.match(/\d+/g) ?? [];
 
-    const ufCandidate =
-      raw
-        .toUpperCase()
-        .match(/\b[A-Z]{2}\b/g)
-        ?.find((uf) => ufsBrasil.includes(uf)) ?? "";
+  //   const ufCandidate =
+  //     raw
+  //       .toUpperCase()
+  //       .match(/\b[A-Z]{2}\b/g)
+  //       ?.find((uf) => ufsBrasil.includes(uf)) ?? "";
 
-    return {
-      number: digits[0] ?? "",
-      series: digits[1] ?? "",
-      uf: ufCandidate,
-    };
-  };
-  const buildCtpsValue = (parts: {
-    number?: string;
-    series?: string;
-    uf?: string;
-  }) => {
-    const number = onlyDigits(parts.number ?? "");
-    const series = onlyDigits(parts.series ?? "");
-    const uf = String(parts.uf ?? "").toUpperCase();
+  //   return {
+  //     number: digits[0] ?? "",
+  //     series: digits[1] ?? "",
+  //     uf: ufCandidate,
+  //   };
+  // };
+  // const buildCtpsValue = (parts: {
+  //   number?: string;
+  //   series?: string;
+  //   uf?: string;
+  // }) => {
+  //   const number = onlyDigits(parts.number ?? "");
+  //   const series = onlyDigits(parts.series ?? "");
+  //   const uf = String(parts.uf ?? "").toUpperCase();
 
-    if (!number && !series && !uf) return "";
-    return [number, series, uf].filter(Boolean).join("-");
-  };
+  //   if (!number && !series && !uf) return "";
+  //   return [number, series, uf].filter(Boolean).join("-");
+  // };
   const currentYear = new Date().getFullYear();
   const [activeTab, setActiveTab] = useState("general");
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
@@ -189,8 +195,12 @@ export default function EditEmployeeForm() {
   const cepAbortRef = useRef<AbortController | null>(null);
   const ensuredCompanyIdsRef = useRef<Set<string>>(new Set());
   const ensuredHourIdsRef = useRef<Set<string>>(new Set());
+  const ensuredDepartmentIdsRef = useRef<Set<string>>(new Set());
+  const ensuredPositionIdsRef = useRef<Set<string>>(new Set());
   const selectedCompanyIdRef = useRef<string>("");
   const selectedWorkingHoursIdRef = useRef<string>("");
+  const selectedDepartmentIdRef = useRef<string>("");
+  const selectedPositionIdRef = useRef<string>("");
   const { user } = useUser();
   const { id }: { id: string } = useParams();
   const router = useRouter();
@@ -342,8 +352,24 @@ export default function EditEmployeeForm() {
           : ((employee as unknown as { workingHours?: { _id?: string } })
               ?.workingHours?._id ?? "");
 
+      const departmentIdValue =
+        typeof (employee as unknown as { departmentId?: unknown })
+          ?.departmentId === "string"
+          ? (employee as unknown as { departmentId?: string }).departmentId
+          : ((employee as unknown as { departmentId?: { _id?: string } })
+              ?.departmentId?._id ?? "");
+
+      const positionIdValue =
+        typeof (employee as unknown as { position?: unknown })?.position ===
+        "string"
+          ? (employee as unknown as { position?: string }).position
+          : ((employee as unknown as { position?: { _id?: string } })?.position
+              ?._id ?? "");
+
       selectedCompanyIdRef.current = companyIdValue ?? "";
       selectedWorkingHoursIdRef.current = workingHoursValue ?? "";
+      selectedDepartmentIdRef.current = departmentIdValue ?? "";
+      selectedPositionIdRef.current = positionIdValue ?? "";
 
       const embeddedCompany = (employee as unknown as { companyId?: unknown })
         ?.companyId;
@@ -413,18 +439,8 @@ export default function EditEmployeeForm() {
             ? (employee as unknown as { city?: string }).city
             : ((employee as unknown as { city?: { _id?: string } })?.city
                 ?._id ?? ""),
-        departmentId:
-          typeof (employee as unknown as { departmentId?: unknown })
-            ?.departmentId === "string"
-            ? (employee as unknown as { departmentId?: string }).departmentId
-            : ((employee as unknown as { departmentId?: { _id?: string } })
-                ?.departmentId?._id ?? ""),
-        position:
-          typeof (employee as unknown as { position?: unknown })?.position ===
-          "string"
-            ? (employee as unknown as { position?: string }).position
-            : ((employee as unknown as { position?: { _id?: string } })
-                ?.position?._id ?? ""),
+        departmentId: departmentIdValue,
+        position: positionIdValue,
         admissionDate: formatDateDigits(
           (employee as unknown as { admissionDate?: unknown })?.admissionDate,
         ),
@@ -473,6 +489,8 @@ export default function EditEmployeeForm() {
 
       const companyIdValue = selectedCompanyIdRef.current;
       const workingHoursValue = selectedWorkingHoursIdRef.current;
+      const departmentIdValue = selectedDepartmentIdRef.current;
+      const positionIdValue = selectedPositionIdRef.current;
 
       if (
         companyIdValue &&
@@ -517,10 +535,54 @@ export default function EditEmployeeForm() {
           console.error("Erro ao buscar horário do funcionário:", error);
         }
       }
+
+      if (
+        departmentIdValue &&
+        !departments.some((d) => d._id === departmentIdValue) &&
+        !ensuredDepartmentIdsRef.current.has(departmentIdValue)
+      ) {
+        ensuredDepartmentIdsRef.current.add(departmentIdValue);
+        try {
+          const { success, department } = await GetCompanyDepartmentById(
+            user._id,
+            departmentIdValue,
+          );
+          if (success && department?._id) {
+            setDepartments((prev) => {
+              if (prev.some((d) => d._id === department._id)) return prev;
+              return [department, ...prev];
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar departamento do funcionário:", error);
+        }
+      }
+
+      if (
+        positionIdValue &&
+        !positions.some((p) => p._id === positionIdValue) &&
+        !ensuredPositionIdsRef.current.has(positionIdValue)
+      ) {
+        ensuredPositionIdsRef.current.add(positionIdValue);
+        try {
+          const { success, position } = await GetCompanyPositionById(
+            user._id,
+            positionIdValue,
+          );
+          if (success && position?._id) {
+            setPositions((prev) => {
+              if (prev.some((p) => p._id === position._id)) return prev;
+              return [position, ...prev];
+            });
+          }
+        } catch (error) {
+          console.error("Erro ao buscar cargo do funcionário:", error);
+        }
+      }
     };
 
     ensureSelectedValues();
-  }, [user?._id, employee, companies, hours]);
+  }, [user?._id, employee, companies, hours, departments, positions]);
 
   const cityOptions = useMemo(() => {
     const uniqueById = new Map<string, CityTypeWithId>();
@@ -687,18 +749,6 @@ export default function EditEmployeeForm() {
                     <FormLabel>E-mail</FormLabel>
                     <FormControl>
                       <Input placeholder="E-mail" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                name="pis"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PIS</FormLabel>
-                    <FormControl>
-                      <Input placeholder="PIS" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1021,7 +1071,7 @@ export default function EditEmployeeForm() {
                       </FormItem>
                     )}
                   /> */}
-                  <FormField
+                  {/* <FormField
                     name="ctps"
                     render={({ field }) => (
                       <FormItem className="md:col-span-3">
@@ -1104,7 +1154,7 @@ export default function EditEmployeeForm() {
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
+                  /> */}
 
                   {/* <FormField
                     name="directSuperior"
@@ -1310,7 +1360,7 @@ export default function EditEmployeeForm() {
                       const selectedDate = toDate(field.value);
                       return (
                         <FormItem>
-                          <FormLabel>Data da nascimento</FormLabel>
+                          <FormLabel>Data de nascimento</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -1430,7 +1480,7 @@ export default function EditEmployeeForm() {
                       const selectedDate = toDate(field.value);
                       return (
                         <FormItem>
-                          <FormLabel>Data da vencimento da CNH</FormLabel>
+                          <FormLabel>Data de vencimento da CNH</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>

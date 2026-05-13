@@ -144,34 +144,34 @@ export default function RegisterEmployeeForm({
     const date = toDate(value);
     return date ? format(date, "ddMMyyyy") : "";
   };
-  const parseCtpsParts = (value: unknown) => {
-    const raw = String(value ?? "").trim();
-    const digits = raw.match(/\d+/g) ?? [];
+  // const parseCtpsParts = (value: unknown) => {
+  //   const raw = String(value ?? "").trim();
+  //   const digits = raw.match(/\d+/g) ?? [];
 
-    const ufCandidate =
-      raw
-        .toUpperCase()
-        .match(/\b[A-Z]{2}\b/g)
-        ?.find((uf) => ufsBrasil.includes(uf)) ?? "";
+  //   const ufCandidate =
+  //     raw
+  //       .toUpperCase()
+  //       .match(/\b[A-Z]{2}\b/g)
+  //       ?.find((uf) => ufsBrasil.includes(uf)) ?? "";
 
-    return {
-      number: digits[0] ?? "",
-      series: digits[1] ?? "",
-      uf: ufCandidate,
-    };
-  };
-  const buildCtpsValue = (parts: {
-    number?: string;
-    series?: string;
-    uf?: string;
-  }) => {
-    const number = onlyDigits(parts.number ?? "");
-    const series = onlyDigits(parts.series ?? "");
-    const uf = String(parts.uf ?? "").toUpperCase();
+  //   return {
+  //     number: digits[0] ?? "",
+  //     series: digits[1] ?? "",
+  //     uf: ufCandidate,
+  //   };
+  // };
+  // const buildCtpsValue = (parts: {
+  //   number?: string;
+  //   series?: string;
+  //   uf?: string;
+  // }) => {
+  //   const number = onlyDigits(parts.number ?? "");
+  //   const series = onlyDigits(parts.series ?? "");
+  //   const uf = String(parts.uf ?? "").toUpperCase();
 
-    if (!number && !series && !uf) return "";
-    return [number, series, uf].filter(Boolean).join("-");
-  };
+  //   if (!number && !series && !uf) return "";
+  //   return [number, series, uf].filter(Boolean).join("-");
+  // };
   const currentYear = new Date().getFullYear();
 
   const [activeTab, setActiveTab] = useState("general");
@@ -200,7 +200,7 @@ export default function RegisterEmployeeForm({
       const { success, positions } = await GetAllPositions(user._id);
 
       if (success) {
-        setPositions(positions);
+        setPositions(Array.isArray(positions) ? positions : []);
       }
     } catch (error) {
       console.error("Erro ao buscar cargos:", error);
@@ -217,7 +217,7 @@ export default function RegisterEmployeeForm({
       const { success, companies } = await GetAllCompanies(user._id, "", "1");
 
       if (success) {
-        setCompanies(companies);
+        setCompanies(Array.isArray(companies) ? companies : []);
       }
     } catch (error) {
       console.error("Erro ao buscar empresas:", error);
@@ -254,7 +254,7 @@ export default function RegisterEmployeeForm({
       );
 
       if (success) {
-        setDepartments(departments);
+        setDepartments(Array.isArray(departments) ? departments : []);
       }
     } catch (error) {
       console.error("Erro ao buscar departamentos:", error);
@@ -515,18 +515,6 @@ export default function RegisterEmployeeForm({
                 <FormLabel>E-mail</FormLabel>
                 <FormControl>
                   <Input placeholder="E-mail" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            name="pis"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>PIS</FormLabel>
-                <FormControl>
-                  <Input placeholder="PIS" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -832,7 +820,7 @@ export default function RegisterEmployeeForm({
                 )}
               />
 
-              <FormField
+              {/* <FormField
                 name="ctps"
                 render={({ field }) => (
                   <FormItem className="md:col-span-3">
@@ -911,7 +899,7 @@ export default function RegisterEmployeeForm({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
             </div>
 
             {/* <div>
@@ -1058,6 +1046,18 @@ export default function RegisterEmployeeForm({
 
           <TabsContent value="personal" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-3">
+              <FormField
+                name="pis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>PIS</FormLabel>
+                    <FormControl>
+                      <Input placeholder="PIS" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 name="rg"
                 render={({ field }) => (

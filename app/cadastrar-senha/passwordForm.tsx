@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, LoaderCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -201,6 +202,11 @@ export function PasswordForm({ token }: { token: string }) {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-2">
+                <Label>Token</Label>
+                <Input value={normalizedToken} disabled />
+              </div>
 
               <Button
                 type="submit"
