@@ -357,7 +357,7 @@ export function DocumentsList() {
                     </TableCell>
                     <TableCell className="flex">
                       <Link
-                        className="hover:text-amplo-secondary flex min-w-0 items-center gap-2 hover:underline"
+                        className="hover:text-amplo-secondary dark:hover:text-amplo-primary flex min-w-0 items-center gap-2 hover:underline"
                         href={`https://sandbox.app.zapsign.com.br/verificar/${document.token}`}
                         target="_blank"
                       >

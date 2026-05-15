@@ -288,8 +288,8 @@ export default function RegisterDocumentForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                <span className="uppercase">Funcionário</span> (emails separados
-                por vírgula)
+                <span className="uppercase">Funcionário(s)</span> (emails
+                separados por vírgula)
               </FormLabel>
               <div className="relative">
                 <FormControl>

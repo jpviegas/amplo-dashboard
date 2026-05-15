@@ -47,7 +47,7 @@ export async function GetDocuments(
   }
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/documents?${queryParams.toString()}`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/documents?${queryParams.toString()}`,
     {
       method: "GET",
       headers: {
@@ -100,7 +100,7 @@ export async function CreateDocuments(
     "name" in file && typeof file.name === "string" ? file.name : "document";
   formData.append("file", file, fileName);
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${userIdValue}`,
