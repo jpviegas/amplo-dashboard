@@ -1349,6 +1349,18 @@ export default function EditEmployeeForm() {
               <TabsContent value="personal" className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-3">
                   <FormField
+                    name="pis"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>PIS</FormLabel>
+                        <FormControl>
+                          <Input placeholder="PIS" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
                     name="rg"
                     render={({ field }) => (
                       <FormItem>

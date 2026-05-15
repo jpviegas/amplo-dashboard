@@ -82,17 +82,12 @@ export const registerEmployeeSchema = z.object({
     .nonempty("O email é obrigatório")
     .min(1, "O email é obrigatório")
     .email("Email inválido"),
-  // pis: z.string().min(1, "O PIS é obrigatório").optional(),
   pis: z.string().optional(),
   cpf: z
     .string()
     .nonempty("O CPF é obrigatório")
     .length(11, "Preencha apenas os 11 números do CPF"),
-  // .optional(),
-  registration: z
-    .string()
-    // .min(1, "O número de matrícula é obrigatório")
-    .optional(),
+  registration: z.string().optional(),
   admissionDate: z
     .string({
       required_error: "A data de admissão é obrigatória",
