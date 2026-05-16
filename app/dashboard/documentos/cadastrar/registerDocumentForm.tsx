@@ -248,7 +248,8 @@ export default function RegisterDocumentForm() {
 
       const { success, message } = await CreateDocuments(
         values.userId,
-        { signers: signerEmails, departmentId: departmentId || undefined },
+        values.type,
+        { signers: signerEmails },
         values.file,
       );
 

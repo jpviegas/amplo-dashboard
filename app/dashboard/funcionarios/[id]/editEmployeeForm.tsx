@@ -29,6 +29,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -59,7 +64,14 @@ import {
 } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
+import {
+  CalendarIcon,
+  LucideAsterisk,
+  MapPin,
+  Phone,
+  Search,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -154,6 +166,19 @@ export default function EditEmployeeForm() {
     const date = toDate(value);
     return date ? format(date, "ddMMyyyy") : "";
   };
+  const requiredLabel = (label: string) => (
+    <HoverCard openDelay={100} closeDelay={0}>
+      <span className="flex items-center gap-1">
+        <span>{label}</span>
+        <HoverCardTrigger asChild>
+          <LucideAsterisk className="text-destructive" />
+        </HoverCardTrigger>
+      </span>
+      <HoverCardContent className="pointer-events-none">
+        Campo obrigatório
+      </HoverCardContent>
+    </HoverCard>
+  );
   // const parseCtpsParts = (value: unknown) => {
   //   const raw = String(value ?? "").trim();
   //   const digits = raw.match(/\d+/g) ?? [];
@@ -183,7 +208,7 @@ export default function EditEmployeeForm() {
   //   return [number, series, uf].filter(Boolean).join("-");
   // };
   const currentYear = new Date().getFullYear();
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState("personal");
   const [companies, setCompanies] = useState<CompanyTypeWithId[]>([]);
   const [hours, setHours] = useState<WorkingHourTypeWithId[]>([]);
   const [cities, setCities] = useState<CityTypeWithId[]>([]);
@@ -751,7 +776,7 @@ export default function EditEmployeeForm() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome</FormLabel>
+                    <FormLabel>{requiredLabel("Nome")}</FormLabel>
                     <FormControl>
                       <Input placeholder="Nome" {...field} />
                     </FormControl>
@@ -763,7 +788,7 @@ export default function EditEmployeeForm() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>E-mail</FormLabel>
+                    <FormLabel>{requiredLabel("E-mail")}</FormLabel>
                     <FormControl>
                       <Input placeholder="E-mail" {...field} />
                     </FormControl>
@@ -775,7 +800,7 @@ export default function EditEmployeeForm() {
                 name="cpf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CPF</FormLabel>
+                    <FormLabel>{requiredLabel("CPF")}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="CPF"
@@ -813,7 +838,7 @@ export default function EditEmployeeForm() {
                   const selectedDate = toDate(field.value);
                   return (
                     <FormItem>
-                      <FormLabel>Data da admissão</FormLabel>
+                      <FormLabel>{requiredLabel("Data da admissão")}</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -859,7 +884,9 @@ export default function EditEmployeeForm() {
                 name="companyId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Selecione a empresa</FormLabel>
+                    <FormLabel>
+                      {requiredLabel("Selecione a empresa")}
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ""}
@@ -885,7 +912,9 @@ export default function EditEmployeeForm() {
                 name="workingHours"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel>Horário de Trabalho</FormLabel>
+                    <FormLabel>
+                      {requiredLabel("Horário de Trabalho")}
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ""}
@@ -908,6 +937,59 @@ export default function EditEmployeeForm() {
                           Criar novo Horário
                         </Button> */}
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="departmentId"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Departamento</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {departments.map((department) => (
+                          <SelectItem
+                            key={department._id}
+                            value={department._id}
+                          >
+                            {department.departmentName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="position"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Cargo</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {positions.map((position) => (
+                          <SelectItem key={position._id} value={position._id}>
+                            {position.positionName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </FormItem>
                 )}
               />
@@ -938,18 +1020,8 @@ export default function EditEmployeeForm() {
                 )}
               />
             </div>
-            <Tabs defaultValue="general" className="space-y-4">
+            <Tabs defaultValue="personal" className="space-y-4">
               <TabsList className="w-full justify-start border-b bg-transparent p-0">
-                <TabsTrigger
-                  value="general"
-                  className={cn(
-                    "rounded-none border-b-2 border-transparent pb-2",
-                    activeTab === "general" && "border-primary",
-                  )}
-                  onClick={() => setActiveTab("general")}
-                >
-                  Informações Gerais
-                </TabsTrigger>
                 <TabsTrigger
                   value="personal"
                   className={cn(
@@ -991,223 +1063,6 @@ export default function EditEmployeeForm() {
                       Configurações REP-P
                     </TabsTrigger> */}
               </TabsList>
-
-              <TabsContent value="general" className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-3">
-                  <FormField
-                    name="departmentId"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Departamento</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value ?? ""}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {departments.map((department) => (
-                              <SelectItem
-                                key={department._id}
-                                value={department._id}
-                              >
-                                {department.departmentName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {/* <Button variant="outline" size="sm" className="gap-2">
-                          <Plus className="size-4" />
-                          Criar novo departamento
-                        </Button> */}
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* <FormField
-                    name="costCenter"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Centro de Custo</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value ?? ""}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="cost1">Centro 1</SelectItem>
-                            <SelectItem value="cost2">Centro 2</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <Plus className="size-4" />
-                          Criar novo centro de custo
-                        </Button>
-                      </FormItem>
-                    )}
-                  /> */}
-
-                  <FormField
-                    name="position"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Cargo</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {positions.map((position) => (
-                              <SelectItem
-                                key={position._id}
-                                value={position._id}
-                              >
-                                {position.positionName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* <FormField
-                    name="sheetNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número da Folha</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Número da Folha" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  /> */}
-                  {/* <FormField
-                    name="ctps"
-                    render={({ field }) => (
-                      <FormItem className="md:col-span-3">
-                        <FormLabel>CTPS</FormLabel>
-                        <div className="grid gap-6 md:grid-cols-3">
-                          <div className="space-y-2">
-                            <Label>Número</Label>
-                            <FormControl>
-                              <Input
-                                placeholder="Número"
-                                inputMode="numeric"
-                                value={parseCtpsParts(field.value).number}
-                                onChange={(e) => {
-                                  const current = parseCtpsParts(field.value);
-                                  field.onChange(
-                                    buildCtpsValue({
-                                      ...current,
-                                      number: e.target.value,
-                                    }),
-                                  );
-                                }}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Série</Label>
-                            <FormControl>
-                              <Input
-                                placeholder="Série"
-                                inputMode="numeric"
-                                value={parseCtpsParts(field.value).series}
-                                onChange={(e) => {
-                                  const current = parseCtpsParts(field.value);
-                                  field.onChange(
-                                    buildCtpsValue({
-                                      ...current,
-                                      series: e.target.value,
-                                    }),
-                                  );
-                                }}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>UF</Label>
-                            <Select
-                              value={
-                                parseCtpsParts(field.value).uf || undefined
-                              }
-                              onValueChange={(uf) => {
-                                const current = parseCtpsParts(field.value);
-                                field.onChange(
-                                  buildCtpsValue({ ...current, uf }),
-                                );
-                              }}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione a UF" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {ufsBrasil.map((uf) => (
-                                  <SelectItem key={uf} value={uf}>
-                                    {uf}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  /> */}
-
-                  {/* <FormField
-                    name="directSuperior"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Superior direto</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="sup1">Superior 1</SelectItem>
-                            <SelectItem value="sup2">Superior 2</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  /> */}
-                </div>
-
-                {/* <div>
-                      <Label>Observações para o Cartão de Ponto</Label>
-                      <Textarea className="min-h-[100px]" />
-                    </div> */}
-              </TabsContent>
 
               <TabsContent value="children" className="space-y-6">
                 <div className="flex items-center justify-between">
