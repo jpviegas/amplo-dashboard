@@ -318,45 +318,76 @@ export default function RegisterEmployeeForm({
       status: initialData?.status ?? "active",
       name: initialData?.name ?? "",
       email: initialData?.email ?? "",
-      // pis: initialData?.pis ?? "",
+      pis: initialData?.pis ?? "",
       cpf: initialData?.cpf ?? "",
-      //   registration: initialData?.registration ?? "",
+      registration: initialData?.registration ?? "",
       admissionDate: formatDateDigits(initialData?.admissionDate),
-      companyId: initialData?.companyId ?? "",
-      workingHours: initialData?.workingHours ?? "",
-      //   position: initialData?.position ?? "",
-      //   departmentId: initialData?.departmentId ?? "",
+      companyId:
+        typeof (initialData as unknown as { companyId?: unknown })
+          ?.companyId === "string"
+          ? ((initialData as unknown as { companyId?: string })?.companyId ??
+            "")
+          : ((initialData as unknown as { companyId?: { _id?: string } })
+              ?.companyId?._id ?? ""),
+      workingHours:
+        typeof (initialData as unknown as { workingHours?: unknown })
+          ?.workingHours === "string"
+          ? ((initialData as unknown as { workingHours?: string })
+              ?.workingHours ?? "")
+          : ((initialData as unknown as { workingHours?: { _id?: string } })
+              ?.workingHours?._id ?? ""),
+      departmentId:
+        typeof (initialData as unknown as { departmentId?: unknown })
+          ?.departmentId === "string"
+          ? ((initialData as unknown as { departmentId?: string })
+              ?.departmentId ?? "")
+          : ((initialData as unknown as { departmentId?: { _id?: string } })
+              ?.departmentId?._id ?? ""),
+      position:
+        typeof (initialData as unknown as { position?: unknown })?.position ===
+        "string"
+          ? ((initialData as unknown as { position?: string })?.position ?? "")
+          : ((initialData as unknown as { position?: { _id?: string } })
+              ?.position?._id ?? ""),
       //   sheetNumber: initialData?.sheetNumber ?? "",
       //   ctps: initialData?.ctps ?? "",
-      //   rg: initialData?.rg ?? "",
-      //   birthDate: initialData?.birthDate
-      //     ? formatDateDigits(initialData.birthDate)
-      //     : undefined,
-      //   socialName: initialData?.socialName ?? "",
-      //   cnh: initialData?.cnh ?? "",
-      //   cnhExpiration: initialData?.cnhExpiration
-      //     ? formatDateDigits(initialData.cnhExpiration)
-      //     : undefined,
-      //   cep: initialData?.cep ?? "",
-      //   address: initialData?.address ?? "",
-      //   addressNumber: initialData?.addressNumber ?? "",
-      //   neighborhood: initialData?.neighborhood ?? "",
-      //   city:
-      //     typeof initialData?.city === "string" ? initialData.city : undefined,
-      //   phone: onlyDigits(initialData?.phone ?? ""),
-      //   extension: initialData?.extension ?? "",
-      //   fatherName: initialData?.fatherName ?? "",
-      //   motherName: initialData?.motherName ?? "",
-      //   nationality: initialData?.nationality ?? "",
-      //   placeOfBirth: initialData?.placeOfBirth ?? "",
-      //   children: Array.isArray(initialData?.children)
-      //     ? initialData!.children.map((child) => ({
-      //         ...child,
-      //         birthDate: child?.birthDate
-      //           ? formatDateDigits(child.birthDate)
-      //           : undefined,
-      //       }))
-      //     : [],
+      rg: onlyDigits(initialData?.rg ?? "").slice(0, 9),
+      birthDate: initialData?.birthDate
+        ? formatDateDigits(initialData.birthDate)
+        : "",
+      socialName: initialData?.socialName ?? "",
+      cnh: initialData?.cnh ?? "",
+      cnhCategory: initialData?.cnhCategory ?? "",
+      cnhExpiration: initialData?.cnhExpiration
+        ? formatDateDigits(initialData.cnhExpiration)
+        : "",
+      cep: onlyDigits(initialData?.cep ?? "").slice(0, 8),
+      address: initialData?.address ?? "",
+      addressNumber: initialData?.addressNumber ?? "",
+      neighborhood: initialData?.neighborhood ?? "",
+      city:
+        typeof initialData?.city === "string"
+          ? initialData.city
+          : ((initialData as unknown as { city?: { _id?: string } })?.city
+              ?._id ?? ""),
+      state: String(initialData?.state ?? "").toUpperCase(),
+      phone: onlyDigits(initialData?.phone ?? "").slice(0, 11),
+      extension: initialData?.extension ?? "",
+      fatherName: initialData?.fatherName ?? "",
+      motherName: initialData?.motherName ?? "",
+      gender: initialData?.gender ?? "nao-informar",
+      nationality: initialData?.nationality ?? "",
+      placeOfBirth: initialData?.placeOfBirth ?? "",
+      placeOfBirthUF: initialData?.placeOfBirthUF ?? "",
+      civilStatus: initialData?.civilStatus ?? "",
+      children: Array.isArray(initialData?.children)
+        ? initialData!.children.map((child) => ({
+            ...(child as Record<string, unknown>),
+            birthDate: (child as { birthDate?: unknown } | null)?.birthDate
+              ? formatDateDigits((child as { birthDate?: unknown }).birthDate)
+              : "",
+          }))
+        : [],
     },
   });
 
@@ -470,7 +501,7 @@ export default function RegisterEmployeeForm({
         admissionDate: onlyDigits(String(values.admissionDate)).slice(0, 8),
         birthDate: values.birthDate
           ? onlyDigits(String(values.birthDate)).slice(0, 8)
-          : undefined,
+          : "",
         cnhExpiration: values.cnhExpiration
           ? formatDateDigits(values.cnhExpiration)
           : undefined,
@@ -571,7 +602,7 @@ export default function RegisterEmployeeForm({
             name="registration"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Matrícula</FormLabel>
+                <FormLabel>{requiredLabel("Matrícula")}</FormLabel>
                 <FormControl>
                   <Input placeholder="Matrícula" {...field} />
                 </FormControl>
@@ -642,7 +673,7 @@ export default function RegisterEmployeeForm({
                 <FormLabel>{requiredLabel("Selecione a empresa")}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  value={field.value ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -666,7 +697,10 @@ export default function RegisterEmployeeForm({
             render={({ field }) => (
               <FormItem className="space-y-2">
                 <FormLabel>{requiredLabel("Horário de Trabalho")}</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value ?? ""}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -689,11 +723,14 @@ export default function RegisterEmployeeForm({
             )}
           />
           <FormField
-            name="department"
+            name="departmentId"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Departamento</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <FormLabel>{requiredLabel("Departamento")}</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value ?? ""}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -714,8 +751,11 @@ export default function RegisterEmployeeForm({
             name="position"
             render={({ field }) => (
               <FormItem className="space-y-2">
-                <FormLabel>Cargo</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <FormLabel>{requiredLabel("Cargo")}</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value ?? ""}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -997,7 +1037,9 @@ export default function RegisterEmployeeForm({
                   const selectedDate = toDate(field.value);
                   return (
                     <FormItem>
-                      <FormLabel>Data de nascimento</FormLabel>
+                      <FormLabel>
+                        {requiredLabel("Data de nascimento")}
+                      </FormLabel>
                       <Popover>
                         <FormControl>
                           <div className="relative">
@@ -1086,7 +1128,7 @@ export default function RegisterEmployeeForm({
                     <FormLabel>Categoria da CNH</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value ?? ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -1155,7 +1197,7 @@ export default function RegisterEmployeeForm({
                 name="cep"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CEP</FormLabel>
+                    <FormLabel>{requiredLabel("CEP")}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -1200,7 +1242,7 @@ export default function RegisterEmployeeForm({
                 name="addressNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Número do endereço</FormLabel>
+                    <FormLabel>{requiredLabel("Número do endereço")}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input placeholder="Número do endereço" {...field} />
@@ -1232,10 +1274,10 @@ export default function RegisterEmployeeForm({
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cidade</FormLabel>
+                    <FormLabel>{requiredLabel("Cidade")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value ? field.value : undefined}
+                      value={field.value ?? ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -1260,7 +1302,10 @@ export default function RegisterEmployeeForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>UF</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? ""}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione a UF" />
@@ -1283,7 +1328,7 @@ export default function RegisterEmployeeForm({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Celular</FormLabel>
+                    <FormLabel>{requiredLabel("Celular")}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -1363,7 +1408,7 @@ export default function RegisterEmployeeForm({
                     <FormLabel>Gênero</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value ?? ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -1423,7 +1468,7 @@ export default function RegisterEmployeeForm({
                     <FormLabel>UF da naturalidade</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value ? field.value : undefined}
+                      value={field.value ?? ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -1450,7 +1495,7 @@ export default function RegisterEmployeeForm({
                     <FormLabel>Estado Civil</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value ?? ""}
                     >
                       <FormControl>
                         <SelectTrigger>

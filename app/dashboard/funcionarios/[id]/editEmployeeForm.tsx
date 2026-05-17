@@ -361,14 +361,19 @@ export default function EditEmployeeForm() {
       name: "",
       email: "",
       cpf: "",
+      registration: "",
       admissionDate: "",
       companyId: "",
       workingHours: "",
       departmentId: "",
       position: "",
       status: "active",
+      birthDate: "",
+      cep: "",
+      addressNumber: "",
       city: "",
       state: "",
+      phone: "",
     },
   });
 
@@ -475,13 +480,17 @@ export default function EditEmployeeForm() {
         ...employee,
         companyId: companyIdValue,
         workingHours: workingHoursValue,
+        registration: String(
+          (employee as unknown as { registration?: unknown })?.registration ??
+            "",
+        ),
         city:
           typeof (employee as unknown as { city?: unknown })?.city === "string"
             ? (employee as unknown as { city?: string }).city
             : ((employee as unknown as { city?: { _id?: string } })?.city
                 ?._id ?? ""),
-        departmentId: departmentIdValue || undefined,
-        position: positionIdValue || undefined,
+        departmentId: departmentIdValue,
+        position: positionIdValue,
         admissionDate: formatDateDigits(
           (employee as unknown as { admissionDate?: unknown })?.admissionDate,
         ),
@@ -489,7 +498,14 @@ export default function EditEmployeeForm() {
           ? formatDateDigits(
               (employee as unknown as { birthDate?: unknown })?.birthDate,
             )
-          : undefined,
+          : "",
+        cep: onlyDigits(
+          String((employee as unknown as { cep?: unknown })?.cep ?? ""),
+        ).slice(0, 8),
+        addressNumber: String(
+          (employee as unknown as { addressNumber?: unknown })?.addressNumber ??
+            "",
+        ),
         cnhExpiration: (employee as unknown as { cnhExpiration?: unknown })
           ?.cnhExpiration
           ? formatDateDigits(
@@ -731,7 +747,7 @@ export default function EditEmployeeForm() {
         admissionDate: onlyDigits(String(values.admissionDate)).slice(0, 8),
         birthDate: values.birthDate
           ? onlyDigits(String(values.birthDate)).slice(0, 8)
-          : undefined,
+          : "",
         cnhExpiration: values.cnhExpiration
           ? formatDateDigits(values.cnhExpiration)
           : undefined,
@@ -824,7 +840,7 @@ export default function EditEmployeeForm() {
                 name="registration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Matrícula</FormLabel>
+                    <FormLabel>{requiredLabel("Matrícula")}</FormLabel>
                     <FormControl>
                       <Input placeholder="Matrícula" {...field} />
                     </FormControl>
@@ -953,7 +969,7 @@ export default function EditEmployeeForm() {
                 name="departmentId"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel>Departamento</FormLabel>
+                    <FormLabel>{requiredLabel("Departamento")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ""}
@@ -981,7 +997,7 @@ export default function EditEmployeeForm() {
                 name="position"
                 render={({ field }) => (
                   <FormItem className="space-y-2">
-                    <FormLabel>Cargo</FormLabel>
+                    <FormLabel>{requiredLabel("Cargo")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       value={field.value ?? ""}
@@ -1270,7 +1286,9 @@ export default function EditEmployeeForm() {
                       const selectedDate = toDate(field.value);
                       return (
                         <FormItem>
-                          <FormLabel>Data de nascimento</FormLabel>
+                          <FormLabel>
+                            {requiredLabel("Data de nascimento")}
+                          </FormLabel>
                           <Popover>
                             <FormControl>
                               <div className="relative">
@@ -1447,7 +1465,7 @@ export default function EditEmployeeForm() {
                     name="cep"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>CEP</FormLabel>
+                        <FormLabel>{requiredLabel("CEP")}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
@@ -1492,7 +1510,9 @@ export default function EditEmployeeForm() {
                     name="addressNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Número do endereço</FormLabel>
+                        <FormLabel>
+                          {requiredLabel("Número do endereço")}
+                        </FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
@@ -1527,10 +1547,10 @@ export default function EditEmployeeForm() {
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cidade</FormLabel>
+                        <FormLabel>{requiredLabel("Cidade")}</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value ? field.value : undefined}
+                          value={field.value ?? ""}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -1581,7 +1601,7 @@ export default function EditEmployeeForm() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Celular</FormLabel>
+                        <FormLabel>{requiredLabel("Celular")}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input

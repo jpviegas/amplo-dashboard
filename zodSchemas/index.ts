@@ -87,7 +87,9 @@ export const registerEmployeeSchema = z.object({
     .string()
     .nonempty("O CPF é obrigatório")
     .length(11, "Preencha apenas os 11 números do CPF"),
-  registration: z.string().optional(),
+  registration: z
+    .string({ required_error: "A matrícula é obrigatória" })
+    .nonempty("A matrícula é obrigatória"),
   admissionDate: z
     .string({
       required_error: "A data de admissão é obrigatória",
@@ -101,22 +103,22 @@ export const registerEmployeeSchema = z.object({
     .string({ required_error: "As horas de trabalho são obrigatórias" })
     .nonempty("As horas de trabalho são obrigatórias"),
   status: z.enum(["active", "inactive"]).optional(),
-  departmentId: z.string().optional(),
+  departmentId: z
+    .string({ required_error: "O departamento é obrigatório" })
+    .nonempty("O departamento é obrigatório"),
   costCenter: z.string().optional(),
-  position: z.string().optional(),
+  position: z
+    .string({ required_error: "O cargo é obrigatório" })
+    .nonempty("O cargo é obrigatório"),
   sheetNumber: z.string().optional(),
   ctps: z.string().optional(),
   directSuperior: z.string().optional(),
   rg: z
-    .string()
-    .nonempty("O RG é obrigatório")
-    .length(9, "Preencha apenas os 9 números do RG")
+    .string({ required_error: "Preencha apenas os 9 números do RG" })
     .optional(),
   birthDate: z
-    .string({
-      required_error: "A data de nascimento é obrigatória",
-    })
-    .optional(),
+    .string({ required_error: "A data de nascimento é obrigatória" })
+    .nonempty("A data de nascimento é obrigatória"),
   socialName: z.string().optional(),
   cnh: z.string().optional(),
   cnhCategory: z.string().optional(),
@@ -125,13 +127,23 @@ export const registerEmployeeSchema = z.object({
       required_error: "A data de expiração da CNH é obrigatória",
     })
     .optional(),
-  cep: z.string().optional(),
+  cep: z
+    .string({ required_error: "O CEP é obrigatório" })
+    .length(8, "Preencha apenas os 8 números do CEP")
+    .nonempty("O CEP é obrigatório"),
   address: z.string().optional(),
-  addressNumber: z.string().optional(),
+  addressNumber: z
+    .string({ required_error: "O número do endereço é obrigatório" })
+    .nonempty("O número do endereço é obrigatório"),
   neighborhood: z.string().optional(),
-  city: z.string().optional(),
+  city: z
+    .string({ required_error: "A cidade é obrigatória" })
+    .nonempty("A cidade é obrigatória"),
   state: z.string().optional(),
-  phone: z.string().optional(),
+  phone: z
+    .string({ required_error: "O celular é obrigatório" })
+    .length(11, "Preencha apenas os 11 números do celular")
+    .nonempty("O celular é obrigatório"),
   extension: z.string().optional(),
   fatherName: z.string().optional(),
   motherName: z.string().optional(),
