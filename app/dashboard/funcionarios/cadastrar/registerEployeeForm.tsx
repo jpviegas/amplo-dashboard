@@ -149,6 +149,13 @@ export default function RegisterEmployeeForm({
     const date = toDate(value);
     return date ? format(date, "ddMMyyyy") : "";
   };
+  const formatDateDisplay = (value: unknown) => {
+    const digits = onlyDigits(String(value ?? "")).slice(0, 8);
+    if (!digits) return "";
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
   const requiredLabel = (label: string) => (
     <HoverCard openDelay={100} closeDelay={0}>
       <span className="flex items-center gap-1">
@@ -460,9 +467,9 @@ export default function RegisterEmployeeForm({
     try {
       const payload: FormValues = {
         ...values,
-        admissionDate: formatDateDigits(values.admissionDate),
+        admissionDate: onlyDigits(String(values.admissionDate)).slice(0, 8),
         birthDate: values.birthDate
-          ? formatDateDigits(values.birthDate)
+          ? onlyDigits(String(values.birthDate)).slice(0, 8)
           : undefined,
         cnhExpiration: values.cnhExpiration
           ? formatDateDigits(values.cnhExpiration)
@@ -471,7 +478,7 @@ export default function RegisterEmployeeForm({
           ? values.children.map((child) => ({
               ...child,
               birthDate: child.birthDate
-                ? formatDateDigits(child.birthDate)
+                ? onlyDigits(String(child.birthDate)).slice(0, 8)
                 : undefined,
             }))
           : values.children,
@@ -580,24 +587,33 @@ export default function RegisterEmployeeForm({
                 <FormItem>
                   <FormLabel>{requiredLabel("Data da admissão")}</FormLabel>
                   <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !selectedDate && "text-muted-foreground",
-                          )}
-                        >
-                          {selectedDate ? (
-                            format(selectedDate, "dd/MM/yyyy")
-                          ) : (
-                            <span>Selecione uma data</span>
-                          )}
-                          <CalendarIcon className="ml-auto size-4" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder="dd/mm/aaaa"
+                          inputMode="numeric"
+                          value={formatDateDisplay(field.value)}
+                          onChange={(e) =>
+                            field.onChange(
+                              onlyDigits(e.target.value).slice(0, 8),
+                            )
+                          }
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-1/2 right-1 -translate-y-1/2"
+                          >
+                            <CalendarIcon className="size-4" />
+                          </Button>
+                        </PopoverTrigger>
+                      </div>
+                    </FormControl>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
@@ -875,24 +891,33 @@ export default function RegisterEmployeeForm({
                           <FormItem>
                             <FormLabel>Data de nascimento</FormLabel>
                             <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full pl-3 text-left font-normal",
-                                      !selectedDate && "text-muted-foreground",
-                                    )}
-                                  >
-                                    {selectedDate ? (
-                                      format(selectedDate, "dd/MM/yyyy")
-                                    ) : (
-                                      <span>Selecione uma data</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto size-4" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
+                              <FormControl>
+                                <div className="relative">
+                                  <Input
+                                    placeholder="dd/mm/aaaa"
+                                    inputMode="numeric"
+                                    value={formatDateDisplay(field.value)}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        onlyDigits(e.target.value).slice(0, 8),
+                                      )
+                                    }
+                                    onBlur={field.onBlur}
+                                    name={field.name}
+                                    ref={field.ref}
+                                  />
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="absolute top-1/2 right-1 -translate-y-1/2"
+                                    >
+                                      <CalendarIcon className="size-4" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                </div>
+                              </FormControl>
                               <PopoverContent
                                 className="w-auto p-0"
                                 align="start"
@@ -972,26 +997,35 @@ export default function RegisterEmployeeForm({
                   const selectedDate = toDate(field.value);
                   return (
                     <FormItem>
-                      <FormLabel>Data da nascimento</FormLabel>
+                      <FormLabel>Data de nascimento</FormLabel>
                       <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !selectedDate && "text-muted-foreground",
-                              )}
-                            >
-                              {selectedDate ? (
-                                format(selectedDate, "dd/MM/yyyy")
-                              ) : (
-                                <span>Selecione uma data</span>
-                              )}
-                              <CalendarIcon className="ml-auto size-4" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder="dd/mm/aaaa"
+                              inputMode="numeric"
+                              value={formatDateDisplay(field.value)}
+                              onChange={(e) =>
+                                field.onChange(
+                                  onlyDigits(e.target.value).slice(0, 8),
+                                )
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1/2 right-1 -translate-y-1/2"
+                              >
+                                <CalendarIcon className="size-4" />
+                              </Button>
+                            </PopoverTrigger>
+                          </div>
+                        </FormControl>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
@@ -1076,7 +1110,7 @@ export default function RegisterEmployeeForm({
                   const selectedDate = toDate(field.value);
                   return (
                     <FormItem>
-                      <FormLabel>Data da vencimento da CNH</FormLabel>
+                      <FormLabel>Data de vencimento da CNH</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
