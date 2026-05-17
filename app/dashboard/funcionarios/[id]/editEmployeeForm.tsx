@@ -64,14 +64,7 @@ import {
 } from "@/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import {
-  CalendarIcon,
-  LucideAsterisk,
-  MapPin,
-  Phone,
-  Search,
-  User,
-} from "lucide-react";
+import { CalendarIcon, MapPin, Phone, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -171,7 +164,7 @@ export default function EditEmployeeForm() {
       <span className="flex items-center gap-1">
         <span>{label}</span>
         <HoverCardTrigger asChild>
-          <LucideAsterisk className="text-destructive" />
+          <span>*</span>
         </HoverCardTrigger>
       </span>
       <HoverCardContent className="pointer-events-none">
