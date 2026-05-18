@@ -111,6 +111,19 @@ export default function RegisterEmployeeForm({
     }
     const raw = String(value).trim();
     if (!raw) return undefined;
+    const buildDate = (year: number, month: number, day: number) => {
+      if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day))
+        return undefined;
+      if (year < 1900 || year > 2100) return undefined;
+      if (month < 1 || month > 12) return undefined;
+      if (day < 1 || day > 31) return undefined;
+      const date = new Date(year, month - 1, day);
+      if (Number.isNaN(date.getTime())) return undefined;
+      if (date.getFullYear() !== year) return undefined;
+      if (date.getMonth() !== month - 1) return undefined;
+      if (date.getDate() !== day) return undefined;
+      return date;
+    };
 
     const slashMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (slashMatch) {
@@ -118,8 +131,7 @@ export default function RegisterEmployeeForm({
       const day = Number(ddRaw);
       const month = Number(mmRaw);
       const year = Number(yyyyRaw);
-      const date = new Date(year, month - 1, day);
-      return Number.isNaN(date.getTime()) ? undefined : date;
+      return buildDate(year, month, day);
     }
 
     const digits = onlyDigits(raw);
@@ -128,18 +140,14 @@ export default function RegisterEmployeeForm({
       const yyyy = Number(first8.slice(0, 4));
       const mm = Number(first8.slice(4, 6));
       const dd = Number(first8.slice(6, 8));
-      if (yyyy >= 1900 && yyyy <= 2100) {
-        const date = new Date(yyyy, mm - 1, dd);
-        return Number.isNaN(date.getTime()) ? undefined : date;
-      }
+      const isoDate = buildDate(yyyy, mm, dd);
+      if (isoDate) return isoDate;
 
       const dd2 = Number(first8.slice(0, 2));
       const mm2 = Number(first8.slice(2, 4));
       const yyyy2 = Number(first8.slice(4, 8));
-      if (yyyy2 >= 1900 && yyyy2 <= 2100) {
-        const date = new Date(yyyy2, mm2 - 1, dd2);
-        return Number.isNaN(date.getTime()) ? undefined : date;
-      }
+      const brDate = buildDate(yyyy2, mm2, dd2);
+      if (brDate) return brDate;
     }
 
     const date = new Date(raw);
