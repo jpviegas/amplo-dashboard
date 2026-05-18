@@ -160,7 +160,7 @@ export async function CreateEmployee(
 
 export async function UpdateEmployee(
   userId: string | { email: string },
-  values: EmployeeType,
+  values: Partial<EmployeeType> & { role?: string },
   id: string,
 ): Promise<{ message: string; success: boolean }> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/${id}`, {

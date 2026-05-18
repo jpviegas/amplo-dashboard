@@ -73,6 +73,7 @@ export const registerCompanySchema = z.object({
 export type EmployeeType = z.infer<typeof registerEmployeeSchema>;
 export type EmployeeTypeWithId = EmployeeType & { _id: string };
 export const registerEmployeeSchema = z.object({
+  role: z.enum(["admin", "employee", "rh"]),
   name: z
     .string()
     .nonempty("O nome é obrigatório")

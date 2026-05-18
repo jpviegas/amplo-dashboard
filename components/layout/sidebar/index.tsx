@@ -1,5 +1,11 @@
 "use client";
 
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -10,15 +16,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
-
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { useUser } from "@/context/UserContext";
 import { Logout } from "@/lib/utils";
+import Link from "next/link";
 import { FaUserClock } from "react-icons/fa6";
 import { IoIosArrowForward } from "react-icons/io";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -26,6 +26,9 @@ import { LuFileText, LuLogOut } from "react-icons/lu";
 import { MdOutlineSettingsInputSvideo } from "react-icons/md";
 
 export default function SidebarComponent() {
+  const { user } = useUser();
+  const isAdmin = user?.role === "admin";
+
   return (
     <Sidebar collapsible="icon" variant="floating">
       <SidebarContent>
@@ -54,18 +57,18 @@ export default function SidebarComponent() {
                   item: "Atribuir ponto",
                   url: "/dashboard/gestao/ponto",
                 },
-                {
-                  item: "Documentos",
-                  url: "/dashboard/gestao/documentos",
-                },
+                // {
+                //   item: "Documentos",
+                //   url: "/dashboard/gestao/documentos",
+                // },
                 {
                   item: "Uniforme/EPI",
                   url: "/dashboard/gestao/epi",
                 },
-                {
-                  item: "Pagamento/Benefício",
-                  url: "/dashboard/gestao/pagamento",
-                },
+                // {
+                //   item: "Pagamento/Benefício",
+                //   url: "/dashboard/gestao/pagamento",
+                // },
               ],
             },
             {
@@ -84,11 +87,20 @@ export default function SidebarComponent() {
                 // { item: "Cidade", url: "cidade" },
               ],
             },
-            {
-              icon: IoSettingsOutline,
-              title: "Configurações",
-              items: [{ item: "Cores", url: "/dashboard/cores" }],
-            },
+            ...(isAdmin
+              ? [
+                  {
+                    icon: IoSettingsOutline,
+                    title: "Configurações",
+                    items: [
+                      {
+                        item: "Atribuir Autorização",
+                        url: "/dashboard/autorizacao",
+                      },
+                    ],
+                  },
+                ]
+              : []),
           ].map((item) => (
             <SidebarMenuItem className="p-2" key={item.title}>
               <Collapsible className="group/collapsible">
